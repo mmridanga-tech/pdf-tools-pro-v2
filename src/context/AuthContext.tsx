@@ -11,6 +11,7 @@ export interface UserProfile {
   role: 'user' | 'admin';
   company?: string;
   jobTitle?: string;
+  provider?: 'google' | 'email';
 }
 
 interface AuthContextType {
@@ -89,13 +90,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await new Promise((r) => setTimeout(r, 700));
     const googleUser: UserProfile = {
       id: 'google_usr_99',
-      name: 'Google User',
-      email: 'user.google@gmail.com',
+      name: 'Alex Vance (Google)',
+      email: 'alex.vance@gmail.com',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
       plan: 'pro',
       emailVerified: true,
       createdAt: new Date().toISOString().split('T')[0],
       role: 'user',
+      company: 'Google Workspace',
+      jobTitle: 'Senior Product Manager',
+      provider: 'google',
     };
     setUser(googleUser);
     setAuthModalOpen(false);

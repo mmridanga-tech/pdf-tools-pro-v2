@@ -5,7 +5,7 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
 import { useToast } from '../context/ToastContext';
-import { saveRecentFile, addActivityLog } from '../utils/storageUtils';
+import { saveRecentFile, addActivityLog, saveAnalyzerReport } from '../utils/storageUtils';
 import { postApiJson } from '../utils/apiClient';
 import { pdfjsLib, ensurePdfWorkerConfigured } from '../utils/pdfWorker';
 import {
@@ -187,6 +187,18 @@ export const DocumentAnalyzer: React.FC = () => {
 
       setAnalysisResult(data);
       toast.success('Document analysis completed successfully!');
+
+      saveAnalyzerReport({
+        title: selectedFile ? `${selectedFile.name} Audit` : `${data.documentType} Audit Report`,
+        documentType: data.documentType,
+        confidenceScore: data.confidenceScore,
+        executiveSummary: data.executiveSummary,
+        entities: data.entities,
+        risks: data.risks,
+        actionItems: data.actionItems,
+        folder: data.documentType === 'Invoice' ? 'Invoices' : data.documentType === 'Contract' ? 'Contracts' : 'General',
+        tags: [data.documentType, 'AI Audit'],
+      });
 
       if (selectedFile) {
         saveRecentFile({

@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
 import { useToast } from '../context/ToastContext';
-import { saveRecentFile, addActivityLog } from '../utils/storageUtils';
+import { saveRecentFile, addActivityLog, saveAiAnalysis } from '../utils/storageUtils';
 import { postApiJson } from '../utils/apiClient';
 import { pdfjsLib, ensurePdfWorkerConfigured } from '../utils/pdfWorker';
 import {
@@ -187,6 +187,15 @@ export const AiAssistant: React.FC = () => {
 
       setOutputResult(data.result);
       toast.success('AI task completed successfully!');
+
+      saveAiAnalysis({
+        title: `AI ${activeAction.toUpperCase()} Output`,
+        docName: selectedFile ? selectedFile.name : 'Pasted Text Document',
+        actionType: activeAction,
+        content: data.result,
+        folder: 'General',
+        tags: ['AI Analysis', activeAction],
+      });
 
       if (selectedFile) {
         saveRecentFile({

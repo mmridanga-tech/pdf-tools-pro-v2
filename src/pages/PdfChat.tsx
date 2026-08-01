@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
 import { useToast } from '../context/ToastContext';
-import { saveRecentFile, addActivityLog } from '../utils/storageUtils';
+import { saveRecentFile, addActivityLog, saveAiChat } from '../utils/storageUtils';
 import { postApiJson } from '../utils/apiClient';
 import { pdfjsLib, ensurePdfWorkerConfigured } from '../utils/pdfWorker';
 import {
@@ -134,7 +134,24 @@ export const PdfChat: React.FC = () => {
         citations: data.reply.match(/\[Page \d+\]/g) || [],
       };
 
-      setMessages((prev) => [...prev, assistantMsg]);
+      const updatedMessages = [...messages, userMsg, assistantMsg];
+      setMessages(updatedMessages);
+
+      if (selectedFile) {
+        saveAiChat({
+          title: `Chat on ${selectedFile.name}`,
+          docName: selectedFile.name,
+          pageCount: pageCount || 1,
+          messages: updatedMessages.map((m) => ({
+            id: m.id,
+            sender: m.sender,
+            text: m.text,
+            timestamp: m.timestamp,
+          })),
+          folder: 'General',
+          tags: ['AI Chat'],
+        });
+      }
     } catch (err: any) {
       toast.error('AI Chat Error: ' + err.message);
     } finally {
