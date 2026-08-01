@@ -16,6 +16,15 @@ const ProtectPDF = lazy(() => import('../pages/ProtectPDF').then((m) => ({ defau
 const UnlockPDF = lazy(() => import('../pages/UnlockPDF').then((m) => ({ default: m.UnlockPDF })));
 const SecurityPDF = lazy(() => import('../pages/SecurityPDF').then((m) => ({ default: m.SecurityPDF })));
 
+// Modules 1-9 Additions
+const Dashboard = lazy(() => import('../pages/Dashboard').then((m) => ({ default: m.Dashboard })));
+const PdfChat = lazy(() => import('../pages/PdfChat').then((m) => ({ default: m.PdfChat })));
+const AiAssistant = lazy(() => import('../pages/AiAssistant').then((m) => ({ default: m.AiAssistant })));
+const TeamWorkspace = lazy(() => import('../pages/TeamWorkspace').then((m) => ({ default: m.TeamWorkspace })));
+const AdminPanel = lazy(() => import('../pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
+const Pricing = lazy(() => import('../pages/Pricing').then((m) => ({ default: m.Pricing })));
+const CloudStoragePage = lazy(() => import('../pages/CloudStorage').then((m) => ({ default: m.CloudStoragePage })));
+
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
 
@@ -29,7 +38,7 @@ const ScrollToTop: React.FC = () => {
 const PageFallback: React.FC = () => (
   <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-slate-400">
     <Loader2 className="w-8 h-8 animate-spin text-red-500 mb-3" />
-    <span className="text-sm font-semibold tracking-wide">Loading Tool...</span>
+    <span className="text-sm font-semibold tracking-wide">Loading Module...</span>
   </div>
 );
 
@@ -52,10 +61,19 @@ export const AppRoutes: React.FC = () => {
           <Route path="/protect-pdf" element={<ProtectPDF />} />
           <Route path="/unlock-pdf" element={<UnlockPDF />} />
           <Route path="/pdf-security" element={<SecurityPDF />} />
+
+          {/* New Platform Modules */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/ai-chat" element={<PdfChat />} />
+          <Route path="/ai-assistant" element={<AiAssistant />} />
+          <Route path="/team" element={<TeamWorkspace />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/cloud-storage" element={<CloudStoragePage />} />
+
           <Route path="*" element={<Home />} />
         </Routes>
       </Suspense>
     </>
   );
 };
-
