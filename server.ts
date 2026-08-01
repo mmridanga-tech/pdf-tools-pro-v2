@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import healthHandler from './api/health.ts';
 import chatHandler from './api/gemini/chat.ts';
 import assistantHandler from './api/gemini/assistant.ts';
+import analyzerHandler from './api/gemini/analyzer.ts';
 
 async function startServer() {
   const app = express();
@@ -15,6 +16,7 @@ async function startServer() {
   app.get('/api/health', healthHandler);
   app.post('/api/gemini/chat', chatHandler);
   app.post('/api/gemini/assistant', assistantHandler);
+  app.post('/api/gemini/analyzer', analyzerHandler);
 
   // Vite middleware setup
   if (process.env.NODE_ENV !== 'production') {

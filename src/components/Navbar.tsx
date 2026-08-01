@@ -107,6 +107,17 @@ export const Navbar: React.FC = () => {
               </Link>
 
               <Link
+                to="/document-analyzer"
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                  activePath === '/document-analyzer'
+                    ? 'text-red-400 bg-red-500/10 border border-red-500/20'
+                    : 'text-emerald-400 hover:text-emerald-300'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" /> Doc Analyzer
+              </Link>
+
+              <Link
                 to="/dashboard"
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                   activePath === '/dashboard' ? 'text-red-400 font-bold' : 'text-slate-400 hover:text-white'
@@ -323,6 +334,14 @@ export const Navbar: React.FC = () => {
               >
                 <span>AI Assistant Suite</span>
                 <Zap className="w-4 h-4 text-purple-400" />
+              </Link>
+              <Link
+                to="/document-analyzer"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-900 text-emerald-400 font-bold text-sm"
+              >
+                <span>Doc Analyzer v1.2</span>
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
               </Link>
               <Link
                 to="/team"

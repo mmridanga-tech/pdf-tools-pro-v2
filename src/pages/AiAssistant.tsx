@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
@@ -20,6 +21,8 @@ import {
   Download,
   Check,
   Zap,
+  ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
 
 ensurePdfWorkerConfigured();
@@ -232,7 +235,7 @@ export const AiAssistant: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-10">
+        <div className="text-center max-w-2xl mx-auto mb-8">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-extrabold uppercase tracking-wider mb-3">
             <Sparkles className="w-4 h-4" /> AI Document Suite
           </div>
@@ -242,6 +245,31 @@ export const AiAssistant: React.FC = () => {
           <p className="text-sm text-slate-400 mt-2">
             Transform lengthy PDFs into summaries, study notes, translated copies, or structured tables in seconds.
           </p>
+        </div>
+
+        {/* Enterprise Document Analyzer Promo Banner */}
+        <div className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-red-950/60 via-slate-900 to-slate-950 border border-red-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0 shadow-inner">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-red-400 uppercase tracking-wider">New Release v1.2</span>
+                <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 text-[10px] font-extrabold">Enterprise</span>
+              </div>
+              <h3 className="text-base font-bold text-white mt-0.5">SmartPDF Document Analyzer Workspace</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Auto-classify Invoices, Contracts, Resumes, Bank Statements, Aadhaar/PAN, detect compliance risks, and export reports in PDF, DOCX, or JSON.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/document-analyzer"
+            className="px-4 py-2.5 rounded-xl font-bold text-xs bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/30 transition-all shrink-0 flex items-center gap-1.5"
+          >
+            Open Document Analyzer <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
         {/* Action Selection Cards Grid */}

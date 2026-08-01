@@ -26,6 +26,7 @@ const ResizeImage = lazy(() => import('../pages/ResizeImage').then((m) => ({ def
 const Dashboard = lazy(() => import('../pages/Dashboard').then((m) => ({ default: m.Dashboard })));
 const PdfChat = lazy(() => import('../pages/PdfChat').then((m) => ({ default: m.PdfChat })));
 const AiAssistant = lazy(() => import('../pages/AiAssistant').then((m) => ({ default: m.AiAssistant })));
+const DocumentAnalyzer = lazy(() => import('../pages/DocumentAnalyzer').then((m) => ({ default: m.DocumentAnalyzer })));
 const TeamWorkspace = lazy(() => import('../pages/TeamWorkspace').then((m) => ({ default: m.TeamWorkspace })));
 const AdminPanel = lazy(() => import('../pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
 const Pricing = lazy(() => import('../pages/Pricing').then((m) => ({ default: m.Pricing })));
@@ -85,6 +86,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/ai-chat" element={<PdfChat />} />
           <Route path="/ai-assistant" element={<AiAssistant />} />
+          <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
           <Route path="/team" element={<TeamWorkspace />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/pricing" element={<Pricing />} />
