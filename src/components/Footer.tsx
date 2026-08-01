@@ -63,32 +63,27 @@ export const Footer: React.FC = () => {
           {/* Utility Suite */}
           <div>
             <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-4">
-              PDF Utilities
+              Image Tools
             </h3>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link to="/merge" className="hover:text-red-400 transition-colors">
-                  Merge PDF Files
+                <Link to="/image-to-pdf" className="hover:text-red-400 transition-colors">
+                  Image to PDF
                 </Link>
               </li>
               <li>
-                <Link to="/split" className="hover:text-red-400 transition-colors">
-                  Split Document
+                <Link to="/pdf-to-image" className="hover:text-red-400 transition-colors">
+                  PDF to Image
                 </Link>
               </li>
               <li>
-                <Link to="/compress" className="hover:text-red-400 transition-colors">
-                  Compress PDF Size
+                <Link to="/compress-image" className="hover:text-red-400 transition-colors">
+                  Compress Image
                 </Link>
               </li>
               <li>
-                <Link to="/pdf-to-word" className="hover:text-red-400 transition-colors">
-                  PDF to Word
-                </Link>
-              </li>
-              <li>
-                <Link to="/protect-pdf" className="hover:text-red-400 transition-colors">
-                  Protect & Encrypt
+                <Link to="/resize-image" className="hover:text-red-400 transition-colors">
+                  Resize Image
                 </Link>
               </li>
             </ul>

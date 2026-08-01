@@ -16,6 +16,12 @@ const ProtectPDF = lazy(() => import('../pages/ProtectPDF').then((m) => ({ defau
 const UnlockPDF = lazy(() => import('../pages/UnlockPDF').then((m) => ({ default: m.UnlockPDF })));
 const SecurityPDF = lazy(() => import('../pages/SecurityPDF').then((m) => ({ default: m.SecurityPDF })));
 
+// Image Tools
+const ImageToPDF = lazy(() => import('../pages/ImageToPDF').then((m) => ({ default: m.ImageToPDF })));
+const PDFToImage = lazy(() => import('../pages/PDFToImage').then((m) => ({ default: m.PDFToImage })));
+const CompressImage = lazy(() => import('../pages/CompressImage').then((m) => ({ default: m.CompressImage })));
+const ResizeImage = lazy(() => import('../pages/ResizeImage').then((m) => ({ default: m.ResizeImage })));
+
 // Modules 1-9 Additions
 const Dashboard = lazy(() => import('../pages/Dashboard').then((m) => ({ default: m.Dashboard })));
 const PdfChat = lazy(() => import('../pages/PdfChat').then((m) => ({ default: m.PdfChat })));
@@ -68,6 +74,12 @@ export const AppRoutes: React.FC = () => {
           <Route path="/protect-pdf" element={<ProtectPDF />} />
           <Route path="/unlock-pdf" element={<UnlockPDF />} />
           <Route path="/pdf-security" element={<SecurityPDF />} />
+
+          {/* Image Tools */}
+          <Route path="/image-to-pdf" element={<ImageToPDF />} />
+          <Route path="/pdf-to-image" element={<PDFToImage />} />
+          <Route path="/compress-image" element={<CompressImage />} />
+          <Route path="/resize-image" element={<ResizeImage />} />
 
           {/* New Platform Modules */}
           <Route path="/dashboard" element={<Dashboard />} />

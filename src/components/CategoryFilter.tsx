@@ -9,6 +9,7 @@ interface CategoryFilterProps {
 
 const CATEGORIES: { id: ToolCategory; label: string }[] = [
   { id: 'all', label: 'All Tools' },
+  { id: 'image', label: 'Image Tools' },
   { id: 'organize', label: 'Organize PDF' },
   { id: 'convert', label: 'Convert PDF' },
   { id: 'edit', label: 'Edit & Optimize' },

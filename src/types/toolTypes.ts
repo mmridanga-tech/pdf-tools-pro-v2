@@ -1,4 +1,4 @@
-export type ToolCategory = 'all' | 'ai' | 'organize' | 'convert' | 'edit' | 'security';
+export type ToolCategory = 'all' | 'image' | 'ai' | 'organize' | 'convert' | 'edit' | 'security';
 
 export interface PDFTool {
   id: string;
