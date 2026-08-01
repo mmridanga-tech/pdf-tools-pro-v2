@@ -33,14 +33,12 @@ export class OCRService {
     options: OCROptions,
     onProgress?: (percent: number, statusMessage?: string, activePage?: number, totalPages?: number) => void
   ): Promise<ProcessedResult> {
-    const pdfjsLib = await import('pdfjs-dist');
+    const { pdfjsLib, ensurePdfWorkerConfigured } = await import('../utils/pdfWorker');
     const { createWorker } = await import('tesseract.js');
 
-    const arrayBuffer = await file.arrayBuffer();
+    ensurePdfWorkerConfigured();
 
-    if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.10.38'}/pdf.worker.min.mjs`;
-    }
+    const arrayBuffer = await file.arrayBuffer();
 
     if (onProgress) onProgress(5, 'Loading PDF document...', 0, 0);
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });

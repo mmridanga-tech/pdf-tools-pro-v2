@@ -4,7 +4,7 @@ import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
 import { useToast } from '../context/ToastContext';
 import { saveRecentFile, addActivityLog } from '../utils/storageUtils';
-import * as pdfjsLib from 'pdfjs-dist';
+import { pdfjsLib, ensurePdfWorkerConfigured } from '../utils/pdfWorker';
 import {
   MessageSquare,
   Send,
@@ -21,8 +21,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-// Configure pdfjs worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+ensurePdfWorkerConfigured();
 
 interface ChatMessage {
   id: string;

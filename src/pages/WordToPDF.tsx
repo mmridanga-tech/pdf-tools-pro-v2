@@ -62,7 +62,7 @@ export const WordToPDF: React.FC = () => {
 
         {!selectedFile ? (
           <FileUploader
-            accept=".docx,.doc"
+            accept=".docx,.doc,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             multiple={false}
             onFilesSelected={handleFileSelected}
             title="Select Word document (.docx or .doc)"

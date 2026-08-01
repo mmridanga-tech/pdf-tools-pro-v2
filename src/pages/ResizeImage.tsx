@@ -33,8 +33,10 @@ export const ResizeImage: React.FC = () => {
   const handleFileSelected = async (files: File[]) => {
     if (files.length === 0) return;
     const file = files[0];
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file.');
+    const t = (file.type || '').toLowerCase();
+    const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
+    if (!t.startsWith('image/') && !['.png', '.jpg', '.jpeg', '.webp', '.svg'].includes(ext)) {
+      toast.error('Please select a valid image file (JPG, PNG, WebP, SVG).');
       return;
     }
 
@@ -163,11 +165,12 @@ export const ResizeImage: React.FC = () => {
 
         {!selectedFile ? (
           <FileUploader
-            accept="image/*"
+            accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, .png, .jpg, .jpeg, .webp, .svg"
             multiple={false}
+            buttonText="Choose Image File"
             onFilesSelected={handleFileSelected}
             title="Select Image file to resize"
-            description="JPG, PNG, WebP image formats supported"
+            description="JPG, PNG, WebP, SVG image formats supported"
           />
         ) : (
           <motion.div

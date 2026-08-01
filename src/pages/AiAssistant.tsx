@@ -4,7 +4,7 @@ import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
 import { useToast } from '../context/ToastContext';
 import { saveRecentFile, addActivityLog } from '../utils/storageUtils';
-import * as pdfjsLib from 'pdfjs-dist';
+import { pdfjsLib, ensurePdfWorkerConfigured } from '../utils/pdfWorker';
 import {
   Sparkles,
   FileText,
@@ -21,7 +21,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+ensurePdfWorkerConfigured();
 
 type AIActionType =
   | 'summarize'

@@ -28,7 +28,11 @@ export const ImageToPDF: React.FC = () => {
   const toast = useToast();
 
   const handleFilesSelected = (selectedFiles: File[]) => {
-    const validImageFiles = selectedFiles.filter((f) => f.type.startsWith('image/'));
+    const validImageFiles = selectedFiles.filter((f) => {
+      const t = (f.type || '').toLowerCase();
+      const ext = '.' + (f.name.split('.').pop() || '').toLowerCase();
+      return t.startsWith('image/') || ['.png', '.jpg', '.jpeg', '.webp', '.svg'].includes(ext);
+    });
     if (validImageFiles.length === 0) {
       toast.error('Please select valid image files (JPG, PNG, WebP, SVG).');
       return;
@@ -129,8 +133,9 @@ export const ImageToPDF: React.FC = () => {
 
         {images.length === 0 ? (
           <FileUploader
-            accept="image/*"
+            accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, .png, .jpg, .jpeg, .webp, .svg"
             multiple={true}
+            buttonText="Choose Image Files"
             onFilesSelected={handleFilesSelected}
             title="Select Image files to convert"
             description="JPG, PNG, WebP, SVG images supported"

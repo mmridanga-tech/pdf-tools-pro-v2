@@ -9,8 +9,72 @@ interface FileUploaderProps {
   onFilesSelected: (files: File[]) => void;
   title?: string;
   description?: string;
+  buttonText?: string;
   className?: string;
 }
+
+/**
+ * Validate whether a given file matches the accept specification.
+ * Supports:
+ * - exact extensions: .png, .jpg, .jpeg, .pdf, .doc, .docx, .webp, .svg
+ * - MIME types: image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, application/pdf
+ * - wildcard MIMEs: image/*
+ */
+const isFileAccepted = (file: File, acceptString: string): boolean => {
+  if (!acceptString || acceptString === '*') return true;
+
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  const ext = '.' + (name.split('.').pop() || '');
+
+  const tokens = acceptString
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  for (const token of tokens) {
+    if (token === '*' || token === '*/*') return true;
+
+    // Extension match
+    if (token.startsWith('.')) {
+      if (ext === token) return true;
+      if (token === '.jpg' && (ext === '.jpeg' || ext === '.jpg')) return true;
+      if (token === '.jpeg' && (ext === '.jpg' || ext === '.jpeg')) return true;
+    }
+    // Wildcard MIME match (e.g. image/*)
+    else if (token.endsWith('/*')) {
+      const mainType = token.split('/')[0];
+      if (type.startsWith(mainType + '/')) return true;
+      if (
+        mainType === 'image' &&
+        ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.bmp'].includes(ext)
+      ) {
+        return true;
+      }
+    }
+    // Exact MIME match
+    else {
+      if (type === token) return true;
+      if (
+        (token === 'image/jpeg' || token === 'image/jpg') &&
+        (type === 'image/jpeg' || type === 'image/jpg' || ext === '.jpg' || ext === '.jpeg')
+      ) {
+        return true;
+      }
+      if (token === 'image/png' && (type === 'image/png' || ext === '.png')) return true;
+      if (token === 'image/webp' && (type === 'image/webp' || ext === '.webp')) return true;
+      if (
+        (token === 'image/svg+xml' || token === 'image/svg') &&
+        (type === 'image/svg+xml' || type === 'image/svg' || ext === '.svg')
+      ) {
+        return true;
+      }
+      if (token === 'application/pdf' && (type === 'application/pdf' || ext === '.pdf')) return true;
+    }
+  }
+
+  return false;
+};
 
 export const FileUploader: React.FC<FileUploaderProps> = ({
   accept = '.pdf',
@@ -19,32 +83,50 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   onFilesSelected,
   title = 'Select PDF files',
   description = 'or drag and drop PDFs here',
+  buttonText,
   className = '',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const getComputedButtonText = () => {
+    if (buttonText) return buttonText;
+    const acc = (accept || '').toLowerCase();
+    if (
+      acc.includes('image') ||
+      acc.includes('.png') ||
+      acc.includes('.jpg') ||
+      acc.includes('.jpeg') ||
+      acc.includes('.webp') ||
+      acc.includes('.svg')
+    ) {
+      return multiple ? 'Choose Image Files' : 'Choose Image File';
+    }
+    if (acc.includes('doc') || acc.includes('word')) {
+      return multiple ? 'Choose Word Files' : 'Choose Word File';
+    }
+    if (acc.includes('pdf')) {
+      return multiple ? 'Choose PDF Files' : 'Select PDF File';
+    }
+    return multiple ? 'Choose Files' : 'Select File';
+  };
+
   const validateAndPassFiles = (fileList: FileList | File[]) => {
     setErrorMsg(null);
     const validFiles: File[] = [];
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-    const acceptedExts = accept
-      .split(',')
-      .map((ext) => ext.trim().toLowerCase().replace('*', ''));
-
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i];
-      const ext = '.' + file.name.split('.').pop()?.toLowerCase();
 
-      // Validate extension
-      if (accept !== '*' && !acceptedExts.some((acc) => acc === ext || acc === file.type)) {
-        setErrorMsg(`Invalid file format: ${file.name}. Expected ${accept}.`);
+      // Validate format against accept rules
+      if (!isFileAccepted(file, accept)) {
+        setErrorMsg(`Invalid file format: ${file.name}. Expected valid ${accept} files.`);
         return;
       }
 
-      // Validate size
+      // Validate file size
       if (file.size > maxSizeBytes) {
         setErrorMsg(`File ${file.name} exceeds the maximum limit of ${maxSizeMB}MB.`);
         return;
@@ -143,7 +225,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           }}
           className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-xl shadow-red-600/25 transition-all"
         >
-          {multiple ? 'Choose PDF Files' : 'Select File'}
+          {getComputedButtonText()}
         </motion.button>
 
         <div className="mt-6 flex items-center justify-center gap-4 text-xs text-slate-500 font-medium">
@@ -168,4 +250,3 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     </div>
   );
 };
-

@@ -163,10 +163,8 @@ export class ImageService {
   ): Promise<ConvertedPdfPageImage[]> {
     if (onProgress) onProgress(5, 'Loading PDF document renderer...');
 
-    const pdfjsLib = await import('pdfjs-dist');
-    if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.10.38'}/pdf.worker.min.mjs`;
-    }
+    const { pdfjsLib, ensurePdfWorkerConfigured } = await import('../utils/pdfWorker');
+    ensurePdfWorkerConfigured();
 
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });

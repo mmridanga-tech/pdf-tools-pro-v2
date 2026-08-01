@@ -288,12 +288,10 @@ export class PDFService {
    * Convert PDF to editable Word document (.docx) by extracting real text
    */
   static async pdfToWord(file: File): Promise<Blob> {
-    const pdfjsLib = await import('pdfjs-dist');
+    const { pdfjsLib, ensurePdfWorkerConfigured } = await import('../utils/pdfWorker');
     const { Document, Paragraph, TextRun, Packer, HeadingLevel } = await import('docx');
 
-    if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.10.38'}/pdf.worker.min.mjs`;
-    }
+    ensurePdfWorkerConfigured();
 
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
