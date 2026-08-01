@@ -15,6 +15,8 @@ import {
   ShieldAlert,
   LogOut,
   ChevronDown,
+  Settings,
+  HelpCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PDF_TOOLS } from '../utils/toolsData';
@@ -207,6 +209,22 @@ export const Navbar: React.FC = () => {
                           className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4 text-slate-400" /> Dashboard & History
+                        </Link>
+
+                        <Link
+                          to="/settings"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors"
+                        >
+                          <Settings className="w-4 h-4 text-slate-400" /> Settings
+                        </Link>
+
+                        <Link
+                          to="/help"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors"
+                        >
+                          <HelpCircle className="w-4 h-4 text-slate-400" /> Help & Support
                         </Link>
 
                         <Link

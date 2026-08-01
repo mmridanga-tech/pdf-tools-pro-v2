@@ -24,6 +24,13 @@ const TeamWorkspace = lazy(() => import('../pages/TeamWorkspace').then((m) => ({
 const AdminPanel = lazy(() => import('../pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
 const Pricing = lazy(() => import('../pages/Pricing').then((m) => ({ default: m.Pricing })));
 const CloudStoragePage = lazy(() => import('../pages/CloudStorage').then((m) => ({ default: m.CloudStoragePage })));
+const Settings = lazy(() => import('../pages/Settings').then((m) => ({ default: m.Settings })));
+const HelpCenter = lazy(() => import('../pages/HelpCenter').then((m) => ({ default: m.HelpCenter })));
+const PrivacyPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.PrivacyPolicy })));
+const TermsOfService = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.TermsOfService })));
+const CookiesPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.CookiesPolicy })));
+const Disclaimer = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.Disclaimer })));
+const AboutUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.AboutUs })));
 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -70,6 +77,13 @@ export const AppRoutes: React.FC = () => {
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/cloud-storage" element={<CloudStoragePage />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/cookies" element={<CookiesPolicy />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
+          <Route path="/about" element={<AboutUs />} />
 
           <Route path="*" element={<Home />} />
         </Routes>
