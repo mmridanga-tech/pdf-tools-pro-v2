@@ -1,7 +1,10 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
+
+import healthHandler from './api/health.ts';
+import chatHandler from './api/gemini/chat.ts';
+import assistantHandler from './api/gemini/assistant.ts';
 
 async function startServer() {
   const app = express();
@@ -9,171 +12,9 @@ async function startServer() {
 
   app.use(express.json({ limit: '25mb' }));
 
-  // Helper for API error handling and status code mapping
-  function handleServerError(res: express.Response, endpoint: string, err: any) {
-    console.error(`Backend Error in ${endpoint}:`, err);
-    const msg = err?.message || String(err) || 'Internal AI Server Error';
-    let statusCode = 500;
-
-    if (msg.includes('missing') || msg.includes('API_KEY') || msg.includes('401') || msg.includes('UNAUTHENTICATED')) {
-      statusCode = 401;
-    } else if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota')) {
-      statusCode = 429;
-    } else if (msg.includes('400') || msg.includes('INVALID_ARGUMENT')) {
-      statusCode = 400;
-    } else if (msg.includes('403') || msg.includes('PERMISSION_DENIED')) {
-      statusCode = 403;
-    } else if (msg.includes('404') || msg.includes('NOT_FOUND')) {
-      statusCode = 404;
-    }
-
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(statusCode).json({
-      success: false,
-      error: msg,
-    });
-  }
-
-  // Helper for Gemini AI client
-  function getGenAI() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is missing.');
-    }
-    return new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        },
-      },
-    });
-  }
-
-  app.get('/api/health', (_req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
-  });
-
-  // AI Document Chat endpoint
-  app.post('/api/gemini/chat', async (req, res) => {
-    try {
-      const { message, pdfContext, history } = req.body;
-      if (!message) {
-        res.setHeader('Content-Type', 'application/json');
-        return res.status(400).json({ success: false, error: 'Message parameter is required.' });
-      }
-
-      const ai = getGenAI();
-
-      const systemInstruction = `You are SmartPDF AI Document Assistant. You analyze the user's PDF document content and answer questions with precision, page references, and citations.
-Document Context provided below:
-${pdfContext ? pdfContext.substring(0, 30000) : 'No document content extracted yet. Answer based on general PDF and document processing expertise.'}
-
-Provide clear, helpful responses with formatting, bullet points, and page citations (e.g. [Page X]) when referencing specific parts of the PDF text.`;
-
-      // Formulate prompt
-      let contentsPrompt = message;
-      if (history && Array.isArray(history) && history.length > 0) {
-        const historyText = history
-          .slice(-6)
-          .map((h: { sender: string; text: string }) => `${h.sender === 'user' ? 'User' : 'Assistant'}: ${h.text}`)
-          .join('\n');
-        contentsPrompt = `Recent Chat History:\n${historyText}\n\nCurrent Question: ${message}`;
-      }
-
-      const aiResponse = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: contentsPrompt,
-        config: {
-          systemInstruction,
-          temperature: 0.3,
-        },
-      });
-
-      const replyText = aiResponse.text || 'I analyzed the document but could not generate a textual reply.';
-      res.setHeader('Content-Type', 'application/json');
-      return res.json({ success: true, data: { reply: replyText } });
-    } catch (err: any) {
-      return handleServerError(res, '/api/gemini/chat', err);
-    }
-  });
-
-  // AI Assistant endpoint (Summarize, Rewrite, Translate, Grammar, Extract Tables, Notes, FAQ, Flashcards)
-  app.post('/api/gemini/assistant', async (req, res) => {
-    try {
-      const { action, textContext, options } = req.body;
-      if (!textContext) {
-        res.setHeader('Content-Type', 'application/json');
-        return res.status(400).json({ success: false, error: 'Text content is required for AI processing.' });
-      }
-
-      const ai = getGenAI();
-
-      let instruction = 'You are an expert AI Document Processing Assistant.';
-      let userPrompt = `Process the following document content:\n\n${textContext.substring(0, 35000)}`;
-
-      switch (action) {
-        case 'summarize':
-          instruction += ' Summarize the document concisely with key takeaways, main findings, and action items.';
-          userPrompt = `Please provide a structured summary of this document:\n\n${textContext.substring(0, 35000)}`;
-          break;
-        case 'rewrite':
-          instruction += ` Rewrite the text in a ${options?.style || 'professional'} tone with enhanced clarity, vocabulary, and flow.`;
-          userPrompt = `Please rewrite the following content:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        case 'translate':
-          instruction += ` Translate the text accurately into ${options?.targetLanguage || 'Spanish'}. Maintain official terminology and layout formatting.`;
-          userPrompt = `Translate this text into ${options?.targetLanguage || 'Spanish'}:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        case 'grammar':
-          instruction += ' Correct all grammar, spelling, punctuation, and structural flaws. Highlight the changes made.';
-          userPrompt = `Fix all grammatical and spelling errors in this document:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        case 'explain':
-          instruction += ' Explain the technical concepts, complex formulas, and domain jargon in plain, clear, accessible language.';
-          userPrompt = `Explain the complex concepts in this text in plain terms:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        case 'extract-tables':
-          instruction += ' Extract all data tables into clean Markdown tables and CSV format.';
-          userPrompt = `Find and extract tabular data from this text into clean Markdown table format:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        case 'key-points':
-          instruction += ' Extract top 10 key bullet points, statistical figures, and core claims.';
-          userPrompt = `Extract the key points and crucial data from this document:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        case 'study-notes':
-          instruction += ' Generate comprehensive study notes, structured headings, executive outlines, and quiz revision summaries.';
-          userPrompt = `Generate detailed study notes from this material:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        case 'faq':
-          instruction += ' Generate a comprehensive FAQ (Frequently Asked Questions) list with accurate answers based on the document.';
-          userPrompt = `Create an FAQ list based on this text:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        case 'flashcards':
-          instruction += ' Generate 8-12 interactive Flashcards (Front: Concept/Question, Back: Answer/Explanation). Format clearly.';
-          userPrompt = `Generate study flashcards from this document:\n\n${textContext.substring(0, 30000)}`;
-          break;
-        default:
-          instruction += ' Provide an executive analysis of the document.';
-      }
-
-      const aiResponse = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: userPrompt,
-        config: {
-          systemInstruction: instruction,
-          temperature: 0.2,
-        },
-      });
-
-      const resultText = aiResponse.text || 'Processing completed with no text output.';
-      res.setHeader('Content-Type', 'application/json');
-      return res.json({ success: true, data: { result: resultText, action } });
-    } catch (err: any) {
-      return handleServerError(res, '/api/gemini/assistant', err);
-    }
-  });
+  app.get('/api/health', healthHandler);
+  app.post('/api/gemini/chat', chatHandler);
+  app.post('/api/gemini/assistant', assistantHandler);
 
   // Vite middleware setup
   if (process.env.NODE_ENV !== 'production') {
@@ -196,3 +37,4 @@ Provide clear, helpful responses with formatting, bullet points, and page citati
 }
 
 startServer();
+
