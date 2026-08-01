@@ -53,7 +53,7 @@ class ErrorReporterService {
     }
 
     if (import.meta.env.DEV) {
-      console.error('🚨 [Captured Error]:', errorObj);
+      console.warn('⚡ [Captured Error]:', errorObj.message, errorObj.source);
     }
   }
 

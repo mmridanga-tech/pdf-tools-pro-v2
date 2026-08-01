@@ -43,12 +43,15 @@ class ClarityService {
       lastClickTime = now;
 
       // Track dead clicks on unclickable elements
-      const target = e.target as HTMLElement;
-      if (
-        target &&
-        !target.closest('button, a, input, select, textarea, [role="button"]')
-      ) {
-        this.trackUserAction('dead_click_potential');
+      const target = e.target as any;
+      if (target) {
+        const closestFn = typeof target.closest === 'function' ? target.closest.bind(target) : (target.parentElement && typeof target.parentElement.closest === 'function' ? target.parentElement.closest.bind(target.parentElement) : null);
+        if (closestFn) {
+          const isInteractive = closestFn('button, a, input, select, textarea, [role="button"]');
+          if (!isInteractive) {
+            this.trackUserAction('dead_click_potential');
+          }
+        }
       }
     });
 
