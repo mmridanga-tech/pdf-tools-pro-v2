@@ -1,13 +1,34 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <meta name="theme-color" content="#0A0A0B" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="description" content="PDF Tools Pro - Free online PDF editor, merger, splitter, compressor, OCR, and PDF protection. 100% client-side privacy without cloud uploads." />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pdf-tools-pro.app/" />
+    <meta property="og:title" content="PDF Tools Pro - Commercial Browser PDF Suite" />
+    <meta property="og:description" content="Merge, split, compress, protect, unlock, and convert PDFs instantly in your browser with complete privacy." />
+    <meta property="og:site_name" content="PDF Tools Pro" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PDF Tools Pro - Commercial Browser PDF Suite" />
+    <meta name="twitter:description" content="Secure client-side PDF utility suite with zero server uploads." />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>" />
+
+    <title>PDF Tools Pro - Secure Browser PDF Suite</title>
   </head>
-  <body>
+  <body class="bg-[#0A0A0B] text-slate-100 antialiased font-sans selection:bg-red-600 selection:text-white min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
 

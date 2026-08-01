@@ -8,6 +8,8 @@ import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import { Minimize2, FileText, Check } from 'lucide-react';
+import { SEO } from '../components/SEO';
+import { saveRecentFile } from '../utils/storageUtils';
 
 export const CompressPDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -39,6 +41,14 @@ export const CompressPDF: React.FC = () => {
       setNewSize(res.newSize);
       setSuccess('PDF compressed successfully!');
       toast.success('Compression completed!');
+
+      saveRecentFile({
+        name: `${selectedFile.name.replace(/\.pdf$/i, '')}_compressed.pdf`,
+        size: res.newSize,
+        toolId: 'compress-pdf',
+        toolName: 'Compress PDF',
+        status: 'completed',
+      });
     } catch (err: any) {
       const msg = err.message || 'Failed to compress PDF.';
       setError(msg);
@@ -59,6 +69,12 @@ export const CompressPDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="Compress PDF"
+        description="Reduce PDF file size online while maintaining document quality with zero server uploads."
+        path="/compress"
+      />
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <ToolHeader
           icon={Minimize2}
@@ -205,3 +221,4 @@ export const CompressPDF: React.FC = () => {
     </motion.div>
   );
 };
+

@@ -9,6 +9,8 @@ import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import { Scissors, FileText } from 'lucide-react';
+import { SEO } from '../components/SEO';
+import { saveRecentFile } from '../utils/storageUtils';
 
 export const SplitPDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -67,6 +69,14 @@ export const SplitPDF: React.FC = () => {
       setResultBlob(splitBlob);
       setSuccess('PDF pages extracted successfully!');
       toast.success('PDF split complete!');
+
+      saveRecentFile({
+        name: `${selectedFile.name.replace(/\.pdf$/i, '')}_split.pdf`,
+        size: splitBlob.size,
+        toolId: 'split-pdf',
+        toolName: 'Split PDF',
+        status: 'completed',
+      });
     } catch (err: any) {
       const msg = err.message || 'Failed to split PDF.';
       setError(msg);
@@ -88,6 +98,12 @@ export const SplitPDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="Split PDF"
+        description="Extract specific pages or custom page ranges from your PDF document easily online."
+        path="/split"
+      />
+
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <ToolHeader
           icon={Scissors}
@@ -201,3 +217,4 @@ export const SplitPDF: React.FC = () => {
     </motion.div>
   );
 };
+

@@ -9,6 +9,8 @@ import { PDFFileItem } from '../types/toolTypes';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import { Layers, ArrowUp, ArrowDown, Trash2, Plus, FileText } from 'lucide-react';
+import { SEO } from '../components/SEO';
+import { saveRecentFile } from '../utils/storageUtils';
 
 export const MergePDF: React.FC = () => {
   const [fileItems, setFileItems] = useState<PDFFileItem[]>([]);
@@ -61,6 +63,14 @@ export const MergePDF: React.FC = () => {
       setResultBlob(merged);
       setSuccess('PDF files merged successfully into one document!');
       toast.success('Merge complete!');
+
+      saveRecentFile({
+        name: 'merged_document.pdf',
+        size: merged.size,
+        toolId: 'merge-pdf',
+        toolName: 'Merge PDF',
+        status: 'completed',
+      });
     } catch (err: any) {
       const msg = err.message || 'Failed to merge PDF files.';
       setError(msg);
@@ -81,6 +91,12 @@ export const MergePDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="Merge PDF"
+        description="Combine multiple PDF documents into one single unified PDF file quickly and securely inside your browser."
+        path="/merge"
+      />
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <ToolHeader
           icon={Layers}
@@ -224,3 +240,4 @@ export const MergePDF: React.FC = () => {
     </motion.div>
   );
 };
+

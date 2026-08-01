@@ -1,0 +1,44 @@
+{
+  "short_name": "PDF Pro",
+  "name": "PDF Tools Pro - Secure Browser PDF Suite",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0A0A0B",
+  "theme_color": "#0A0A0B",
+  "display": "standalone",
+  "orientation": "any",
+  "description": "Commercial browser-based PDF processing suite for merging, splitting, compressing, OCR, and encrypting PDF files securely.",
+  "shortcuts": [
+    {
+      "name": "Merge PDF",
+      "short_name": "Merge",
+      "description": "Combine PDF files",
+      "url": "/merge"
+    },
+    {
+      "name": "Compress PDF",
+      "short_name": "Compress",
+      "description": "Reduce PDF size",
+      "url": "/compress"
+    },
+    {
+      "name": "Protect PDF",
+      "short_name": "Protect",
+      "description": "Encrypt PDF with password",
+      "url": "/protect-pdf"
+    }
+  ]
+}

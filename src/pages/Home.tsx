@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Hero } from '../components/Hero';
 import { CategoryFilter } from '../components/CategoryFilter';
 import { ToolCard } from '../components/ToolCard';
 import { PDF_TOOLS } from '../utils/toolsData';
 import { ToolCategory } from '../types/toolTypes';
-import { ShieldCheck, Zap, Lock, HelpCircle } from 'lucide-react';
+import { ShieldCheck, Zap, Lock, HelpCircle, Star } from 'lucide-react';
+import { SEO } from '../components/SEO';
+import { getFavoriteTools } from '../utils/storageUtils';
 
 export const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ToolCategory>('all');
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setFavoriteIds(getFavoriteTools());
+  }, []);
+
+  const favoriteTools = PDF_TOOLS.filter((t) => favoriteIds.includes(t.id));
 
   // Filter tools based on search query and selected category
   const filteredTools = PDF_TOOLS.filter((tool) => {
@@ -25,11 +34,34 @@ export const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0A0A0B]">
+      <SEO
+        title="PDF Tools Pro - Free Commercial Browser PDF Utility Suite"
+        description="Merge, split, compress, protect, unlock, OCR, and convert PDF documents easily online with zero server uploads."
+        path="/"
+      />
+
       {/* Hero Section */}
       <Hero searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       {/* Main Tools Container */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-12">
+        {/* Favorite Tools Quick Section (if any) */}
+        {favoriteTools.length > 0 && !searchQuery && selectedCategory === 'all' && (
+          <div className="bg-[#121215] border border-amber-500/20 rounded-3xl p-6 shadow-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <Star className="w-5 h-5 text-amber-400 fill-current" />
+              <h2 className="text-sm font-extrabold uppercase tracking-wider text-amber-300">
+                Your Starred Favorite Tools
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {favoriteTools.map((tool) => (
+                <ToolCard key={`fav-${tool.id}`} tool={tool} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Category Filters */}
         <CategoryFilter
           selectedCategory={selectedCategory}
@@ -67,7 +99,7 @@ export const Home: React.FC = () => {
                   setSearchQuery('');
                   setSelectedCategory('all');
                 }}
-                className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+                className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20 cursor-pointer"
               >
                 Reset Search Filters
               </button>
@@ -175,4 +207,5 @@ export const Home: React.FC = () => {
     </div>
   );
 };
+
 
