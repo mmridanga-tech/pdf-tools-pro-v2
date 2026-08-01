@@ -9,6 +9,31 @@ async function startServer() {
 
   app.use(express.json({ limit: '25mb' }));
 
+  // Helper for API error handling and status code mapping
+  function handleServerError(res: express.Response, endpoint: string, err: any) {
+    console.error(`Backend Error in ${endpoint}:`, err);
+    const msg = err?.message || String(err) || 'Internal AI Server Error';
+    let statusCode = 500;
+
+    if (msg.includes('missing') || msg.includes('API_KEY') || msg.includes('401') || msg.includes('UNAUTHENTICATED')) {
+      statusCode = 401;
+    } else if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota')) {
+      statusCode = 429;
+    } else if (msg.includes('400') || msg.includes('INVALID_ARGUMENT')) {
+      statusCode = 400;
+    } else if (msg.includes('403') || msg.includes('PERMISSION_DENIED')) {
+      statusCode = 403;
+    } else if (msg.includes('404') || msg.includes('NOT_FOUND')) {
+      statusCode = 404;
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(statusCode).json({
+      success: false,
+      error: msg,
+    });
+  }
+
   // Helper for Gemini AI client
   function getGenAI() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -25,9 +50,9 @@ async function startServer() {
     });
   }
 
-  // Health check endpoint
   app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
   });
 
   // AI Document Chat endpoint
@@ -35,7 +60,8 @@ async function startServer() {
     try {
       const { message, pdfContext, history } = req.body;
       if (!message) {
-        return res.status(400).json({ error: 'Message parameter is required.' });
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({ success: false, error: 'Message parameter is required.' });
       }
 
       const ai = getGenAI();
@@ -66,10 +92,10 @@ Provide clear, helpful responses with formatting, bullet points, and page citati
       });
 
       const replyText = aiResponse.text || 'I analyzed the document but could not generate a textual reply.';
-      return res.json({ reply: replyText });
+      res.setHeader('Content-Type', 'application/json');
+      return res.json({ success: true, data: { reply: replyText } });
     } catch (err: any) {
-      console.error('Error in /api/gemini/chat:', err);
-      return res.status(500).json({ error: err.message || 'AI Chat processing failed.' });
+      return handleServerError(res, '/api/gemini/chat', err);
     }
   });
 
@@ -78,7 +104,8 @@ Provide clear, helpful responses with formatting, bullet points, and page citati
     try {
       const { action, textContext, options } = req.body;
       if (!textContext) {
-        return res.status(400).json({ error: 'Text content is required for AI processing.' });
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({ success: false, error: 'Text content is required for AI processing.' });
       }
 
       const ai = getGenAI();
@@ -141,10 +168,10 @@ Provide clear, helpful responses with formatting, bullet points, and page citati
       });
 
       const resultText = aiResponse.text || 'Processing completed with no text output.';
-      return res.json({ result: resultText, action });
+      res.setHeader('Content-Type', 'application/json');
+      return res.json({ success: true, data: { result: resultText, action } });
     } catch (err: any) {
-      console.error('Error in /api/gemini/assistant:', err);
-      return res.status(500).json({ error: err.message || 'AI Assistant task failed.' });
+      return handleServerError(res, '/api/gemini/assistant', err);
     }
   });
 

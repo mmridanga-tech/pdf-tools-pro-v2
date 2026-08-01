@@ -4,6 +4,7 @@ import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
 import { useToast } from '../context/ToastContext';
 import { saveRecentFile, addActivityLog } from '../utils/storageUtils';
+import { postApiJson } from '../utils/apiClient';
 import { pdfjsLib, ensurePdfWorkerConfigured } from '../utils/pdfWorker';
 import {
   Sparkles,
@@ -172,23 +173,14 @@ export const AiAssistant: React.FC = () => {
     setOutputResult('');
 
     try {
-      const res = await fetch('/api/gemini/assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: activeAction,
-          textContext: pdfTextContent,
-          options: {
-            targetLanguage,
-            style: rewriteStyle,
-          },
-        }),
+      const data = await postApiJson<{ result: string; action: string }>('/api/gemini/assistant', {
+        action: activeAction,
+        textContext: pdfTextContent,
+        options: {
+          targetLanguage,
+          style: rewriteStyle,
+        },
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'AI processing failed.');
-      }
 
       setOutputResult(data.result);
       toast.success('AI task completed successfully!');

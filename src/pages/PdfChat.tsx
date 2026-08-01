@@ -4,6 +4,7 @@ import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
 import { useToast } from '../context/ToastContext';
 import { saveRecentFile, addActivityLog } from '../utils/storageUtils';
+import { postApiJson } from '../utils/apiClient';
 import { pdfjsLib, ensurePdfWorkerConfigured } from '../utils/pdfWorker';
 import {
   MessageSquare,
@@ -119,21 +120,11 @@ export const PdfChat: React.FC = () => {
     }, 100);
 
     try {
-      const response = await fetch('/api/gemini/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: query,
-          pdfContext: pdfTextContext,
-          history: messages,
-        }),
+      const data = await postApiJson<{ reply: string }>('/api/gemini/chat', {
+        message: query,
+        pdfContext: pdfTextContext,
+        history: messages,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate response.');
-      }
 
       const assistantMsg: ChatMessage = {
         id: Math.random().toString(36).substring(2, 9),
