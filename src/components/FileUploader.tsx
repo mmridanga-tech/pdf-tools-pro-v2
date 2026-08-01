@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Upload, AlertCircle, FilePlus, ShieldCheck } from 'lucide-react';
+import { Upload, AlertCircle, FilePlus, ShieldCheck, Cloud } from 'lucide-react';
 import { motion } from 'motion/react';
+import { CloudDrivePickerModal } from './CloudDrivePickerModal';
 
 interface FileUploaderProps {
   accept?: string;
@@ -88,6 +89,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isCloudPickerOpen, setIsCloudPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getComputedButtonText = () => {
@@ -215,18 +217,45 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         <h3 className="text-xl sm:text-2xl font-extrabold text-white mb-2 tracking-tight">{title}</h3>
         <p className="text-sm text-slate-400 mb-8 max-w-sm font-normal">{description}</p>
 
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            fileInputRef.current?.click();
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+            className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-xl shadow-red-600/25 transition-all cursor-pointer"
+          >
+            {getComputedButtonText()}
+          </motion.button>
+
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCloudPickerOpen(true);
+            }}
+            className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-bold text-sm shadow-lg transition-all cursor-pointer gap-2"
+          >
+            <Cloud className="w-4 h-4 text-red-400" />
+            <span>Import from Cloud Drive</span>
+          </motion.button>
+        </div>
+
+        <CloudDrivePickerModal
+          isOpen={isCloudPickerOpen}
+          onClose={() => setIsCloudPickerOpen(false)}
+          mode="import"
+          onFilesImported={(files) => {
+            if (files.length > 0) {
+              validateAndPassFiles(files);
+            }
           }}
-          className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-xl shadow-red-600/25 transition-all"
-        >
-          {getComputedButtonText()}
-        </motion.button>
+        />
 
         <div className="mt-6 flex items-center justify-center gap-4 text-xs text-slate-500 font-medium">
           <span>Max file size: {maxSizeMB}MB</span>
