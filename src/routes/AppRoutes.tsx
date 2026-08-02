@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 const Home = lazy(() => import('../pages/Home').then((m) => ({ default: m.Home })));
 const MergePDF = lazy(() => import('../pages/MergePDF').then((m) => ({ default: m.MergePDF })));
 const SplitPDF = lazy(() => import('../pages/SplitPDF').then((m) => ({ default: m.SplitPDF })));
+const DeletePDFPages = lazy(() => import('../pages/DeletePDFPages').then((m) => ({ default: m.DeletePDFPages })));
 const CompressPDF = lazy(() => import('../pages/CompressPDF').then((m) => ({ default: m.CompressPDF })));
 const PDFToWord = lazy(() => import('../pages/PDFToWord').then((m) => ({ default: m.PDFToWord })));
 const WordToPDF = lazy(() => import('../pages/WordToPDF').then((m) => ({ default: m.WordToPDF })));
@@ -65,6 +66,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/merge" element={<MergePDF />} />
           <Route path="/split" element={<SplitPDF />} />
+          <Route path="/delete-pages" element={<DeletePDFPages />} />
           <Route path="/compress" element={<CompressPDF />} />
           <Route path="/pdf-to-word" element={<PDFToWord />} />
           <Route path="/word-to-pdf" element={<WordToPDF />} />

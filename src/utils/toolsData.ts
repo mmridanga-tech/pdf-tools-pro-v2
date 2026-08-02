@@ -24,6 +24,17 @@ export const PDF_TOOLS: PDFTool[] = [
     color: 'from-amber-500 to-orange-600',
   },
   {
+    id: 'delete-pages',
+    name: 'Delete PDF Pages',
+    description: 'Remove unwanted pages from your PDF file while preserving quality and metadata.',
+    icon: 'Trash2',
+    category: 'organize',
+    path: '/delete-pages',
+    popular: true,
+    badge: 'Essentials',
+    color: 'from-rose-600 to-red-700',
+  },
+  {
     id: 'compress-pdf',
     name: 'Compress PDF',
     description: 'Reduce file size of your PDF while maintaining optimal quality.',

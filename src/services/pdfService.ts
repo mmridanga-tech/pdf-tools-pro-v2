@@ -553,4 +553,44 @@ export class PDFService {
       return false;
     }
   }
+
+  /**
+   * Delete specific pages from a PDF file
+   */
+  static async deletePages(
+    file: File,
+    pageIndicesToDelete: number[],
+    onProgress?: (percent: number, statusMsg?: string) => void
+  ): Promise<Blob> {
+    if (onProgress) onProgress(10, 'Loading PDF document...');
+    const { PDFDocument } = await import('pdf-lib');
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+    const totalPages = pdfDoc.getPageCount();
+
+    if (pageIndicesToDelete.length === 0) {
+      throw new Error('No pages selected for deletion.');
+    }
+
+    if (pageIndicesToDelete.length >= totalPages) {
+      throw new Error('Cannot delete all pages from a PDF. At least one page must remain in the document.');
+    }
+
+    if (onProgress) onProgress(40, `Removing ${pageIndicesToDelete.length} selected pages...`);
+
+    // Sort indices in descending order so deleting higher indices does not alter lower indices
+    const sortedIndices = [...new Set(pageIndicesToDelete)]
+      .filter((idx) => idx >= 0 && idx < totalPages)
+      .sort((a, b) => b - a);
+
+    for (const pageIdx of sortedIndices) {
+      pdfDoc.removePage(pageIdx);
+    }
+
+    if (onProgress) onProgress(80, 'Optimizing PDF document streams...');
+    const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+
+    if (onProgress) onProgress(100, 'Page deletion complete!');
+    return new Blob([pdfBytes], { type: 'application/pdf' });
+  }
 }
