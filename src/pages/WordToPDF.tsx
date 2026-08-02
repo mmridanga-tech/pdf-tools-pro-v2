@@ -13,7 +13,7 @@ export const WordToPDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
-  const { state, startProcessing, setSuccess, setError, reset } = usePDFProcessor();
+  const { state, startProcessing, updateProgress, setSuccess, setError, reset } = usePDFProcessor();
   const toast = useToast();
 
   const handleFileSelected = (files: File[]) => {
@@ -28,7 +28,9 @@ export const WordToPDF: React.FC = () => {
 
     try {
       startProcessing('Reading Word document and rendering PDF pages...');
-      const pdfBlob = await PDFService.wordToPDF(selectedFile);
+      const pdfBlob = await PDFService.wordToPDF(selectedFile, (percent, statusMsg) => {
+        updateProgress(percent, statusMsg);
+      });
       setResultBlob(pdfBlob);
       setSuccess('Word document converted to PDF successfully!');
       toast.success('Conversion to PDF complete!');

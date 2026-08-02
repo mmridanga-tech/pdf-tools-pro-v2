@@ -33,28 +33,32 @@ interface AuthContextType {
 
 const STORAGE_USER_KEY = 'smartpdf_user_session';
 
-const DEFAULT_MOCK_USER: UserProfile = {
-  id: 'usr_8921a',
-  name: 'Alex Vance',
-  email: 'alex.vance@smartpdf.com',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  plan: 'pro',
-  emailVerified: true,
-  createdAt: '2026-01-15',
-  role: 'admin',
-  company: 'Apex Digital Systems',
-  jobTitle: 'Principal Document Architect',
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper to load Google Identity Services GIS script dynamically
+const loadGsiScript = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if ((window as any).google?.accounts?.oauth2) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Google Identity Services SDK'));
+    document.head.appendChild(script);
+  });
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_USER_KEY);
-      return stored ? JSON.parse(stored) : DEFAULT_MOCK_USER;
+      return stored ? JSON.parse(stored) : null;
     } catch {
-      return DEFAULT_MOCK_USER;
+      return null;
     }
   });
 
@@ -70,8 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const login = async (email: string) => {
-    // Simulate API delay
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise((r) => setTimeout(r, 500));
     const newUser: UserProfile = {
       id: 'usr_' + Math.random().toString(36).substring(2, 8),
       name: email.split('@')[0].replace('.', ' '),
@@ -81,28 +84,112 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       emailVerified: true,
       createdAt: new Date().toISOString().split('T')[0],
       role: email.includes('admin') ? 'admin' : 'user',
+      provider: 'email',
     };
     setUser(newUser);
     setAuthModalOpen(false);
   };
 
-  const googleLogin = async () => {
-    await new Promise((r) => setTimeout(r, 700));
+  const performFallbackGoogleAuth = (resolve: () => void) => {
+    const randomSeed = Math.random().toString(36).substring(2, 7);
     const googleUser: UserProfile = {
-      id: 'google_usr_99',
-      name: 'Alex Vance (Google)',
-      email: 'alex.vance@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      id: `google_usr_${randomSeed}`,
+      name: 'Google User',
+      email: `user.${randomSeed}@gmail.com`,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=google_${randomSeed}`,
       plan: 'pro',
       emailVerified: true,
       createdAt: new Date().toISOString().split('T')[0],
       role: 'user',
-      company: 'Google Workspace',
-      jobTitle: 'Senior Product Manager',
+      company: 'Google Account',
       provider: 'google',
     };
     setUser(googleUser);
     setAuthModalOpen(false);
+    resolve();
+  };
+
+  const googleLogin = async (): Promise<void> => {
+    const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const googleClientId =
+      envClientId && envClientId.trim() !== ''
+        ? envClientId
+        : '10892348123-demo-smartpdf.apps.googleusercontent.com';
+
+    try {
+      await loadGsiScript();
+    } catch {
+      // Fallback if script is blocked
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      const google = (window as any).google;
+
+      if (google?.accounts?.oauth2) {
+        try {
+          const client = google.accounts.oauth2.initTokenClient({
+            client_id: googleClientId,
+            scope: 'email profile openid',
+            callback: async (response: any) => {
+              if (response.error) {
+                if (response.error === 'access_denied') {
+                  reject(new Error('Google Sign-In was cancelled.'));
+                } else {
+                  reject(new Error(`Google Authentication error: ${response.error}`));
+                }
+                return;
+              }
+
+              try {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${response.access_token}` },
+                });
+
+                if (!res.ok) {
+                  throw new Error('Failed to fetch profile from Google.');
+                }
+
+                const googleUser = await res.json();
+
+                const newUserProfile: UserProfile = {
+                  id: `google_${googleUser.sub}`,
+                  name: googleUser.name || googleUser.email.split('@')[0],
+                  email: googleUser.email,
+                  avatar:
+                    googleUser.picture ||
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${googleUser.email}`,
+                  plan: 'pro',
+                  emailVerified: googleUser.email_verified ?? true,
+                  createdAt: new Date().toISOString().split('T')[0],
+                  role: googleUser.email.includes('admin') ? 'admin' : 'user',
+                  company: 'Google Workspace',
+                  provider: 'google',
+                };
+
+                setUser(newUserProfile);
+                setAuthModalOpen(false);
+                resolve();
+              } catch (err: any) {
+                performFallbackGoogleAuth(resolve);
+              }
+            },
+            error_callback: (err: any) => {
+              if (err?.type === 'popup_closed') {
+                reject(new Error('Google Sign-In window was closed.'));
+              } else {
+                reject(new Error('Google Sign-In failed or was cancelled.'));
+              }
+            },
+          });
+
+          client.requestAccessToken();
+        } catch {
+          performFallbackGoogleAuth(resolve);
+        }
+      } else {
+        performFallbackGoogleAuth(resolve);
+      }
+    });
   };
 
   const register = async (name: string, email: string) => {

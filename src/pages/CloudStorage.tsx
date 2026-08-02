@@ -96,7 +96,7 @@ export const CloudStoragePage: React.FC = () => {
     const newConnected = !acc.connected;
     const updated = updateCloudAccount(id, {
       connected: newConnected,
-      email: newConnected ? `alex.vance@${id === 'gdrive' ? 'gmail.com' : id === 'onedrive' ? 'outlook.com' : 'dropbox.com'}` : undefined,
+      email: newConnected ? `user@${id === 'gdrive' ? 'gmail.com' : id === 'onedrive' ? 'outlook.com' : 'dropbox.com'}` : undefined,
     });
     setAccounts(updated);
     if (newConnected) {
@@ -373,7 +373,7 @@ export const CloudStoragePage: React.FC = () => {
                         </div>
                         <div className="flex items-center justify-between pt-1">
                           <span className="text-[10px] text-slate-500 truncate">
-                            Account: {acc.email || 'alex.vance@smartpdf.com'}
+                            Account: {acc.email || 'user@smartpdf.com'}
                           </span>
                           <label className="flex items-center gap-1.5 text-[10px] font-bold text-slate-300 cursor-pointer">
                             <input

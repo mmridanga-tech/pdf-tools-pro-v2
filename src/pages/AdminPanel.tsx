@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { SEO } from '../components/SEO';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import {
   AreaChart,
   Area,
@@ -40,6 +41,7 @@ const USER_ANALYTICS_DATA = [
 
 export const AdminPanel: React.FC = () => {
   const toast = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'logs' | 'support' | 'health'>('overview');
 
   const [supportTickets, setSupportTickets] = useState([
@@ -263,7 +265,7 @@ export const AdminPanel: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
                   {[
-                    { name: 'Alex Vance', email: 'alex@smartpdf.com', plan: 'Enterprise', ops: '4,210', status: 'Active' },
+                    { name: user?.name || 'Administrator', email: user?.email || 'admin@smartpdf.com', plan: 'Enterprise', ops: '4,210', status: 'Active' },
                     { name: 'Sarah Chen', email: 'sarah@apex.io', plan: 'Pro', ops: '1,890', status: 'Active' },
                     { name: 'Michael Ross', email: 'm.ross@lawfirm.com', plan: 'Pro', ops: '980', status: 'Active' },
                     { name: 'Emma Watson', email: 'emma@university.edu', plan: 'Free', ops: '120', status: 'Active' },

@@ -1,11 +1,15 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { ProtectedRoute } from './ProtectedRoute';
 
 const Home = lazy(() => import('../pages/Home').then((m) => ({ default: m.Home })));
 const MergePDF = lazy(() => import('../pages/MergePDF').then((m) => ({ default: m.MergePDF })));
 const SplitPDF = lazy(() => import('../pages/SplitPDF').then((m) => ({ default: m.SplitPDF })));
 const DeletePDFPages = lazy(() => import('../pages/DeletePDFPages').then((m) => ({ default: m.DeletePDFPages })));
+const ExtractPDFPages = lazy(() => import('../pages/ExtractPDFPages').then((m) => ({ default: m.ExtractPDFPages })));
+const RearrangePDFPages = lazy(() => import('../pages/RearrangePDFPages').then((m) => ({ default: m.RearrangePDFPages })));
+const DuplicatePDFPages = lazy(() => import('../pages/DuplicatePDFPages').then((m) => ({ default: m.DuplicatePDFPages })));
 const CompressPDF = lazy(() => import('../pages/CompressPDF').then((m) => ({ default: m.CompressPDF })));
 const PDFToWord = lazy(() => import('../pages/PDFToWord').then((m) => ({ default: m.PDFToWord })));
 const WordToPDF = lazy(() => import('../pages/WordToPDF').then((m) => ({ default: m.WordToPDF })));
@@ -67,6 +71,9 @@ export const AppRoutes: React.FC = () => {
           <Route path="/merge" element={<MergePDF />} />
           <Route path="/split" element={<SplitPDF />} />
           <Route path="/delete-pages" element={<DeletePDFPages />} />
+          <Route path="/extract-pages" element={<ExtractPDFPages />} />
+          <Route path="/rearrange-pages" element={<RearrangePDFPages />} />
+          <Route path="/duplicate-pages" element={<DuplicatePDFPages />} />
           <Route path="/compress" element={<CompressPDF />} />
           <Route path="/pdf-to-word" element={<PDFToWord />} />
           <Route path="/word-to-pdf" element={<WordToPDF />} />
@@ -85,15 +92,50 @@ export const AppRoutes: React.FC = () => {
           <Route path="/resize-image" element={<ResizeImage />} />
 
           {/* New Platform Modules */}
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/ai-chat" element={<PdfChat />} />
           <Route path="/ai-assistant" element={<AiAssistant />} />
           <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
-          <Route path="/team" element={<TeamWorkspace />} />
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route
+            path="/team"
+            element={
+              <ProtectedRoute>
+                <TeamWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/cloud-storage" element={<CloudStoragePage />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route
+            path="/cloud-storage"
+            element={
+              <ProtectedRoute>
+                <CloudStoragePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />

@@ -55,7 +55,7 @@ const DEFAULT_ACCOUNTS: Record<CloudProviderId, CloudAccountInfo> = {
     provider: 'gdrive',
     name: 'Google Drive',
     connected: true,
-    email: 'alex.vance@gmail.com',
+    email: 'user@gmail.com',
     usedBytes: 15248234291, // ~14.2 GB
     totalBytes: 16106127360, // 15 GB
     autoSaveEnabled: true,
@@ -65,7 +65,7 @@ const DEFAULT_ACCOUNTS: Record<CloudProviderId, CloudAccountInfo> = {
     provider: 'onedrive',
     name: 'Microsoft OneDrive',
     connected: true,
-    email: 'alex.vance@outlook.com',
+    email: 'user@outlook.com',
     usedBytes: 5368709120, // 5 GB
     totalBytes: 107374182400, // 100 GB
     autoSaveEnabled: true,

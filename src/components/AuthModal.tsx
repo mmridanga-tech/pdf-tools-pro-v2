@@ -35,7 +35,7 @@ export const AuthModal: React.FC = () => {
     setLoading(true);
     try {
       if (mode === 'login') {
-        await login(email || 'alex.vance@smartpdf.com', password);
+        await login(email, password);
         toast.success('Welcome back to SmartPDF!');
       } else if (mode === 'register') {
         if (!name) {
@@ -43,7 +43,7 @@ export const AuthModal: React.FC = () => {
           setLoading(false);
           return;
         }
-        await register(name, email || 'newuser@smartpdf.com', password);
+        await register(name, email, password);
         toast.success('Account created! Verification link sent to your email.');
       } else if (mode === 'forgot') {
         await sendPasswordReset(email);
@@ -62,8 +62,8 @@ export const AuthModal: React.FC = () => {
     try {
       await googleLogin();
       toast.success('Signed in with Google successfully!');
-    } catch {
-      toast.error('Google login failed.');
+    } catch (err: any) {
+      toast.error(err.message || 'Google login failed.');
     } finally {
       setLoading(false);
     }
@@ -168,7 +168,7 @@ export const AuthModal: React.FC = () => {
                     <input
                       type="text"
                       required
-                      placeholder="Alex Vance"
+                      placeholder="Jane Doe"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 bg-[#1a1a20] border border-slate-800 rounded-2xl text-white text-sm focus:outline-none focus:border-red-500 transition-colors"

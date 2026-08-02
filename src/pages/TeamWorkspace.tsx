@@ -53,10 +53,10 @@ export const TeamWorkspace: React.FC = () => {
   const [members, setMembers] = useState<TeamMember[]>([
     {
       id: 'm1',
-      name: user?.name || 'Alex Vance',
-      email: user?.email || 'alex.vance@smartpdf.com',
+      name: user?.name || 'Workspace Owner',
+      email: user?.email || 'owner@smartpdf.com',
       role: 'Owner',
-      avatar: user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      avatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=owner',
       status: 'Active',
       joinedAt: '2026-01-10',
     },
@@ -102,7 +102,7 @@ export const TeamWorkspace: React.FC = () => {
       id: 'sf2',
       name: 'Master_Service_Agreement_v4.pdf',
       size: '3.8 MB',
-      sharedBy: 'Alex Vance',
+      sharedBy: user?.name || 'Workspace Owner',
       permission: 'Admin',
       updatedAt: 'Yesterday',
     },
@@ -324,7 +324,7 @@ export const TeamWorkspace: React.FC = () => {
             <div className="space-y-3">
               {[
                 { user: 'Sarah Chen', action: 'Merged 4 PDF pages into Q3_Financial_Audit.pdf', time: '10 mins ago' },
-                { user: 'Alex Vance', action: 'Added password protection to Master_Service_Agreement.pdf', time: '1 hour ago' },
+                { user: user?.name || 'Workspace Owner', action: 'Added password protection to Master_Service_Agreement.pdf', time: '1 hour ago' },
                 { user: 'Michael Ross', action: 'Ran AI Summarizer on Technical_Specs.pdf', time: '3 hours ago' },
                 { user: 'Elena Rostova', action: 'Joined workspace via email invite', time: 'Yesterday' },
               ].map((log, i) => (
