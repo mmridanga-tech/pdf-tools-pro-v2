@@ -1,4 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  firebaseSignOut,
+  onAuthStateChanged,
+  FirebaseUser,
+} from '../lib/firebase';
 
 export interface UserProfile {
   id: string;
@@ -20,7 +28,7 @@ interface AuthContextType {
   login: (email: string, password?: string) => Promise<void>;
   googleLogin: () => Promise<void>;
   register: (name: string, email: string, password?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void> | void;
   updateProfile: (data: Partial<UserProfile>) => void;
   sendPasswordReset: (email: string) => Promise<void>;
   sendEmailVerification: () => Promise<void>;
@@ -35,23 +43,6 @@ const STORAGE_USER_KEY = 'smartpdf_user_session';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper to load Google Identity Services GIS script dynamically
-const loadGsiScript = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    if ((window as any).google?.accounts?.oauth2) {
-      resolve();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load Google Identity Services SDK'));
-    document.head.appendChild(script);
-  });
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
@@ -64,6 +55,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot'>('login');
+
+  // Sync Firebase Auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
+      if (fbUser) {
+        const newUserProfile: UserProfile = {
+          id: `google_${fbUser.uid}`,
+          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Google User',
+          email: fbUser.email || '',
+          avatar:
+            fbUser.photoURL ||
+            `https://api.dicebear.com/7.x/avataaars/svg?seed=${fbUser.email || fbUser.uid}`,
+          plan: 'pro',
+          emailVerified: fbUser.emailVerified ?? true,
+          createdAt: new Date().toISOString().split('T')[0],
+          role: fbUser.email && fbUser.email.includes('admin') ? 'admin' : 'user',
+          company: 'Google Account',
+          provider: 'google',
+        };
+        setUser(newUserProfile);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -90,106 +106,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthModalOpen(false);
   };
 
-  const performFallbackGoogleAuth = (resolve: () => void) => {
-    const randomSeed = Math.random().toString(36).substring(2, 7);
-    const googleUser: UserProfile = {
-      id: `google_usr_${randomSeed}`,
-      name: 'Google User',
-      email: `user.${randomSeed}@gmail.com`,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=google_${randomSeed}`,
-      plan: 'pro',
-      emailVerified: true,
-      createdAt: new Date().toISOString().split('T')[0],
-      role: 'user',
-      company: 'Google Account',
-      provider: 'google',
-    };
-    setUser(googleUser);
-    setAuthModalOpen(false);
-    resolve();
-  };
-
   const googleLogin = async (): Promise<void> => {
-    const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const googleClientId =
-      envClientId && envClientId.trim() !== ''
-        ? envClientId
-        : '10892348123-demo-smartpdf.apps.googleusercontent.com';
-
     try {
-      await loadGsiScript();
-    } catch {
-      // Fallback if script is blocked
-    }
-
-    return new Promise<void>((resolve, reject) => {
-      const google = (window as any).google;
-
-      if (google?.accounts?.oauth2) {
-        try {
-          const client = google.accounts.oauth2.initTokenClient({
-            client_id: googleClientId,
-            scope: 'email profile openid',
-            callback: async (response: any) => {
-              if (response.error) {
-                if (response.error === 'access_denied') {
-                  reject(new Error('Google Sign-In was cancelled.'));
-                } else {
-                  reject(new Error(`Google Authentication error: ${response.error}`));
-                }
-                return;
-              }
-
-              try {
-                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                  headers: { Authorization: `Bearer ${response.access_token}` },
-                });
-
-                if (!res.ok) {
-                  throw new Error('Failed to fetch profile from Google.');
-                }
-
-                const googleUser = await res.json();
-
-                const newUserProfile: UserProfile = {
-                  id: `google_${googleUser.sub}`,
-                  name: googleUser.name || googleUser.email.split('@')[0],
-                  email: googleUser.email,
-                  avatar:
-                    googleUser.picture ||
-                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${googleUser.email}`,
-                  plan: 'pro',
-                  emailVerified: googleUser.email_verified ?? true,
-                  createdAt: new Date().toISOString().split('T')[0],
-                  role: googleUser.email.includes('admin') ? 'admin' : 'user',
-                  company: 'Google Workspace',
-                  provider: 'google',
-                };
-
-                setUser(newUserProfile);
-                setAuthModalOpen(false);
-                resolve();
-              } catch (err: any) {
-                performFallbackGoogleAuth(resolve);
-              }
-            },
-            error_callback: (err: any) => {
-              if (err?.type === 'popup_closed') {
-                reject(new Error('Google Sign-In window was closed.'));
-              } else {
-                reject(new Error('Google Sign-In failed or was cancelled.'));
-              }
-            },
-          });
-
-          client.requestAccessToken();
-        } catch {
-          performFallbackGoogleAuth(resolve);
-        }
-      } else {
-        performFallbackGoogleAuth(resolve);
+      const result = await signInWithPopup(auth, googleProvider);
+      const fbUser = result.user;
+      const newUserProfile: UserProfile = {
+        id: `google_${fbUser.uid}`,
+        name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Google User',
+        email: fbUser.email || '',
+        avatar:
+          fbUser.photoURL ||
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${fbUser.email || fbUser.uid}`,
+        plan: 'pro',
+        emailVerified: fbUser.emailVerified ?? true,
+        createdAt: new Date().toISOString().split('T')[0],
+        role: fbUser.email && fbUser.email.includes('admin') ? 'admin' : 'user',
+        company: 'Google Account',
+        provider: 'google',
+      };
+      setUser(newUserProfile);
+      setAuthModalOpen(false);
+    } catch (err: any) {
+      if (err?.code === 'auth/popup-closed-by-user') {
+        throw new Error('Google Sign-In popup was closed before completing sign in.');
+      } else if (err?.code === 'auth/cancelled-popup-request') {
+        throw new Error('Google Sign-In popup request was cancelled.');
+      } else if (err?.code === 'auth/popup-blocked') {
+        throw new Error('Google Sign-In popup was blocked by browser. Please allow popups.');
       }
-    });
+      throw new Error(err?.message || 'Google Sign-In with Firebase failed.');
+    }
   };
 
   const register = async (name: string, email: string) => {
@@ -208,7 +154,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthModalOpen(false);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch {
+      // Ignore signout errors
+    }
     setUser(null);
   };
 
