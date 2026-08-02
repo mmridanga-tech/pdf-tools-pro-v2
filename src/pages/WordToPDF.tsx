@@ -1,141 +1,498 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import JSZip from 'jszip';
 import { FileUploader } from '../components/FileUploader';
-import { ProcessingModal } from '../components/ProcessingModal';
 import { ToolHeader } from '../components/ToolHeader';
-import { usePDFProcessor } from '../hooks/usePDFProcessor';
-import { PDFService } from '../services/pdfService';
+import {
+  WordConverterService,
+  FileQueueItem,
+  ConversionEngineMode,
+} from '../services/wordConverterService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
-import { FileType, ArrowRight } from 'lucide-react';
+import {
+  FileType,
+  FilePlus,
+  Trash2,
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  Settings2,
+  Cpu,
+  Server,
+  Sparkles,
+  ArrowRight,
+  Archive,
+} from 'lucide-react';
 
 export const WordToPDF: React.FC = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
-
-  const { state, startProcessing, updateProgress, setSuccess, setError, reset } = usePDFProcessor();
+  const [queue, setQueue] = useState<FileQueueItem[]>([]);
+  const [engineMode, setEngineMode] = useState<ConversionEngineMode>('auto');
+  const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const toast = useToast();
 
-  const handleFileSelected = (files: File[]) => {
+  const acceptString =
+    '.docx,.doc,.odt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text';
+
+  const handleFilesSelected = (files: File[]) => {
     if (files.length === 0) return;
-    const file = files[0];
-    setSelectedFile(file);
-    toast.info(`Selected ${file.name}`);
+
+    const newItems: FileQueueItem[] = files.map((file) => ({
+      id: `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      file,
+      name: file.name,
+      size: file.size,
+      format: WordConverterService.getFileFormat(file.name),
+      status: 'pending',
+      progress: 0,
+      statusMsg: 'Ready for conversion',
+    }));
+
+    setQueue((prev) => [...prev, ...newItems]);
+    toast.info(`Added ${files.length} document${files.length > 1 ? 's' : ''} to queue.`);
   };
 
-  const handleConvert = async () => {
-    if (!selectedFile) return;
+  const handleRemoveItem = (id: string) => {
+    setQueue((prev) => prev.filter((item) => item.id !== id));
+    toast.info('Item removed from queue.');
+  };
+
+  const handleClearQueue = () => {
+    setQueue([]);
+    toast.info('Cleared queue.');
+  };
+
+  const convertSingleItem = async (id: string) => {
+    const targetItem = queue.find((item) => item.id === id);
+    if (!targetItem || targetItem.status === 'converting') return;
+
+    const startTime = Date.now();
+    setQueue((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, status: 'converting', progress: 5, statusMsg: 'Starting conversion...' }
+          : item
+      )
+    );
 
     try {
-      startProcessing('Reading Word document and rendering PDF pages...');
-      const pdfBlob = await PDFService.wordToPDF(selectedFile, (percent, statusMsg) => {
-        updateProgress(percent, statusMsg);
+      const pdfBlob = await WordConverterService.convertToPDF(targetItem.file, {
+        engine: engineMode,
+        onProgress: (percent, statusMsg) => {
+          setQueue((prev) =>
+            prev.map((item) =>
+              item.id === id ? { ...item, progress: percent, statusMsg } : item
+            )
+          );
+        },
       });
-      setResultBlob(pdfBlob);
-      setSuccess('Word document converted to PDF successfully!');
-      toast.success('Conversion to PDF complete!');
+
+      const conversionTimeMs = Date.now() - startTime;
+      setQueue((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                status: 'completed',
+                progress: 100,
+                statusMsg: 'Conversion successful!',
+                pdfBlob,
+                conversionTimeMs,
+              }
+            : item
+        )
+      );
+      toast.success(`Converted ${targetItem.name} to PDF!`);
     } catch (err: any) {
-      const msg = err.message || 'Failed to convert Word file to PDF.';
-      setError(msg);
-      toast.error(msg);
+      const errorMsg = err?.message || 'Conversion failed.';
+      setQueue((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? { ...item, status: 'error', progress: 0, error: errorMsg, statusMsg: errorMsg }
+            : item
+        )
+      );
+      toast.error(`Failed to convert ${targetItem.name}: ${errorMsg}`);
     }
   };
 
-  const handleReset = () => {
-    setSelectedFile(null);
-    setResultBlob(null);
-    reset();
+  const convertAllQueue = async () => {
+    const pendingItems = queue.filter((item) => item.status === 'pending' || item.status === 'error');
+    if (pendingItems.length === 0) {
+      toast.info('No pending files to convert.');
+      return;
+    }
+
+    setIsProcessingBatch(true);
+    let successCount = 0;
+
+    for (const item of pendingItems) {
+      await convertSingleItem(item.id);
+      successCount++;
+    }
+
+    setIsProcessingBatch(false);
+    toast.success(`Batch conversion completed for ${successCount} file(s).`);
   };
+
+  const downloadPDF = (item: FileQueueItem) => {
+    if (!item.pdfBlob) return;
+    const url = URL.createObjectURL(item.pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    const pdfName = item.name.replace(/\.(docx|doc|odt)$/i, '') + '.pdf';
+    link.download = pdfName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${pdfName}`);
+  };
+
+  const downloadAllZip = async () => {
+    const completedItems = queue.filter((item) => item.status === 'completed' && item.pdfBlob);
+    if (completedItems.length === 0) {
+      toast.error('No converted PDFs available to download.');
+      return;
+    }
+
+    try {
+      toast.info('Creating ZIP package...');
+      const zip = new JSZip();
+
+      completedItems.forEach((item) => {
+        const pdfName = item.name.replace(/\.(docx|doc|odt)$/i, '') + '.pdf';
+        zip.file(pdfName, item.pdfBlob!);
+      });
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `SmartPDF_Word_Conversions_${Date.now()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Downloaded ZIP archive with all PDFs!');
+    } catch (err: any) {
+      toast.error(`Failed to create ZIP package: ${err?.message}`);
+    }
+  };
+
+  const completedCount = queue.filter((item) => item.status === 'completed').length;
+  const pendingCount = queue.filter((item) => item.status === 'pending').length;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-[#0A0A0B] py-14"
+      className="min-h-screen bg-[#0A0A0B] py-12"
     >
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <ToolHeader
           icon={FileType}
-          title="Word to PDF Converter"
-          description="Convert Microsoft Word DOC and DOCX files into high-quality PDF documents."
-          badge="Conversion"
+          title="Production Word & ODT to PDF Converter"
+          description="Convert Microsoft Word (.docx, .doc) and OpenDocument (.odt) files with exact layout, fonts, margins, tables, and images."
+          badge="High-Fidelity Engine"
         />
 
-        {!selectedFile ? (
-          <FileUploader
-            accept=".docx,.doc,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            multiple={false}
-            onFilesSelected={handleFileSelected}
-            title="Select Word document (.docx or .doc)"
-            description="or drag and drop Word file here"
-          />
-        ) : (
-          <motion.div
-            initial={{ scale: 0.98, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#141417]/90 backdrop-blur-sm rounded-3xl border border-slate-800/80 shadow-2xl p-6 sm:p-8 space-y-8"
+        {/* Engine Settings Bar */}
+        <div className="bg-[#141417]/90 border border-slate-800/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center font-bold">
+              <Cpu className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white flex items-center gap-2">
+                <span>Engine Mode:</span>
+                <span className="text-red-400 capitalize font-mono">
+                  {engineMode === 'auto'
+                    ? 'Auto (Client + Pluggable Server Fallback)'
+                    : engineMode === 'client'
+                    ? 'Client-Side (Fast & Private)'
+                    : 'Server-Side Engine'}
+                </span>
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Preserves original OpenXML pagination, vector images, styles & document tables
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowSettings(!showSettings)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
           >
-            {/* Conversion Visual Card */}
-            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center font-bold shrink-0">
-                  DOCX
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white">{selectedFile.name}</p>
-                  <p className="text-xs text-slate-400">{formatBytes(selectedFile.size)}</p>
-                </div>
-              </div>
+            <Settings2 className="w-3.5 h-3.5 text-red-400" />
+            <span>Engine Options</span>
+          </button>
+        </div>
 
-              <div className="flex items-center gap-2 text-red-400 font-semibold text-sm">
-                <span>Converts to</span>
-                <ArrowRight className="w-5 h-5" />
-              </div>
+        {/* Settings Drawer */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden bg-[#18181C] border border-slate-800 rounded-2xl p-5 space-y-4"
+            >
+              <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-red-400" />
+                <span>Conversion Engine Architecture</span>
+              </h4>
 
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center font-bold shrink-0">
-                  PDF
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white">
-                    {selectedFile.name.replace(/\.(docx|doc)$/i, '')}.pdf
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEngineMode('auto')}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    engineMode === 'auto'
+                      ? 'bg-red-500/10 border-red-500/40 text-white'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-red-400" />
+                    <span>Auto (Recommended)</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Uses fast client-side rendering with server API fallback for maximum compatibility.
                   </p>
-                  <p className="text-xs text-slate-400">Standard PDF Document</p>
-                </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEngineMode('client')}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    engineMode === 'client'
+                      ? 'bg-red-500/10 border-red-500/40 text-white'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs mb-1">
+                    <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Client-Side Engine</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    100% browser-based conversion. Zero server uploads required.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEngineMode('server')}
+                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    engineMode === 'server'
+                      ? 'bg-red-500/10 border-red-500/40 text-white'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs mb-1">
+                    <Server className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Server Endpoint API</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Routes document directly to pluggable server conversion microservice.
+                  </p>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* File Uploader Dropzone */}
+        <FileUploader
+          accept={acceptString}
+          multiple={true}
+          onFilesSelected={handleFilesSelected}
+          title="Drop Word or ODT documents here"
+          description="Supports DOCX, DOC, ODT • Single or Multiple File Queue"
+          buttonText="Choose Documents"
+        />
+
+        {/* Queue Management UI */}
+        {queue.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.99 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#141417]/90 backdrop-blur-sm rounded-3xl border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6"
+          >
+            {/* Header & Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <span>Document Conversion Queue</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                    {queue.length} file{queue.length > 1 ? 's' : ''}
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  {completedCount} completed • {pendingCount} pending
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleClearQueue}
+                  disabled={isProcessingBatch}
+                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-400 hover:text-white transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  Clear Queue
+                </button>
+
+                {completedCount > 1 && (
+                  <button
+                    type="button"
+                    onClick={downloadAllZip}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 hover:text-blue-300 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <Archive className="w-3.5 h-3.5" />
+                    <span>Download All (ZIP)</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={convertAllQueue}
+                  disabled={isProcessingBatch || pendingCount === 0}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-xs font-bold shadow-lg shadow-red-600/20 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {isProcessingBatch ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Converting Batch...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileType className="w-3.5 h-3.5" />
+                      <span>Convert All Queue</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
-            <div className="flex justify-between items-center pt-2">
-              <button
-                onClick={handleReset}
-                className="text-xs font-semibold text-slate-400 hover:text-slate-200 underline focus:outline-none focus:ring-2 focus:ring-red-500/50"
-              >
-                Choose another file
-              </button>
+            {/* Queue Item Cards */}
+            <div className="space-y-3">
+              {queue.map((item) => {
+                const isConverting = item.status === 'converting';
+                const isCompleted = item.status === 'completed';
+                const isError = item.status === 'error';
 
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleConvert}
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-xl shadow-red-600/25 transition-all"
-              >
-                <FileType className="w-5 h-5" />
-                <span>Convert to PDF</span>
-              </motion.button>
+                return (
+                  <div
+                    key={item.id}
+                    className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all"
+                  >
+                    {/* Left File Info */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-11 h-11 rounded-xl border flex items-center justify-center font-bold text-xs shrink-0 ${
+                          item.format === 'DOCX'
+                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                            : item.format === 'DOC'
+                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        }`}
+                      >
+                        {item.format}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{item.name}</p>
+                        <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-0.5">
+                          <span>{formatBytes(item.size)}</span>
+                          <span>•</span>
+                          <span
+                            className={`font-semibold ${
+                              isCompleted
+                                ? 'text-emerald-400'
+                                : isError
+                                ? 'text-red-400'
+                                : isConverting
+                                ? 'text-amber-400'
+                                : 'text-slate-400'
+                            }`}
+                          >
+                            {item.statusMsg}
+                          </span>
+                          {item.conversionTimeMs && (
+                            <>
+                              <span>•</span>
+                              <span className="font-mono text-slate-500">
+                                {(item.conversionTimeMs / 1000).toFixed(1)}s
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar during conversion */}
+                    {isConverting && (
+                      <div className="flex-1 max-w-xs space-y-1">
+                        <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                          <span>Converting...</span>
+                          <span>{item.progress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-red-500 to-amber-500 transition-all duration-200 rounded-full"
+                            style={{ width: `${item.progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isCompleted && (
+                        <button
+                          type="button"
+                          onClick={() => downloadPDF(item)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download PDF</span>
+                        </button>
+                      )}
+
+                      {(item.status === 'pending' || isError) && (
+                        <button
+                          type="button"
+                          onClick={() => convertSingleItem(item.id)}
+                          disabled={isProcessingBatch}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{isError ? 'Retry' : 'Convert'}</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(item.id)}
+                        disabled={isConverting}
+                        className="p-2 rounded-xl text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors disabled:opacity-30 cursor-pointer"
+                        title="Remove file"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
         )}
-
-        {/* Modal */}
-        <ProcessingModal
-          state={state}
-          resultBlob={resultBlob}
-          resultFileName={`${selectedFile?.name.replace(/\.(docx|doc)$/i, '')}.pdf`}
-          onReset={handleReset}
-          title="Converting Word to PDF"
-        />
       </div>
     </motion.div>
   );

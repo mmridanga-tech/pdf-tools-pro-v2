@@ -6,6 +6,8 @@ import healthHandler from './api/health.ts';
 import chatHandler from './api/gemini/chat.ts';
 import assistantHandler from './api/gemini/assistant.ts';
 import analyzerHandler from './api/gemini/analyzer.ts';
+import wordConvertHandler from './api/convert/word.ts';
+import pdfToWordHandler from './api/convert/pdfToWord.ts';
 
 async function startServer() {
   const app = express();
@@ -17,6 +19,8 @@ async function startServer() {
   app.post('/api/gemini/chat', chatHandler);
   app.post('/api/gemini/assistant', assistantHandler);
   app.post('/api/gemini/analyzer', analyzerHandler);
+  app.all('/api/convert/word-to-pdf', wordConvertHandler);
+  app.all('/api/convert/pdf-to-word', pdfToWordHandler);
 
   // Vite middleware setup
   if (process.env.NODE_ENV !== 'production') {
