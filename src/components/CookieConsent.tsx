@@ -97,13 +97,13 @@ export const CookieConsent: React.FC = () => {
                     onClick={handleAcceptAll}
                     className="px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer"
                   >
-                    Accept All
+                    Accept
                   </button>
                   <button
                     onClick={handleRejectNonEssential}
                     className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                   >
-                    Reject Optional
+                    Reject
                   </button>
                   <button
                     onClick={() => setShowCustomizeModal(true)}

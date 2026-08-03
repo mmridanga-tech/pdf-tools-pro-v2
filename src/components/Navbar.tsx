@@ -359,6 +359,40 @@ export const Navbar: React.FC = () => {
                 <span>Pricing Plans</span>
                 <ArrowRight className="w-4 h-4 text-slate-500" />
               </Link>
+
+              <p className="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider pt-2 mb-1">
+                Company & Legal
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-300">
+                <Link
+                  to="/about"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 bg-slate-900/60 rounded-xl hover:bg-slate-800"
+                >
+                  About Us
+                </Link>
+                <Link
+                  to="/contact"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 bg-slate-900/60 rounded-xl hover:bg-slate-800"
+                >
+                  Contact Us
+                </Link>
+                <Link
+                  to="/privacy"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 bg-slate-900/60 rounded-xl hover:bg-slate-800"
+                >
+                  Privacy Policy
+                </Link>
+                <Link
+                  to="/terms"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2.5 bg-slate-900/60 rounded-xl hover:bg-slate-800"
+                >
+                  Terms & Conditions
+                </Link>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
