@@ -186,15 +186,12 @@ export class ImageService {
   }
 
   /**
-   * Convert PDF document pages into image files (PNG or JPEG)
+   * Quick thumbnail generator for PDF page preview grid
    */
-  static async pdfToImage(
+  static async getPdfThumbnails(
     file: File,
-    options: { format: 'png' | 'jpeg'; quality: number; scale: number } = { format: 'png', quality: 0.9, scale: 2.0 },
     onProgress?: (percent: number, msg?: string) => void
-  ): Promise<ConvertedPdfPageImage[]> {
-    if (onProgress) onProgress(5, 'Loading PDF document renderer...');
-
+  ): Promise<{ pageNumber: number; thumbnailDataUrl: string; width: number; height: number }[]> {
     const { pdfjsLib, ensurePdfWorkerConfigured } = await import('../utils/pdfWorker');
     ensurePdfWorkerConfigured();
 
@@ -203,17 +200,92 @@ export class ImageService {
     const pdfDoc = await loadingTask.promise;
     const pageCount = pdfDoc.numPages;
 
-    const results: ConvertedPdfPageImage[] = [];
-    const baseName = file.name.replace(/\.pdf$/i, '');
+    const thumbnails = [];
 
     for (let i = 1; i <= pageCount; i++) {
       if (onProgress) {
-        const pct = Math.round(10 + (i / pageCount) * 85);
-        onProgress(pct, `Rendering PDF page ${i} of ${pageCount}...`);
+        onProgress(Math.round((i / pageCount) * 100), `Loading page preview ${i}/${pageCount}...`);
       }
 
       const page = await pdfDoc.getPage(i);
-      const viewport = page.getViewport({ scale: options.scale || 2.0 });
+      const viewport = page.getViewport({ scale: 0.35 });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        thumbnails.push({
+          pageNumber: i,
+          thumbnailDataUrl: canvas.toDataURL('image/jpeg', 0.75),
+          width: Math.round(viewport.width / 0.35),
+          height: Math.round(viewport.height / 0.35),
+        });
+      }
+    }
+
+    return thumbnails;
+  }
+
+  /**
+   * Convert PDF document pages into high quality image files (PNG or JPEG)
+   */
+  static async pdfToImage(
+    file: File,
+    options: {
+      format: 'png' | 'jpeg';
+      qualityPreset?: 'standard' | 'hd' | 'ultrahd';
+      quality?: number;
+      scale?: number;
+      pagesToExtract?: number[];
+    } = { format: 'png', qualityPreset: 'hd' },
+    onProgress?: (percent: number, msg?: string) => void
+  ): Promise<ConvertedPdfPageImage[]> {
+    if (onProgress) onProgress(5, 'Loading PDF document renderer...');
+
+    const { pdfjsLib, ensurePdfWorkerConfigured } = await import('../utils/pdfWorker');
+    ensurePdfWorkerConfigured();
+
+    // Resolution scale and compression quality per preset
+    let scale = options.scale || 2.0;
+    let quality = options.quality || 0.92;
+
+    if (options.qualityPreset === 'standard') {
+      scale = 1.0;
+      quality = 0.82;
+    } else if (options.qualityPreset === 'hd') {
+      scale = 2.0;
+      quality = 0.92;
+    } else if (options.qualityPreset === 'ultrahd') {
+      scale = 3.0;
+      quality = 0.98;
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+    const pdfDoc = await loadingTask.promise;
+    const pageCount = pdfDoc.numPages;
+
+    const pagesToProcess = options.pagesToExtract && options.pagesToExtract.length > 0
+      ? options.pagesToExtract.filter((p) => p >= 1 && p <= pageCount)
+      : Array.from({ length: pageCount }, (_, idx) => idx + 1);
+
+    const results: ConvertedPdfPageImage[] = [];
+    const baseName = file.name.replace(/\.pdf$/i, '');
+
+    for (let index = 0; index < pagesToProcess.length; index++) {
+      const i = pagesToProcess[index];
+      if (onProgress) {
+        const pct = Math.round(10 + ((index + 1) / pagesToProcess.length) * 85);
+        onProgress(pct, `Extracting page ${i} of ${pageCount} (${index + 1}/${pagesToProcess.length})...`);
+      }
+
+      const page = await pdfDoc.getPage(i);
+      const viewport = page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
@@ -228,10 +300,10 @@ export class ImageService {
       await page.render({ canvasContext: ctx, viewport, canvas }).promise;
 
       const mimeType = options.format === 'jpeg' ? 'image/jpeg' : 'image/png';
-      const dataUrl = canvas.toDataURL(mimeType, options.quality);
+      const dataUrl = canvas.toDataURL(mimeType, quality);
 
       const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((b) => resolve(b || new Blob()), mimeType, options.quality);
+        canvas.toBlob((b) => resolve(b || new Blob()), mimeType, quality);
       });
 
       const ext = options.format === 'jpeg' ? 'jpg' : 'png';
@@ -245,7 +317,7 @@ export class ImageService {
       });
     }
 
-    if (onProgress) onProgress(100, 'All pages rendered successfully!');
+    if (onProgress) onProgress(100, 'All requested pages extracted successfully!');
     return results;
   }
 
