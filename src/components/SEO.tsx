@@ -87,7 +87,15 @@ export const SEO: React.FC<SEOProps> = ({
     };
 
     scriptTag.textContent = JSON.stringify(schemaData);
-  }, [fullTitle, description, canonicalUrl, toolName]);
+
+    // Track SPA page view in Google Analytics
+    if (typeof window !== 'undefined' && (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag('config', 'G-SCDQ6X3ZC3', {
+        page_path: path,
+        page_title: fullTitle,
+      });
+    }
+  }, [fullTitle, description, canonicalUrl, toolName, path]);
 
   return null;
 };
