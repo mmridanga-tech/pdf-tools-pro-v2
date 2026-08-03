@@ -50,6 +50,18 @@ const BlogPost = lazy(() => import('../pages/BlogPost').then((m) => ({ default: 
 const AuthorProfile = lazy(() => import('../pages/AuthorProfile').then((m) => ({ default: m.AuthorProfile })));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 
+// SEO Landing Pages
+const MergePDFOnline = lazy(() => import('../pages/landing/MergePDFOnline').then((m) => ({ default: m.MergePDFOnline })));
+const SplitPDFOnline = lazy(() => import('../pages/landing/SplitPDFOnline').then((m) => ({ default: m.SplitPDFOnline })));
+const CompressPDFOnline = lazy(() => import('../pages/landing/CompressPDFOnline').then((m) => ({ default: m.CompressPDFOnline })));
+const PDFToWordOnline = lazy(() => import('../pages/landing/PDFToWordOnline').then((m) => ({ default: m.PDFToWordOnline })));
+const WordToPDFOnline = lazy(() => import('../pages/landing/WordToPDFOnline').then((m) => ({ default: m.WordToPDFOnline })));
+const ExcelToPDFOnline = lazy(() => import('../pages/landing/ExcelToPDFOnline').then((m) => ({ default: m.ExcelToPDFOnline })));
+const JPGToPDFOnline = lazy(() => import('../pages/landing/JPGToPDFOnline').then((m) => ({ default: m.JPGToPDFOnline })));
+const PDFToJPGOnline = lazy(() => import('../pages/landing/PDFToJPGOnline').then((m) => ({ default: m.PDFToJPGOnline })));
+const ProtectPDFOnline = lazy(() => import('../pages/landing/ProtectPDFOnline').then((m) => ({ default: m.ProtectPDFOnline })));
+const UnlockPDFOnline = lazy(() => import('../pages/landing/UnlockPDFOnline').then((m) => ({ default: m.UnlockPDFOnline })));
+
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
 
@@ -90,9 +102,21 @@ export const AppRoutes: React.FC = () => {
           <Route path="/watermark" element={<WatermarkPDF />} />
           <Route path="/page-numbers" element={<PageNumbersPDF />} />
           <Route path="/ocr-pdf" element={<OcrPDF />} />
-          <Route path="/protect-pdf" element={<ProtectPDF />} />
-          <Route path="/unlock-pdf" element={<UnlockPDF />} />
+          <Route path="/protect-pdf" element={<ProtectPDFOnline />} />
+          <Route path="/protect-pdf-online" element={<ProtectPDFOnline />} />
+          <Route path="/unlock-pdf" element={<UnlockPDFOnline />} />
+          <Route path="/unlock-pdf-online" element={<UnlockPDFOnline />} />
           <Route path="/pdf-security" element={<SecurityPDF />} />
+
+          {/* SEO Landing Pages */}
+          <Route path="/merge-pdf-online" element={<MergePDFOnline />} />
+          <Route path="/split-pdf-online" element={<SplitPDFOnline />} />
+          <Route path="/compress-pdf-online" element={<CompressPDFOnline />} />
+          <Route path="/pdf-to-word-online" element={<PDFToWordOnline />} />
+          <Route path="/word-to-pdf-online" element={<WordToPDFOnline />} />
+          <Route path="/excel-to-pdf" element={<ExcelToPDFOnline />} />
+          <Route path="/jpg-to-pdf" element={<JPGToPDFOnline />} />
+          <Route path="/pdf-to-jpg" element={<PDFToJPGOnline />} />
 
           {/* Image Tools */}
           <Route path="/image-to-pdf" element={<ImageToPDF />} />
