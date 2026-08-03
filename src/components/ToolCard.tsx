@@ -1,6 +1,28 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
+import {
+  Layers,
+  Scissors,
+  Trash2,
+  FileOutput,
+  ArrowUpDown,
+  Copy,
+  Minimize2,
+  FileText,
+  FileType,
+  RotateCw,
+  Stamp,
+  Hash,
+  ScanText,
+  Lock,
+  MessageSquare,
+  Sparkles,
+  Image as ImageIcon,
+  FileImage,
+  Scaling,
+  Unlock,
+  ArrowRight,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { PDFTool } from '../types/toolTypes';
 
@@ -8,11 +30,31 @@ interface ToolCardProps {
   tool: PDFTool;
 }
 
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Layers,
+  Scissors,
+  Trash2,
+  FileOutput,
+  ArrowUpDown,
+  Copy,
+  Minimize2,
+  FileText,
+  FileType,
+  RotateCw,
+  Stamp,
+  Hash,
+  ScanText,
+  Lock,
+  MessageSquare,
+  Sparkles,
+  Image: ImageIcon,
+  FileImage,
+  Scaling,
+  Unlock,
+};
+
 export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
-  // Dynamically get icon component from lucide-react
-  const IconComponent =
-    (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[tool.icon] ||
-    Icons.FileText;
+  const IconComponent = iconMap[tool.icon] || FileText;
 
   return (
     <motion.div
@@ -25,6 +67,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
       <Link
         to={tool.path}
         className="group relative h-full bg-[#141417]/90 hover:bg-[#18181d] rounded-2xl p-6 border border-slate-800/80 hover:border-red-500/50 shadow-lg hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+        aria-label={`Open ${tool.name} tool - ${tool.description}`}
       >
         {/* Decorative gradient blur background on hover */}
         <div className="absolute -right-8 -top-8 w-28 h-28 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/20 group-hover:scale-125 transition-all duration-500 pointer-events-none" />
@@ -57,7 +100,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
 
         <div className="flex items-center text-xs font-semibold text-red-400 group-hover:text-red-300 gap-1.5 mt-auto pt-3.5 border-t border-slate-800/80">
           <span>Use Tool</span>
-          <Icons.ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-200" />
+          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-200" />
         </div>
       </Link>
     </motion.div>

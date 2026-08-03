@@ -74,6 +74,7 @@ export const Hero: React.FC<HeroProps> = ({ searchQuery, onSearchChange }) => {
               <button
                 onClick={() => onSearchChange('')}
                 className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-white transition-colors"
+                aria-label="Clear search input"
               >
                 <X className="w-4 h-4" />
               </button>

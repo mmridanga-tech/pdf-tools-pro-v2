@@ -11,6 +11,59 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      target: 'esnext',
+      minify: 'esbuild',
+      cssMinify: true,
+      chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (
+                id.includes('react') ||
+                id.includes('react-dom') ||
+                id.includes('react-router-dom')
+              ) {
+                return 'vendor-react';
+              }
+              if (
+                id.includes('pdf-lib') ||
+                id.includes('@cantoo/pdf-lib') ||
+                id.includes('pdfjs-dist')
+              ) {
+                return 'vendor-pdf';
+              }
+              if (id.includes('@google/genai')) {
+                return 'vendor-ai';
+              }
+              if (id.includes('lucide-react')) {
+                return 'vendor-icons';
+              }
+              if (id.includes('motion')) {
+                return 'vendor-motion';
+              }
+              if (id.includes('recharts')) {
+                return 'vendor-charts';
+              }
+              if (
+                id.includes('docx') ||
+                id.includes('mammoth') ||
+                id.includes('jspdf') ||
+                id.includes('html2canvas') ||
+                id.includes('tesseract.js') ||
+                id.includes('jszip')
+              ) {
+                return 'vendor-doc-tools';
+              }
+              if (id.includes('firebase')) {
+                return 'vendor-firebase';
+              }
+            }
+          },
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
