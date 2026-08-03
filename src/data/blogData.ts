@@ -77,9 +77,9 @@ export const BLOG_POSTS: BlogPostItem[] = [
     category: 'Security & Encryption',
     categorySlug: 'security',
     author: {
-      name: 'Elena Rostova',
-      role: 'Cybersecurity & Document Encryption Lead',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+      name: 'Mridanga Mondal',
+      role: 'Founder & Electrical Engineer',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
     },
     publishDate: 'August 3, 2026',
     readTime: '18 min read',
@@ -276,8 +276,8 @@ export const BLOG_POSTS: BlogPostItem[] = [
     category: 'Format Conversion',
     categorySlug: 'conversion',
     author: {
-      name: 'Dr. Marcus Vance',
-      role: 'Senior Document Format Standards Architect',
+      name: 'Mridanga Mondal',
+      role: 'Founder & Electrical Engineer',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
     },
     publishDate: 'August 3, 2026',

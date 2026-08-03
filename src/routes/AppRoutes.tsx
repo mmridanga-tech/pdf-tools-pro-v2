@@ -47,6 +47,7 @@ const AboutUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default:
 const ContactUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.ContactUs })));
 const BlogHome = lazy(() => import('../pages/BlogHome').then((m) => ({ default: m.BlogHome })));
 const BlogPost = lazy(() => import('../pages/BlogPost').then((m) => ({ default: m.BlogPost })));
+const AuthorProfile = lazy(() => import('../pages/AuthorProfile').then((m) => ({ default: m.AuthorProfile })));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 
 const ScrollToTop: React.FC = () => {
@@ -155,6 +156,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/blog" element={<BlogHome />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/author/mridanga-mondal" element={<AuthorProfile />} />
+          <Route path="/author/:authorSlug" element={<AuthorProfile />} />
           <Route path="/404" element={<NotFoundPage />} />
 
           <Route path="*" element={<NotFoundPage />} />

@@ -277,21 +277,24 @@ export const BlogPost: React.FC = () => {
           <div className="pt-6 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-4">
             
             {/* Author Info */}
-            <div className="flex items-center gap-3">
+            <Link
+              to={post.author.name.toLowerCase().includes('mridanga') ? '/author/mridanga-mondal' : '/author/mridanga-mondal'}
+              className="flex items-center gap-3 group/author"
+            >
               <img
                 src={post.author.avatar}
                 alt={post.author.name}
                 referrerPolicy="no-referrer"
-                className="w-11 h-11 rounded-full object-cover border-2 border-red-500/30"
+                className="w-11 h-11 rounded-full object-cover border-2 border-red-500/30 group-hover/author:border-red-400 transition-colors"
               />
               <div>
-                <p className="text-xs font-bold text-white flex items-center gap-1">
+                <p className="text-xs font-bold text-white group-hover/author:text-red-400 transition-colors flex items-center gap-1">
                   {post.author.name}
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" title="Verified Author" />
                 </p>
                 <p className="text-[11px] text-slate-400">{post.author.role}</p>
               </div>
-            </div>
+            </Link>
 
             {/* Social Share Buttons */}
             <div className="flex items-center gap-2">
