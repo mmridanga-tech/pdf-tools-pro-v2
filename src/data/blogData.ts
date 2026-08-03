@@ -18,6 +18,7 @@ export interface BlogSection {
 export interface BlogPostItem {
   id: string;
   slug: string;
+  aliases?: string[];
   title: string;
   subtitle: string;
   excerpt: string;
@@ -30,6 +31,7 @@ export interface BlogPostItem {
   };
   publishDate: string;
   readTime: string;
+  featuredImage: string;
   featured?: boolean;
   popular?: boolean;
   views: number;
@@ -37,6 +39,10 @@ export interface BlogPostItem {
   metaDescription: string;
   keywords: string[];
   relatedSlugs: string[];
+  faqs: {
+    question: string;
+    answer: string;
+  }[];
   toolCta: {
     title: string;
     description: string;
@@ -60,6 +66,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
   {
     id: '1',
     slug: 'how-to-merge-pdf-online',
+    aliases: ['how-to-merge-pdf-files-online', 'merge-pdf', 'how-to-merge-pdfs'],
     title: 'How to Merge PDF Files Online: Free Step-by-Step Guide',
     subtitle: 'Combine multiple PDF documents into a single organized file in seconds without installing software.',
     excerpt: 'Learn the fastest, most secure method to merge PDF files online. Perfect for invoices, reports, academic papers, and business contracts.',
@@ -72,6 +79,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     },
     publishDate: 'August 2, 2026',
     readTime: '4 min read',
+    featuredImage: 'https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1200&q=80',
     featured: true,
     popular: true,
     views: 14250,
@@ -79,6 +87,20 @@ export const BLOG_POSTS: BlogPostItem[] = [
     metaDescription: 'Combine multiple PDFs into one cohesive document easily. Fast, private, browser-based WebAssembly processing with zero file limits.',
     keywords: ['merge pdf online', 'combine pdf files', 'free pdf joiner', 'merge pdf without software', 'smartpdf merge'],
     relatedSlugs: ['best-free-pdf-tools', 'how-to-compress-pdf-without-losing-quality', 'pdf-vs-word'],
+    faqs: [
+      {
+        question: 'Is it free to merge PDFs with SmartPDF AI?',
+        answer: 'Yes! SmartPDF AI allows you to merge unlimited PDF files 100% free with no hidden paywalls, account requirements, or watermarks.'
+      },
+      {
+        question: 'Are my uploaded PDF files kept private?',
+        answer: 'Absolutely. SmartPDF AI compiles documents directly inside your web browser using WebAssembly. Your files are never uploaded to remote cloud servers.'
+      },
+      {
+        question: 'Can I reorder or rotate PDF pages before merging?',
+        answer: 'Yes. Our interactive page preview panel lets you drag, drop, reorder, or rotate individual pages before generating your final compiled document.'
+      }
+    ],
     toolCta: {
       title: 'Ready to Merge Your PDFs?',
       description: 'Use SmartPDF AI’s free browser-based PDF merger tool. Fast, private, and unlimited.',
@@ -147,6 +169,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
   {
     id: '2',
     slug: 'how-to-compress-pdf-without-losing-quality',
+    aliases: ['how-to-compress-pdf', 'compress-pdf', 'reduce-pdf-size'],
     title: 'How to Compress PDF Files Without Losing Quality',
     subtitle: 'Shrink oversized PDF documents up to 80% while keeping text crisp and images sharp.',
     excerpt: 'Discover advanced vector compression algorithms and image downsampling methods that shrink file size while preserving high visual quality.',
@@ -159,13 +182,28 @@ export const BLOG_POSTS: BlogPostItem[] = [
     },
     publishDate: 'August 1, 2026',
     readTime: '5 min read',
+    featuredImage: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80',
     featured: true,
-    popular: fontPopular(12890),
+    popular: true,
     views: 12890,
     metaTitle: 'Compress PDF Without Losing Quality (Free Tool 2026) | SmartPDF AI',
     metaDescription: 'Reduce PDF file size online without compromising font crispness or image resolution. Learn extreme compression techniques.',
     keywords: ['compress pdf without losing quality', 'shrink pdf size', 'reduce pdf size online', 'compress pdf free', 'pdf optimizer'],
     relatedSlugs: ['how-to-merge-pdf-online', 'best-free-pdf-tools', 'ocr-explained'],
+    faqs: [
+      {
+        question: 'How much can I reduce my PDF file size?',
+        answer: 'Depending on embedded graphics and initial DPI, SmartPDF AI typically reduces file sizes by 30% up to 80% with zero visible text loss.'
+      },
+      {
+        question: 'Will text become blurry after compression?',
+        answer: 'No! Vector typography remains crisp and selectable. Only photographic raster images are downsampled to screen-optimized DPI.'
+      },
+      {
+        question: 'What is the maximum PDF file size limit for compression?',
+        answer: 'Because processing runs directly in your device RAM, you can compress files as large as 2GB without server timeout limits.'
+      }
+    ],
     toolCta: {
       title: 'Compress Your Heavy PDFs Now',
       description: 'Shrink file size instantly up to 80% without losing document clarity.',
@@ -221,6 +259,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
   {
     id: '3',
     slug: 'best-free-pdf-tools',
+    aliases: ['top-pdf-tools-2026', 'best-pdf-tools'],
     title: '8 Best Free PDF Tools in 2026 for Professionals & Students',
     subtitle: 'An objective review of top-rated free PDF converters, AI summarizers, and editing platforms.',
     excerpt: 'Compare the best free PDF utilities in 2026. Explore privacy standards, AI feature sets, file size limits, and browser-native capabilities.',
@@ -233,6 +272,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     },
     publishDate: 'July 28, 2026',
     readTime: '6 min read',
+    featuredImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
     featured: false,
     popular: true,
     views: 18900,
@@ -240,6 +280,16 @@ export const BLOG_POSTS: BlogPostItem[] = [
     metaDescription: 'Discover top free PDF online tools for 2026. Compare SmartPDF AI, Adobe Acrobat Online, Smallpdf, and iLovePDF.',
     keywords: ['best free pdf tools', 'top pdf editors 2026', 'free pdf converter', 'online pdf suite', 'smartpdf vs adobe'],
     relatedSlugs: ['ai-pdf-tools-guide', 'how-to-merge-pdf-online', 'pdf-security-guide'],
+    faqs: [
+      {
+        question: 'Why choose SmartPDF AI over desktop software?',
+        answer: 'SmartPDF AI runs instantly in your web browser with zero installation, full mobile compatibility, and 100% private client-side WebAssembly execution.'
+      },
+      {
+        question: 'Are there hidden limits on document tasks?',
+        answer: 'No. SmartPDF AI provides unrestricted document conversion, merging, splitting, and compression without forcing registration or daily limits.'
+      }
+    ],
     toolCta: {
       title: 'Explore All SmartPDF AI Utilities',
       description: 'Access 20+ free, secure PDF conversion and AI document tools in one clean interface.',
@@ -276,6 +326,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
   {
     id: '4',
     slug: 'pdf-vs-word',
+    aliases: ['pdf-versus-word', 'difference-between-pdf-and-word', 'pdf-or-word'],
     title: 'PDF vs Word: When to Use Which Document Format',
     subtitle: 'Understanding the key differences in layout fidelity, security, editability, and file distribution.',
     excerpt: 'Debating between saving as PDF or Microsoft Word DOCX? Learn when to choose fixed visual layout versus editable text formatting.',
@@ -288,6 +339,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     },
     publishDate: 'July 25, 2026',
     readTime: '4 min read',
+    featuredImage: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80',
     featured: false,
     popular: true,
     views: 9400,
@@ -295,6 +347,16 @@ export const BLOG_POSTS: BlogPostItem[] = [
     metaDescription: 'Compare PDF vs Word DOCX. Learn when to publish as fixed PDF or draft in editable Word format.',
     keywords: ['pdf vs word', 'difference between pdf and docx', 'when to use pdf', 'convert pdf to word', 'smartpdf conversion'],
     relatedSlugs: ['how-to-convert-pdf-to-word', 'pdf-security-guide', 'best-free-pdf-tools'],
+    faqs: [
+      {
+        question: 'Can I convert a PDF back into an editable Word document?',
+        answer: 'Yes! SmartPDF AI provides a PDF to Word converter that extracts editable paragraphs, tables, and images with layout formatting preserved.'
+      },
+      {
+        question: 'Which format is best for sending resumes?',
+        answer: 'PDF is always recommended for resumes unless an employer’s Applicant Tracking System explicitly requests a Word DOCX file.'
+      }
+    ],
     toolCta: {
       title: 'Convert Between PDF and Word Instantly',
       description: 'Switch formats seamlessly with SmartPDF AI’s dual-direction PDF to Word converter.',
@@ -334,6 +396,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
   {
     id: '5',
     slug: 'how-to-convert-pdf-to-word',
+    aliases: ['convert-pdf-to-word', 'pdf-to-docx-guide'],
     title: 'How to Convert PDF to Word Easily (With Formatting Intact)',
     subtitle: 'Turn scanned or standard PDFs into fully editable Microsoft Word DOCX files without losing layouts.',
     excerpt: 'Step-by-step guide to converting PDFs into editable DOCX files. Preserves headers, columns, tables, fonts, and inline image alignment.',
@@ -346,6 +409,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     },
     publishDate: 'July 20, 2026',
     readTime: '5 min read',
+    featuredImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
     featured: false,
     popular: true,
     views: 11200,
@@ -353,6 +417,16 @@ export const BLOG_POSTS: BlogPostItem[] = [
     metaDescription: 'Convert PDF to Word DOCX online for free. Keep tables, images, and text styles completely intact.',
     keywords: ['convert pdf to word', 'pdf to docx converter', 'editable pdf to word', 'free pdf to word', 'smartpdf convert'],
     relatedSlugs: ['pdf-vs-word', 'ocr-explained', 'how-to-compress-pdf-without-losing-quality'],
+    faqs: [
+      {
+        question: 'Can scanned image PDFs be converted into Word text?',
+        answer: 'Yes! SmartPDF AI incorporates built-in OCR (Optical Character Recognition) to convert scanned images into real editable text in the converted Word document.'
+      },
+      {
+        question: 'Will table structures stay aligned in Microsoft Word?',
+        answer: 'Our structure recognition engine identifies grid boundaries and converts PDF tables into native Word tables for easy editing.'
+      }
+    ],
     toolCta: {
       title: 'Convert Your PDF to Word Now',
       description: 'Transform locked PDF documents into fully editable Word documents in seconds.',
@@ -395,6 +469,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
   {
     id: '6',
     slug: 'pdf-security-guide',
+    aliases: ['secure-pdf-tips', 'pdf-encryption-guide'],
     title: 'Secure PDF Tips: Password Protection, Redaction & Encryption',
     subtitle: 'Essential steps to secure confidential corporate records, personal financial files, and legal contracts.',
     excerpt: 'Learn how to apply 256-bit AES encryption, user passwords, permission restrictions, and permanent text redaction to sensitive PDF files.',
@@ -407,6 +482,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     },
     publishDate: 'July 15, 2026',
     readTime: '6 min read',
+    featuredImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80',
     featured: false,
     popular: true,
     views: 15400,
@@ -414,6 +490,16 @@ export const BLOG_POSTS: BlogPostItem[] = [
     metaDescription: 'Protect confidential documents with 256-bit AES encryption and password security. Essential security tips for business PDFs.',
     keywords: ['secure pdf', 'password protect pdf', 'pdf encryption', 'redact pdf', 'pdf security guide'],
     relatedSlugs: ['best-free-pdf-tools', 'how-to-merge-pdf-online', 'ai-pdf-tools-guide'],
+    faqs: [
+      {
+        question: 'What encryption standard is used to protect PDFs?',
+        answer: 'SmartPDF AI uses military-grade 256-bit AES encryption to lock and password-protect your confidential PDF files.'
+      },
+      {
+        question: 'Is drawing a black box over text enough for redaction?',
+        answer: 'No! Placing a simple black box leaves underlying text searchable in PDF code. True redaction permanently deletes the underlying character coordinates.'
+      }
+    ],
     toolCta: {
       title: 'Encrypt Your PDF Document',
       description: 'Add military-grade password protection and restriction permissions to your PDF.',
@@ -449,6 +535,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
   {
     id: '7',
     slug: 'ai-pdf-tools-guide',
+    aliases: ['ai-pdf-guide', 'chat-with-pdf-guide'],
     title: 'AI PDF Tools Guide: How to Summarize & Chat with PDFs',
     subtitle: 'Leverage Google Gemini AI to analyze 100-page reports, extract key insights, and query documents instantly.',
     excerpt: 'Discover how generative AI is transforming document analysis. Learn prompt engineering tips for querying financial reports and research papers.',
@@ -461,6 +548,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     },
     publishDate: 'July 10, 2026',
     readTime: '5 min read',
+    featuredImage: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&q=80',
     featured: true,
     popular: true,
     views: 21500,
@@ -468,6 +556,16 @@ export const BLOG_POSTS: BlogPostItem[] = [
     metaDescription: 'Use Gemini AI to chat with PDFs, extract key statistics, and generate instant executive summaries from complex documents.',
     keywords: ['ai pdf tools', 'chat with pdf', 'summarize pdf with ai', 'gemini pdf chat', 'smartpdf ai chat'],
     relatedSlugs: ['best-free-pdf-tools', 'ocr-explained', 'how-to-merge-pdf-online'],
+    faqs: [
+      {
+        question: 'Which AI engine powers SmartPDF AI Document Chat?',
+        answer: 'SmartPDF AI uses Google Gemini AI models for ultra-fast summarization, citation tracking, and multi-turn document query conversations.'
+      },
+      {
+        question: 'Is my document text saved or used for AI training?',
+        answer: 'No. Your document contents are processed in memory and never stored or used to train public foundation models.'
+      }
+    ],
     toolCta: {
       title: 'Chat with Your PDF Document',
       description: 'Upload any document and ask questions, generate summaries, or translate text instantly.',
@@ -502,6 +600,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
   {
     id: '8',
     slug: 'ocr-explained',
+    aliases: ['ocr-explained-guide', 'how-ocr-works'],
     title: 'OCR Explained: How Optical Character Recognition Works for PDFs',
     subtitle: 'Convert flat scanned image PDFs into fully searchable, copyable, and indexable text files.',
     excerpt: 'Understand the underlying computer vision technology behind OCR. Learn how neural networks identify characters, fonts, and multilingual scripts.',
@@ -514,6 +613,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     },
     publishDate: 'July 5, 2026',
     readTime: '5 min read',
+    featuredImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
     featured: false,
     popular: false,
     views: 8700,
@@ -521,6 +621,16 @@ export const BLOG_POSTS: BlogPostItem[] = [
     metaDescription: 'Learn how OCR technology converts scanned images into searchable PDF text. Explore accuracy tips and multilingual support.',
     keywords: ['ocr explained', 'optical character recognition pdf', 'searchable pdf creator', 'scanned pdf to text', 'smartpdf ocr'],
     relatedSlugs: ['how-to-convert-pdf-to-word', 'ai-pdf-tools-guide', 'best-free-pdf-tools'],
+    faqs: [
+      {
+        question: 'What languages are supported by SmartPDF OCR?',
+        answer: 'Our OCR engine supports English, Spanish, French, German, Italian, Portuguese, Chinese, Japanese, Korean, and over 50 other international languages.'
+      },
+      {
+        question: 'Can OCR convert physical paper receipts into text?',
+        answer: 'Yes! Simply take a picture of the receipt or scan it as a PDF, then upload it to SmartPDF OCR to unlock copyable and searchable text.'
+      }
+    ],
     toolCta: {
       title: 'Make Your Scanned PDF Searchable',
       description: 'Run SmartPDF OCR on your scanned image documents to unlock copyable text.',
@@ -564,6 +674,14 @@ export const BLOG_POSTS: BlogPostItem[] = [
     ]
   }
 ];
+
+export function getBlogPostBySlug(slug?: string): BlogPostItem | undefined {
+  if (!slug) return undefined;
+  const clean = slug.toLowerCase().trim();
+  return BLOG_POSTS.find(
+    (p) => p.slug.toLowerCase() === clean || p.aliases?.some((a) => a.toLowerCase() === clean)
+  );
+}
 
 function fontPopular(count: number) {
   return count > 10000;

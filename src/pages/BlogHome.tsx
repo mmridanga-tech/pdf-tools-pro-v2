@@ -289,31 +289,49 @@ export const BlogHome: React.FC = () => {
                 {filteredPosts.map((post) => (
                   <article
                     key={post.id}
-                    className="bg-[#121215] border border-slate-800 rounded-3xl p-6 flex flex-col justify-between space-y-4 group hover:border-slate-700 transition-all shadow-md"
+                    className="bg-[#121215] border border-slate-800 rounded-3xl overflow-hidden flex flex-col justify-between group hover:border-slate-700 transition-all shadow-md"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-red-400 text-[10px] font-bold">
+                    <div>
+                      <div className="h-40 overflow-hidden relative">
+                        <img
+                          src={post.featuredImage}
+                          alt={post.title}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              'https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1200&q=80';
+                          }}
+                        />
+                        <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-red-400 text-[10px] font-bold">
                           {post.category}
-                        </span>
-                        <span className="text-[11px] text-slate-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {post.readTime}
                         </span>
                       </div>
 
-                      <h3 className="text-base font-bold text-white group-hover:text-red-400 transition-colors leading-snug">
-                        <Link to={`/blog/${post.slug}`}>
-                          {post.title}
-                        </Link>
-                      </h3>
+                      <div className="p-5 space-y-2.5">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-slate-500" /> {post.readTime}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3 text-slate-500" /> {post.views.toLocaleString()}
+                          </span>
+                        </div>
 
-                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                        {post.excerpt}
-                      </p>
+                        <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-red-400 transition-colors leading-snug line-clamp-2">
+                          <Link to={`/blog/${post.slug}`}>
+                            {post.title}
+                          </Link>
+                        </h3>
+
+                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                          {post.excerpt}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
-                      <div className="flex items-center gap-2">
+                    <div className="p-5 pt-0 border-t border-slate-800/60 mt-2 flex items-center justify-between text-xs text-slate-500">
+                      <div className="flex items-center gap-2 pt-3">
                         <img
                           src={post.author.avatar}
                           alt={post.author.name}
@@ -325,7 +343,7 @@ export const BlogHome: React.FC = () => {
 
                       <Link
                         to={`/blog/${post.slug}`}
-                        className="text-red-400 font-bold hover:underline inline-flex items-center gap-0.5"
+                        className="text-red-400 font-bold hover:underline inline-flex items-center gap-0.5 pt-3"
                       >
                         Read <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
