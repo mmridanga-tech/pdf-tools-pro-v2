@@ -501,6 +501,34 @@ export const BlogPost: React.FC = () => {
                     ))}
                   </ul>
                 )}
+
+                {/* Comparison / Data Table */}
+                {section.table && (
+                  <div className="overflow-x-auto my-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl">
+                    <table className="w-full text-left text-xs sm:text-sm text-slate-200 border-collapse">
+                      <thead>
+                        <tr className="bg-slate-800/90 border-b border-slate-700 text-white font-bold">
+                          {section.table.headers.map((header, hIdx) => (
+                            <th key={hIdx} className="py-3.5 px-4 font-black tracking-wider uppercase text-[11px] sm:text-xs text-red-400">
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/80">
+                        {section.table.rows.map((row, rIdx) => (
+                          <tr key={rIdx} className="hover:bg-slate-800/40 transition-colors">
+                            {row.map((cell, cIdx) => (
+                              <td key={cIdx} className={`py-3 px-4 text-xs sm:text-sm leading-normal ${cIdx === 0 ? 'font-bold text-white' : 'text-slate-300'}`}>
+                                {renderFormattedText(cell)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </section>
             ))}
 
