@@ -8,6 +8,7 @@ import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import { Hash, FileText } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export const PageNumbersPDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -62,6 +63,11 @@ export const PageNumbersPDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="Page Numbers PDF"
+        description="Insert page numbers into your PDF files easily. Customize position, start number, and page numbering formats."
+        path="/page-numbers"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <ToolHeader
           icon={Hash}

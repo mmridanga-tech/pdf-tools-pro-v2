@@ -195,6 +195,8 @@ export const PDFToWord: React.FC = () => {
       <SEO
         title="Convert PDF to Word Online Free - High Fidelity DOCX"
         description="Convert PDF files into editable Microsoft Word (.docx) documents preserving layout, fonts, images, tables, and OCR for scanned documents."
+        toolName="PDF to Word"
+        path="/pdf-to-word"
       />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">

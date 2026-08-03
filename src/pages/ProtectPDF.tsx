@@ -8,6 +8,7 @@ import { usePDFProcessor } from '../hooks/usePDFProcessor';
 import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
+import { SEO } from '../components/SEO';
 import {
   Lock,
   FileText,
@@ -107,6 +108,11 @@ export const ProtectPDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="Protect PDF"
+        description="Encrypt PDF documents with strong password protection and permission restrictions."
+        path="/protect-pdf"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <ToolHeader
           icon={Lock}

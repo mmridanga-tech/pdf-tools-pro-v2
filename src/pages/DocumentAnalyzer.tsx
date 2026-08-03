@@ -511,8 +511,10 @@ export const DocumentAnalyzer: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <SEO
-        title="Enterprise Document Analyzer - SmartPDF AI v1.2"
+        title="Enterprise Document Analyzer - SmartPDF AI"
         description="Automated document classification, entity extraction, risk detection, and executive summaries with Gemini AI."
+        toolName="Document Analyzer"
+        path="/analyzer"
       />
 
       {/* Header Banner */}

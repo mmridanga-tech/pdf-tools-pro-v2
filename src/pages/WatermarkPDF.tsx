@@ -8,6 +8,7 @@ import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import { Stamp, FileText, Eye } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export const WatermarkPDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -68,6 +69,11 @@ export const WatermarkPDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="Watermark PDF"
+        description="Stamp custom text watermarks onto PDF pages with custom font size, opacity, and rotation."
+        path="/watermark"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <ToolHeader
           icon={Stamp}

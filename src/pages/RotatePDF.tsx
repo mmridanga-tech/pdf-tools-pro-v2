@@ -9,6 +9,7 @@ import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import { RotateCw, FileText, RefreshCw } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export const RotatePDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -82,6 +83,11 @@ export const RotatePDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="Rotate PDF"
+        description="Rotate PDF pages online clockwise or counterclockwise. Permanently save rotated PDF documents easily."
+        path="/rotate"
+      />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <ToolHeader
           icon={RotateCw}

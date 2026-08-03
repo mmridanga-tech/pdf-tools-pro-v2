@@ -216,6 +216,8 @@ export const BlogPost: React.FC = () => {
         title={post.metaTitle}
         description={post.metaDescription}
         path={`/blog/${post.slug}`}
+        type="BlogPosting"
+        image={post.featuredImage}
         jsonLdSchema={schemaData}
       />
 

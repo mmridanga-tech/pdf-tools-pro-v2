@@ -10,6 +10,7 @@ import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { OCROptions, OCRResultData } from '../types/pdfTypes';
 import { useToast } from '../context/ToastContext';
+import { SEO } from '../components/SEO';
 import {
   ScanText,
   FileType,
@@ -111,6 +112,11 @@ export const OcrPDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="OCR PDF"
+        description="Extract text from scanned PDFs & images with high accuracy AI optical character recognition."
+        path="/ocr-pdf"
+      />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <ToolHeader
           icon={ScanText}

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import JSZip from 'jszip';
 import { FileUploader } from '../components/FileUploader';
 import { ToolHeader } from '../components/ToolHeader';
+import { SEO } from '../components/SEO';
 import {
   WordConverterService,
   FileQueueItem,
@@ -193,6 +194,11 @@ export const WordToPDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-12"
     >
+      <SEO
+        toolName="Word to PDF"
+        description="Convert Microsoft Word DOC and DOCX files into PDF documents quickly with 100% layout accuracy."
+        path="/word-to-pdf"
+      />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <ToolHeader
           icon={FileType}

@@ -8,6 +8,7 @@ import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import { Unlock, FileText, Eye, EyeOff, ShieldAlert, KeyRound, CheckCircle2 } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export const UnlockPDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -81,6 +82,11 @@ export const UnlockPDF: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-14"
     >
+      <SEO
+        toolName="Unlock PDF"
+        description="Remove passwords and permissions security from locked PDF files instantly."
+        path="/unlock-pdf"
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <ToolHeader
           icon={Unlock}
