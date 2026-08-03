@@ -3,6 +3,7 @@ import { WatermarkOptions, PageNumberOptions, OCROptions, ProcessedResult, PDFPr
 import { OCRService } from './ocrService';
 import { WordConverterService, WordConversionOptions } from './wordConverterService';
 import { PDFToWordService, PDFToWordOptions } from './pdfToWordService';
+import { PDFCompressionService, CompressionLevel } from './pdfCompressionService';
 
 export class PDFService {
   /**
@@ -94,83 +95,14 @@ export class PDFService {
    */
   static async compressPDF(
     file: File,
-    level: 'recommended' | 'extreme' | 'less'
+    level: 'recommended' | 'extreme' | 'less' | CompressionLevel
   ): Promise<{ blob: Blob; originalSize: number; newSize: number }> {
-    const originalSize = file.size;
-    const arrayBuffer = await file.arrayBuffer();
-
-    const { PDFDocument } = await import('pdf-lib');
-    const pdfDocLib = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-    const pdfBytesLib = await pdfDocLib.save({
-      useObjectStreams: true,
-      addDefaultPage: false,
-    });
-    const libBlob = new Blob([pdfBytesLib], { type: 'application/pdf' });
-
-    let finalBlob = libBlob;
-
-    if (level === 'recommended' || level === 'extreme') {
-      try {
-        const pdfjsLib = await import('pdfjs-dist');
-        if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '4.10.38'}/pdf.worker.min.mjs`;
-        }
-
-        const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
-        const pdfDoc = await loadingTask.promise;
-        const pageCount = pdfDoc.numPages;
-
-        const jsPDFMod = await import('jspdf');
-        const jsPDF = jsPDFMod.default;
-
-        const scale = level === 'extreme' ? 1.0 : 1.25;
-        const quality = level === 'extreme' ? 0.45 : 0.65;
-
-        const firstPage = await pdfDoc.getPage(1);
-        const vp1 = firstPage.getViewport({ scale: 1.0 });
-
-        const doc = new jsPDF({
-          orientation: vp1.width > vp1.height ? 'landscape' : 'portrait',
-          unit: 'pt',
-          format: [vp1.width, vp1.height],
-        });
-
-        for (let i = 1; i <= pageCount; i++) {
-          if (i > 1) {
-            const p = await pdfDoc.getPage(i);
-            const pVp = p.getViewport({ scale: 1.0 });
-            doc.addPage([pVp.width, pVp.height], pVp.width > pVp.height ? 'landscape' : 'portrait');
-          }
-
-          const page = await pdfDoc.getPage(i);
-          const viewport = page.getViewport({ scale });
-          const canvas = document.createElement('canvas');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const context = canvas.getContext('2d');
-
-          if (context) {
-            await page.render({ canvasContext: context, viewport, canvas }).promise;
-          }
-
-          const jpegUrl = canvas.toDataURL('image/jpeg', quality);
-          const pVp = page.getViewport({ scale: 1.0 });
-          doc.addImage(jpegUrl, 'JPEG', 0, 0, pVp.width, pVp.height, undefined, 'FAST');
-        }
-
-        const renderBlob = doc.output('blob');
-
-        // Choose the smaller blob between libBlob and renderBlob
-        if (renderBlob.size < libBlob.size) {
-          finalBlob = renderBlob;
-        }
-      } catch {
-        finalBlob = libBlob;
-      }
-    }
-
-    const newSize = finalBlob.size;
-    return { blob: finalBlob, originalSize, newSize };
+    const res = await PDFCompressionService.compressPDF(file, { level: level as CompressionLevel });
+    return {
+      blob: res.blob,
+      originalSize: res.originalSize,
+      newSize: res.newSize,
+    };
   }
 
   /**

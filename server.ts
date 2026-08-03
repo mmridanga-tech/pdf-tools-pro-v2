@@ -8,6 +8,7 @@ import assistantHandler from './api/gemini/assistant.ts';
 import analyzerHandler from './api/gemini/analyzer.ts';
 import wordConvertHandler from './api/convert/word.ts';
 import pdfToWordHandler from './api/convert/pdfToWord.ts';
+import compressHandler from './api/convert/compress.ts';
 
 async function startServer() {
   const app = express();
@@ -21,6 +22,7 @@ async function startServer() {
   app.post('/api/gemini/analyzer', analyzerHandler);
   app.all('/api/convert/word-to-pdf', wordConvertHandler);
   app.all('/api/convert/pdf-to-word', pdfToWordHandler);
+  app.all('/api/convert/compress', compressHandler);
 
   // Vite middleware setup
   if (process.env.NODE_ENV !== 'production') {
