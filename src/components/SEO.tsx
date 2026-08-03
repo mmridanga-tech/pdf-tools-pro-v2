@@ -8,16 +8,16 @@ interface SEOProps {
 }
 
 export const SEO: React.FC<SEOProps> = ({
-  title = 'PDF Tools Pro - Secure Browser PDF Suite',
-  description = 'Free online PDF tools to merge, split, compress, protect, unlock, and convert PDF files. 100% private, browser-based processing with zero server uploads.',
+  title = 'SmartPDF AI - Enterprise PDF & Document Productivity Suite',
+  description = 'Free online PDF tools to merge, split, compress, protect, unlock, OCR, convert, and AI-chat with PDF files. 100% private client-side processing.',
   path = '/',
   toolName,
 }) => {
   const fullTitle = toolName
-    ? `${toolName} - PDF Tools Pro`
-    : title.includes('PDF Tools Pro')
+    ? `${toolName} - SmartPDF AI`
+    : title.includes('SmartPDF')
     ? title
-    : `${title} | PDF Tools Pro`;
+    : `${title} | SmartPDF AI`;
 
   useEffect(() => {
     // Update Title
