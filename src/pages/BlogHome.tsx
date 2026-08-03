@@ -86,7 +86,6 @@ export const BlogHome: React.FC = () => {
         title="PDF & AI Knowledge Center - SmartPDF AI Blog"
         description="Expert guides, productivity tutorials, AI document analysis tips, and security best practices for PDF workflows."
         path="/blog"
-        type="CollectionPage"
         jsonLdSchema={blogJsonLd}
       />
 
