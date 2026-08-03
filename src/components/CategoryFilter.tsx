@@ -16,7 +16,7 @@ const CATEGORIES: { id: ToolCategory; label: string }[] = [
   { id: 'security', label: 'Security & Tools' },
 ];
 
-export const CategoryFilter: React.FC<CategoryFilterProps> = ({
+export const CategoryFilter: React.FC<CategoryFilterProps> = React.memo(({
   selectedCategory,
   onSelectCategory,
 }) => {
@@ -48,5 +48,5 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
       })}
     </div>
   );
-};
+});
 

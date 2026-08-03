@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Hero } from '../components/Hero';
 import { CategoryFilter } from '../components/CategoryFilter';
@@ -18,19 +18,33 @@ export const Home: React.FC = () => {
     setFavoriteIds(getFavoriteTools());
   }, []);
 
-  const favoriteTools = PDF_TOOLS.filter((t) => favoriteIds.includes(t.id));
+  const favoriteTools = useMemo(() => {
+    return PDF_TOOLS.filter((t) => favoriteIds.includes(t.id));
+  }, [favoriteIds]);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const handleSelectCategory = useCallback((category: ToolCategory) => {
+    setSelectedCategory(category);
+  }, []);
 
   // Filter tools based on search query and selected category
-  const filteredTools = PDF_TOOLS.filter((tool) => {
-    const matchesSearch =
-      tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredTools = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return PDF_TOOLS.filter((tool) => {
+      const matchesSearch =
+        !query ||
+        tool.name.toLowerCase().includes(query) ||
+        tool.description.toLowerCase().includes(query);
 
-    const matchesCategory =
-      selectedCategory === 'all' || tool.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === 'all' || tool.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
-  });
+      return matchesSearch && matchesCategory;
+    });
+  }, [searchQuery, selectedCategory]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0B]">
@@ -41,7 +55,7 @@ export const Home: React.FC = () => {
       />
 
       {/* Hero Section */}
-      <Hero searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <Hero searchQuery={searchQuery} onSearchChange={handleSearchChange} />
 
       {/* Main Tools Container */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-12">
@@ -65,7 +79,7 @@ export const Home: React.FC = () => {
         {/* Category Filters */}
         <CategoryFilter
           selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
+          onSelectCategory={handleSelectCategory}
         />
 
         {/* Tools Grid */}

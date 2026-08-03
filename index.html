@@ -27,22 +27,52 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>" />
 
-    <!-- Google Analytics (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SCDQ6X3ZC3"></script>
+    <!-- Deferred Third-Party Scripts (Google Analytics & Clarity - Loaded after user interaction or idle) -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-SCDQ6X3ZC3');
-    </script>
+      window.gtag = gtag;
 
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-      (function(c,l,a,r,i,t,y){
-          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "xwjp8x03ar");
+      (function() {
+        var loaded = false;
+        function loadThirdParty() {
+          if (loaded) return;
+          loaded = true;
+
+          // GA4
+          gtag('js', new Date());
+          gtag('config', 'G-SCDQ6X3ZC3');
+          var gaScript = document.createElement('script');
+          gaScript.async = true;
+          gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-SCDQ6X3ZC3';
+          document.head.appendChild(gaScript);
+
+          // Microsoft Clarity
+          (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "xwjp8x03ar");
+        }
+
+        var events = ['pointermove', 'scroll', 'keydown', 'touchstart', 'click'];
+        function triggerLoad() {
+          loadThirdParty();
+          events.forEach(function(ev) {
+            window.removeEventListener(ev, triggerLoad, { passive: true });
+          });
+        }
+
+        events.forEach(function(ev) {
+          window.addEventListener(ev, triggerLoad, { passive: true });
+        });
+
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(function() { setTimeout(loadThirdParty, 3500); });
+        } else {
+          setTimeout(loadThirdParty, 4000);
+        }
+      })();
     </script>
 
     <title>SmartPDF AI - Enterprise PDF Productivity & AI Suite</title>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Sparkles, Zap, Github, Linkedin, Twitter, ExternalLink, Globe, Heart } from 'lucide-react';
 
-export const Footer: React.FC = () => {
+export const Footer: React.FC = React.memo(() => {
   return (
     <footer className="bg-[#070708] text-slate-400 border-t border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
@@ -195,4 +195,4 @@ export const Footer: React.FC = () => {
       </div>
     </footer>
   );
-};
+});

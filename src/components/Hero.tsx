@@ -7,7 +7,7 @@ interface HeroProps {
   onSearchChange: (query: string) => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ searchQuery, onSearchChange }) => {
+export const Hero: React.FC<HeroProps> = React.memo(({ searchQuery, onSearchChange }) => {
   return (
     <section className="relative pt-14 pb-16 md:pt-24 md:pb-24 bg-[#0A0A0B] overflow-hidden border-b border-slate-800/60">
       {/* Background ambient lighting circles */}
@@ -105,5 +105,5 @@ export const Hero: React.FC<HeroProps> = ({ searchQuery, onSearchChange }) => {
       </div>
     </section>
   );
-};
+});
 

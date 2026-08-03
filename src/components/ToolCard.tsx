@@ -8,7 +8,7 @@ interface ToolCardProps {
   tool: PDFTool;
 }
 
-export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
+export const ToolCard: React.FC<ToolCardProps> = React.memo(({ tool }) => {
   // Dynamically get icon component from lucide-react
   const IconComponent =
     (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[tool.icon] ||
@@ -57,4 +57,4 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool }) => {
       </Link>
     </motion.div>
   );
-};
+});
