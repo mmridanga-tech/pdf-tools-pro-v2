@@ -153,6 +153,15 @@ export const Navbar: React.FC = () => {
                 Pricing
               </Link>
 
+              <Link
+                to="/blog"
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  activePath.startsWith('/blog') ? 'text-red-400 font-bold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Blog
+              </Link>
+
               {user?.role === 'admin' && (
                 <Link
                   to="/admin"

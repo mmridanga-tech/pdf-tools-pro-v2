@@ -5,6 +5,7 @@ interface SEOProps {
   description?: string;
   path?: string;
   toolName?: string;
+  jsonLdSchema?: Record<string, unknown>;
 }
 
 export const SEO: React.FC<SEOProps> = ({
@@ -12,6 +13,7 @@ export const SEO: React.FC<SEOProps> = ({
   description = 'Free online PDF tools to merge, split, compress, protect, unlock, OCR, convert, and AI-chat with PDF files. 100% private client-side processing.',
   path = '/',
   toolName,
+  jsonLdSchema,
 }) => {
   const fullTitle = toolName
     ? `${toolName} - SmartPDF AI`
@@ -70,7 +72,7 @@ export const SEO: React.FC<SEOProps> = ({
       document.head.appendChild(scriptTag);
     }
 
-    const schemaData = {
+    const schemaData = jsonLdSchema || {
       '@context': 'https://schema.org',
       '@type': toolName ? 'SoftwareApplication' : 'WebApplication',
       name: fullTitle,

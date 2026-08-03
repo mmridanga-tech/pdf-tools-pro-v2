@@ -44,6 +44,8 @@ const CookiesPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ de
 const Disclaimer = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.Disclaimer })));
 const AboutUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.AboutUs })));
 const ContactUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.ContactUs })));
+const BlogHome = lazy(() => import('../pages/BlogHome').then((m) => ({ default: m.BlogHome })));
+const BlogPost = lazy(() => import('../pages/BlogPost').then((m) => ({ default: m.BlogPost })));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 
 const ScrollToTop: React.FC = () => {
@@ -145,6 +147,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route path="/blog" element={<BlogHome />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/404" element={<NotFoundPage />} />
 
           <Route path="*" element={<NotFoundPage />} />
