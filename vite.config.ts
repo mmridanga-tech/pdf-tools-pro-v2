@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
@@ -14,31 +14,8 @@ export default defineConfig(() => {
     build: {
       target: 'esnext',
       cssMinify: true,
-      minify: 'esbuild',
-      chunkSizeWarningLimit: 1500,
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-                return 'vendor-react';
-              }
-              if (id.includes('lucide-react')) {
-                return 'vendor-icons';
-              }
-              if (id.includes('motion')) {
-                return 'vendor-motion';
-              }
-              if (id.includes('pdf-lib') || id.includes('@cantoo/pdf-lib') || id.includes('pdfjs-dist')) {
-                return 'vendor-pdf';
-              }
-              if (id.includes('@google/genai')) {
-                return 'vendor-ai';
-              }
-            }
-          },
-        },
-      },
+      minify: 'esbuild' as const,
+      chunkSizeWarningLimit: 2000,
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
