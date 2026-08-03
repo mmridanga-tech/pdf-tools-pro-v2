@@ -1,9 +1,15 @@
 import { formatBytes } from '../utils/fileUtils';
 
+export interface ImageToPDFItem {
+  file: File;
+  rotation?: number; // 0, 90, 180, 270
+}
+
 export interface ImageToPDFOptions {
   orientation: 'portrait' | 'landscape' | 'auto';
   margin: number; // in pt or mm
   pageSize: 'a4' | 'letter' | 'fit';
+  quality?: number; // 0.1 to 1.0
 }
 
 export interface CompressImageOptions {
@@ -49,36 +55,60 @@ export class ImageService {
   }
 
   /**
-   * Convert multiple image files into a compiled PDF
+   * Convert multiple image files or items into a compiled PDF
    */
   static async imageToPDF(
-    files: File[],
-    options: ImageToPDFOptions = { orientation: 'auto', margin: 20, pageSize: 'a4' }
+    itemsInput: (File | ImageToPDFItem)[],
+    options: ImageToPDFOptions = { orientation: 'auto', margin: 20, pageSize: 'a4', quality: 0.92 },
+    onProgress?: (percent: number, msg: string) => void
   ): Promise<Blob> {
-    if (files.length === 0) {
+    if (itemsInput.length === 0) {
       throw new Error('Please select at least one image file.');
     }
+
+    if (onProgress) onProgress(5, 'Initializing PDF compiler engine...');
 
     const jsPDFMod = await import('jspdf');
     const jsPDF = jsPDFMod.default;
 
     let doc: InstanceType<typeof jsPDF> | null = null;
+    const quality = typeof options.quality === 'number' ? Math.min(1.0, Math.max(0.1, options.quality)) : 0.92;
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < itemsInput.length; i++) {
+      const rawItem = itemsInput[i];
+      const file = rawItem instanceof File ? rawItem : rawItem.file;
+      const rotation = rawItem instanceof File ? 0 : rawItem.rotation || 0;
+
+      if (onProgress) {
+        const pct = Math.round(10 + (i / itemsInput.length) * 85);
+        onProgress(pct, `Processing image ${i + 1} of ${itemsInput.length}...`);
+      }
+
       const img = await ImageService.loadImageFromFile(file);
+      const naturalW = img.naturalWidth || img.width;
+      const naturalH = img.naturalHeight || img.height;
 
-      // Create canvas to render clean data URL
+      const isRotated90 = rotation === 90 || rotation === 270;
+      const canvasW = isRotated90 ? naturalH : naturalW;
+      const canvasH = isRotated90 ? naturalW : naturalH;
+
+      // Create canvas to render clean rotated data URL
       const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth || img.width;
-      canvas.height = img.naturalHeight || img.height;
+      canvas.width = canvasW;
+      canvas.height = canvasH;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Could not initialize canvas 2d context.');
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
 
-      const imgDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvasW, canvasH);
+
+      ctx.save();
+      ctx.translate(canvasW / 2, canvasH / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.drawImage(img, -naturalW / 2, -naturalH / 2);
+      ctx.restore();
+
+      const imgDataUrl = canvas.toDataURL('image/jpeg', quality);
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
 
@@ -131,7 +161,7 @@ export class ImageService {
       }
 
       // Calculate placement inside margin
-      const margin = options.pageSize === 'fit' ? options.margin : options.margin;
+      const margin = options.margin;
       const availW = pageW - margin * 2;
       const availH = pageH - margin * 2;
 
@@ -148,6 +178,8 @@ export class ImageService {
 
       doc?.addImage(imgDataUrl, 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
     }
+
+    if (onProgress) onProgress(100, 'Compilation finished!');
 
     if (!doc) throw new Error('Failed to create PDF document.');
     return doc.output('blob');
