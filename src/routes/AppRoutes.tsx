@@ -39,12 +39,16 @@ const Pricing = lazy(() => import('../pages/Pricing').then((m) => ({ default: m.
 const CloudStoragePage = lazy(() => import('../pages/CloudStorage').then((m) => ({ default: m.CloudStoragePage })));
 const Settings = lazy(() => import('../pages/Settings').then((m) => ({ default: m.Settings })));
 const HelpCenter = lazy(() => import('../pages/HelpCenter').then((m) => ({ default: m.HelpCenter })));
+// Legal & Policy Pages
 const PrivacyPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.PrivacyPolicy })));
 const TermsOfService = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.TermsOfService })));
 const CookiesPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.CookiesPolicy })));
 const Disclaimer = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.Disclaimer })));
 const AboutUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.AboutUs })));
 const ContactUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.ContactUs })));
+const EditorialPolicy = lazy(() => import('../pages/EditorialPolicy').then((m) => ({ default: m.EditorialPolicy })));
+const ReviewProcess = lazy(() => import('../pages/ReviewProcess').then((m) => ({ default: m.ReviewProcess })));
+const AIContentPolicy = lazy(() => import('../pages/AIContentPolicy').then((m) => ({ default: m.AIContentPolicy })));
 const BlogHome = lazy(() => import('../pages/BlogHome').then((m) => ({ default: m.BlogHome })));
 const BlogPost = lazy(() => import('../pages/BlogPost').then((m) => ({ default: m.BlogPost })));
 const AuthorProfile = lazy(() => import('../pages/AuthorProfile').then((m) => ({ default: m.AuthorProfile })));
@@ -178,6 +182,9 @@ export const AppRoutes: React.FC = () => {
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route path="/editorial-policy" element={<EditorialPolicy />} />
+          <Route path="/review-process" element={<ReviewProcess />} />
+          <Route path="/ai-content-policy" element={<AIContentPolicy />} />
           <Route path="/blog" element={<BlogHome />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/author/mridanga-mondal" element={<AuthorProfile />} />
