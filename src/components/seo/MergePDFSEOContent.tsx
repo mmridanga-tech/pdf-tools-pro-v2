@@ -17,6 +17,8 @@ import {
   Globe,
   Award
 } from 'lucide-react';
+import { RecommendedArticles } from './RecommendedArticles';
+import { RelatedTools } from './RelatedTools';
 
 export const MergePDFSEOContent: React.FC = () => {
   const faqs = [
@@ -403,6 +405,12 @@ export const MergePDFSEOContent: React.FC = () => {
           </Link>
         </div>
       </section>
+
+      {/* Recommended Articles Section */}
+      <RecommendedArticles category="Tutorials & Guides" limit={3} />
+
+      {/* Related Tools Section */}
+      <RelatedTools currentToolPath="/merge-pdf" limit={4} />
     </div>
   );
 };

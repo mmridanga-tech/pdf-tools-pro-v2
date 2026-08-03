@@ -9,6 +9,8 @@ import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import { SEO } from '../components/SEO';
+import { RecommendedArticles } from '../components/seo/RecommendedArticles';
+import { RelatedTools } from '../components/seo/RelatedTools';
 import {
   Lock,
   FileText,
@@ -392,6 +394,12 @@ export const ProtectPDF: React.FC = () => {
           onReset={handleReset}
           title="Encrypting PDF Document"
         />
+
+        {/* Recommended Articles & Related Tools */}
+        <div className="mt-16 space-y-12">
+          <RecommendedArticles category="Security & Privacy" limit={3} />
+          <RelatedTools currentToolPath="/protect-pdf" limit={4} />
+        </div>
       </div>
     </motion.div>
   );

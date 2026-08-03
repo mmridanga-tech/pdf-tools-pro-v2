@@ -29,6 +29,7 @@ import {
 import { SEO } from '../components/SEO';
 import { BLOG_POSTS, getBlogPostBySlug, BlogPostItem } from '../data/blogData';
 import { useToast } from '../context/ToastContext';
+import { RelatedTools } from '../components/seo/RelatedTools';
 
 export const BlogPost: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -68,10 +69,12 @@ export const BlogPost: React.FC = () => {
   const prevPost = currentIndex > 0 ? BLOG_POSTS[currentIndex - 1] : BLOG_POSTS[BLOG_POSTS.length - 1];
   const nextPost = currentIndex < BLOG_POSTS.length - 1 ? BLOG_POSTS[currentIndex + 1] : BLOG_POSTS[0];
 
-  // Related posts
-  const relatedPosts = BLOG_POSTS.filter(
+  // Related posts with fallback to guarantee 3 items
+  const matchedRelated = BLOG_POSTS.filter(
     (p) => p.id !== post.id && (post.relatedSlugs?.includes(p.slug) || p.categorySlug === post.categorySlug)
-  ).slice(0, 3);
+  );
+  const remainingPosts = BLOG_POSTS.filter((p) => p.id !== post.id && !matchedRelated.some((m) => m.id === p.id));
+  const relatedPosts = [...matchedRelated, ...remainingPosts].slice(0, 3);
 
   const articleUrl = `https://smartpdfai.tech/blog/${post.slug}`;
 
@@ -731,6 +734,11 @@ export const BlogPost: React.FC = () => {
             </div>
           </section>
         )}
+
+        {/* Related PDF Tools Section */}
+        <div className="pt-2">
+          <RelatedTools currentToolPath={post.toolCta?.link} limit={4} />
+        </div>
 
       </div>
     </div>

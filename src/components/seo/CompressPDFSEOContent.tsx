@@ -20,6 +20,8 @@ import {
   Lock,
   Award
 } from 'lucide-react';
+import { RecommendedArticles } from './RecommendedArticles';
+import { RelatedTools } from './RelatedTools';
 
 export const CompressPDFSEOContent: React.FC = () => {
   const faqs = [
@@ -411,6 +413,12 @@ export const CompressPDFSEOContent: React.FC = () => {
           </Link>
         </div>
       </section>
+
+      {/* Recommended Articles Section */}
+      <RecommendedArticles category="PDF Compression" limit={3} />
+
+      {/* Related Tools Section */}
+      <RelatedTools currentToolPath="/compress-pdf" limit={4} />
     </div>
   );
 };

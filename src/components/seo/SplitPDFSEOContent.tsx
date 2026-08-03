@@ -20,6 +20,8 @@ import {
   Filter,
   MousePointer
 } from 'lucide-react';
+import { RecommendedArticles } from './RecommendedArticles';
+import { RelatedTools } from './RelatedTools';
 
 export const SplitPDFSEOContent: React.FC = () => {
   const faqs = [
@@ -411,6 +413,12 @@ export const SplitPDFSEOContent: React.FC = () => {
           </Link>
         </div>
       </section>
+
+      {/* Recommended Articles Section */}
+      <RecommendedArticles category="Tutorials & Guides" limit={3} />
+
+      {/* Related Tools Section */}
+      <RelatedTools currentToolPath="/split-pdf" limit={4} />
     </div>
   );
 };

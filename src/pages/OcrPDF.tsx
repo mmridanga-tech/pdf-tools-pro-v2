@@ -11,6 +11,8 @@ import { formatBytes } from '../utils/fileUtils';
 import { OCROptions, OCRResultData } from '../types/pdfTypes';
 import { useToast } from '../context/ToastContext';
 import { SEO } from '../components/SEO';
+import { RecommendedArticles } from '../components/seo/RecommendedArticles';
+import { RelatedTools } from '../components/seo/RelatedTools';
 import {
   ScanText,
   FileType,
@@ -340,6 +342,12 @@ export const OcrPDF: React.FC = () => {
             )}
           </motion.div>
         )}
+
+        {/* Recommended Articles & Related Tools */}
+        <div className="mt-16 space-y-12">
+          <RecommendedArticles category="OCR & Text AI" limit={3} />
+          <RelatedTools currentToolPath="/ocr-pdf" limit={4} />
+        </div>
       </div>
     </motion.div>
   );

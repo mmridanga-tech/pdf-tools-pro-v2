@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { FileUploader } from '../components/FileUploader';
 import { SEO } from '../components/SEO';
 import { ToolHeader } from '../components/ToolHeader';
+import { RecommendedArticles } from '../components/seo/RecommendedArticles';
+import { RelatedTools } from '../components/seo/RelatedTools';
 import { PDFCanvasViewer } from '../components/PDFCanvasViewer';
 import { useToast } from '../context/ToastContext';
 import { saveRecentFile, addActivityLog, saveAiChat } from '../utils/storageUtils';
@@ -845,6 +847,12 @@ export const PdfChat: React.FC = () => {
             </div>
           )}
         </AnimatePresence>
+
+        {/* Recommended Articles & Related Tools */}
+        <div className="mt-16 space-y-12">
+          <RecommendedArticles category="AI & Automation" limit={3} />
+          <RelatedTools currentToolPath="/chat-pdf" limit={4} />
+        </div>
       </div>
     </div>
   );

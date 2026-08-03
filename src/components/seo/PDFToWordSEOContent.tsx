@@ -21,6 +21,8 @@ import {
   Award,
   RefreshCw
 } from 'lucide-react';
+import { RecommendedArticles } from './RecommendedArticles';
+import { RelatedTools } from './RelatedTools';
 
 export const PDFToWordSEOContent: React.FC = () => {
   const faqs = [
@@ -412,6 +414,12 @@ export const PDFToWordSEOContent: React.FC = () => {
           </Link>
         </div>
       </section>
+
+      {/* Recommended Articles Section */}
+      <RecommendedArticles category="Format Conversion" limit={3} />
+
+      {/* Related Tools Section */}
+      <RelatedTools currentToolPath="/pdf-to-word" limit={4} />
     </div>
   );
 };
