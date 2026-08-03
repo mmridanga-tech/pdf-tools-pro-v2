@@ -17,7 +17,12 @@ import {
   UserCheck,
   Server,
   Key,
-  HardDrive
+  HardDrive,
+  Scale,
+  Ban,
+  HelpCircle,
+  Sparkles,
+  Gavel
 } from 'lucide-react';
 import { SEO } from '../components/SEO';
 
@@ -413,39 +418,341 @@ export const TermsOfService: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0A0A0B] py-12 px-4 sm:px-6 lg:px-8">
       <SEO
-        title="Terms of Service - SmartPDF AI"
-        description="SmartPDF commercial SaaS terms of service and acceptable usage guidelines."
+        title="Terms and Conditions - SmartPDF AI"
+        description="SmartPDF AI Terms and Conditions. Comprehensive user agreement, user responsibilities, acceptable use policy, AI content disclaimer, file processing policy, limitation of liability, and governing law."
+        path="/terms"
       />
-      <div className="max-w-4xl mx-auto bg-[#121215] border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl space-y-8">
-        <div className="space-y-2 border-b border-slate-800/80 pb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold">
-            <FileText className="w-3.5 h-3.5" /> User Agreement
+      
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header Banner */}
+        <div className="bg-[#121215] border border-slate-800 rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold">
+              <Scale className="w-3.5 h-3.5" /> User Agreement
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold">
+              <FileText className="w-3.5 h-3.5" /> Terms & Conditions
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold">
+              <Globe className="w-3.5 h-3.5" /> smartpdfai.tech
+            </span>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Terms of Service</h1>
-          <p className="text-xs text-slate-400">Effective Date: August 1, 2026</p>
+
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Terms & Conditions</h1>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
+              Welcome to <strong className="text-slate-200">SmartPDF AI</strong> (<a href="https://smartpdfai.tech" className="text-red-400 hover:underline">https://smartpdfai.tech</a>). These Terms & Conditions govern your access to and use of our online PDF conversion utilities, AI document chat assistant, team workspaces, and web services.
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
+            <div>
+              <span>Effective Date: <strong>August 3, 2026</strong></span>
+              <span className="mx-2">•</span>
+              <span>Last Updated: <strong>August 3, 2026</strong></span>
+            </div>
+            <a
+              href="mailto:mmridanga@gmail.com"
+              className="inline-flex items-center gap-1.5 text-red-400 font-semibold hover:text-red-300 transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5" /> mmridanga@gmail.com
+            </a>
+          </div>
         </div>
 
-        <div className="space-y-6 text-xs text-slate-300 leading-relaxed">
-          <section className="space-y-2">
-            <h2 className="text-sm font-bold text-white">1. Service Acceptance</h2>
-            <p>
-              By accessing or using SmartPDF tools, AI document processing services, or team workspaces, you agree to be bound by these commercial Terms of Service and all applicable federal and international laws.
+        {/* High-Level Highlights Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-[#121215] border border-slate-800 rounded-2xl p-4 space-y-2">
+            <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <h3 className="text-xs font-bold text-white">Binding Agreement</h3>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              By using our website, you accept these terms in full and agree to comply with all rules.
             </p>
+          </div>
+
+          <div className="bg-[#121215] border border-slate-800 rounded-2xl p-4 space-y-2">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <Ban className="w-4 h-4" />
+            </div>
+            <h3 className="text-xs font-bold text-white">Acceptable Use</h3>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              Strictly prohibits uploading malware, unauthorized copyrighted media, or automated abuse.
+            </p>
+          </div>
+
+          <div className="bg-[#121215] border border-slate-800 rounded-2xl p-4 space-y-2">
+            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <h3 className="text-xs font-bold text-white">AI Disclaimer</h3>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              AI summaries are for assistance only. Users should verify critical legal/financial outputs.
+            </p>
+          </div>
+
+          <div className="bg-[#121215] border border-slate-800 rounded-2xl p-4 space-y-2">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Lock className="w-4 h-4" />
+            </div>
+            <h3 className="text-xs font-bold text-white">Zero Disk Storage</h3>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              Files are processed in volatile RAM buffers and automatically purged within 1 hour.
+            </p>
+          </div>
+        </div>
+
+        {/* Detailed Terms Container */}
+        <div className="bg-[#121215] border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl space-y-10">
+          
+          {/* Section 1: Acceptance of Terms */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <CheckCircle2 className="w-4 h-4 text-red-500" />
+              <h2>1. Acceptance of Terms</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+              <p>
+                By accessing, browsing, creating an account, or utilizing any services provided at <a href="https://smartpdfai.tech" className="text-red-400 hover:underline">https://smartpdfai.tech</a>, you confirm that you have read, understood, and agreed to be legally bound by these Terms & Conditions ("Terms"), as well as our <a href="/privacy" className="text-red-400 hover:underline">Privacy Policy</a> and <a href="/cookies" className="text-red-400 hover:underline">Cookie Policy</a>.
+              </p>
+              <p>
+                If you do not agree to these Terms, you must immediately discontinue using our website and services. You represent that you are at least 18 years old (or the legal age of majority in your jurisdiction) and possess the legal capacity to enter into binding agreements.
+              </p>
+            </div>
           </section>
 
-          <section className="space-y-2">
-            <h2 className="text-sm font-bold text-white">2. Permitted Use & Content Restrictions</h2>
-            <p>
-              You agree not to upload malware, copyrighted media without authorization, or illegal material. SmartPDF reserves the right to terminate accounts that attempt automated abuse or denial-of-service vector exploitation.
-            </p>
+          {/* Section 2: Description of Services */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <Cpu className="w-4 h-4 text-red-500" />
+              <h2>2. Description of Services</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-3">
+              <p>
+                SmartPDF AI provides a web-based productivity platform featuring:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-slate-300">
+                <li><strong className="text-white">PDF Document Utilities:</strong> Merging, splitting, compressing, rotating, watermarking, page numbering, unlocking, and file type conversions (PDF to Word, Word to PDF, Image to PDF, PDF to Image).</li>
+                <li><strong className="text-white">AI Document Chat & OCR:</strong> Natural language document search, AI PDF summarization, and OCR text extraction powered by Gemini AI and computer vision models.</li>
+                <li><strong className="text-white">Client & Server Processing Tiers:</strong> Client-side browser processing via WebAssembly alongside server-side volatile RAM execution.</li>
+                <li><strong className="text-white">Team Workspaces & Cloud Storage:</strong> Collaborative document management and cloud workspace tools for Pro and Enterprise subscribers.</li>
+              </ul>
+              <p>
+                We reserve the right to modify, update, enhance, or discontinue any feature of the platform at any time without prior notice.
+              </p>
+            </div>
           </section>
 
-          <section className="space-y-2">
-            <h2 className="text-sm font-bold text-white">3. Commercial Subscription & SLA</h2>
-            <p>
-              Pro and Enterprise subscriptions are billed according to chosen monthly or annual billing periods. SmartPDF guarantees a 99.9% uptime Service Level Agreement (SLA) for paid workspace tiers.
-            </p>
+          {/* Section 3: User Responsibilities */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <UserCheck className="w-4 h-4 text-red-500" />
+              <h2>3. User Account & Responsibilities</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+              <p>
+                To access premium workspace features, you may register an account using Firebase Authentication or OAuth providers. You agree to:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-slate-300">
+                <li>Provide accurate, current, and complete account information during registration.</li>
+                <li>Maintain the confidentiality of your login credentials and authentication tokens.</li>
+                <li>Accept full responsibility for all activities that occur under your registered user account.</li>
+                <li>Promptly notify us at <a href="mailto:mmridanga@gmail.com" className="text-red-400 hover:underline">mmridanga@gmail.com</a> if you discover any unauthorized account access or security breach.</li>
+              </ul>
+            </div>
           </section>
+
+          {/* Section 4: Acceptable Use Policy */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <Ban className="w-4 h-4 text-red-500" />
+              <h2>4. Acceptable Use Policy (AUP)</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-3">
+              <p>
+                You agree to use SmartPDF AI strictly for lawful productivity purposes. You are <strong className="text-red-400">STRICTLY PROHIBITED</strong> from:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-slate-300">
+                <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1">
+                  <strong className="text-white text-xs block">Malware & Attacks</strong>
+                  <p className="text-[11px] text-slate-400">
+                    Uploading files containing computer viruses, trojans, ransomware, spyware, or malicious payloads.
+                  </p>
+                </div>
+                <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1">
+                  <strong className="text-white text-xs block">Automated Abuse</strong>
+                  <p className="text-[11px] text-slate-400">
+                    Executing automated scrapers, bots, or denial-of-service (DDoS) vectors intended to overload our infrastructure.
+                  </p>
+                </div>
+                <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1">
+                  <strong className="text-white text-xs block">Unauthorized Password Unlocking</strong>
+                  <p className="text-[11px] text-slate-400">
+                    Using our PDF Unlock tool on documents for which you do not possess rightful ownership or explicit legal authorization.
+                  </p>
+                </div>
+                <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1">
+                  <strong className="text-white text-xs block">Reverse Engineering</strong>
+                  <p className="text-[11px] text-slate-400">
+                    Attempting to decompile, reverse engineer, or extract proprietary WebAssembly binaries and server code.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 5: Intellectual Property */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <ShieldCheck className="w-4 h-4 text-red-500" />
+              <h2>5. Intellectual Property Rights</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+              <p>
+                <strong className="text-white">SmartPDF AI Ownership:</strong> All intellectual property rights in the SmartPDF AI platform—including software code, WebAssembly modules, algorithms, UI designs, logos, graphics, brand names, and documentation—are the exclusive property of SmartPDF AI and its licensors.
+              </p>
+              <p>
+                <strong className="text-white">Your Content Ownership:</strong> You retain full, unencumbered ownership, title, and copyright over all documents, text, images, and files you upload to or process using SmartPDF AI. We claim no ownership over your files or document outputs.
+              </p>
+            </div>
+          </section>
+
+          {/* Section 6: AI-Generated Content Disclaimer */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <h2>6. AI-Generated Content Disclaimer</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-3">
+              <p>
+                SmartPDF AI integrates advanced generative AI models (such as Google Gemini AI) to summarize documents, extract insights, and answer questions regarding uploaded PDFs:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-slate-300">
+                <li><strong className="text-white">Informational Purpose Only:</strong> AI chat outputs, document summaries, citations, and translations are generated automatically and provided for general informational and assistance purposes.</li>
+                <li><strong className="text-white">No Professional Advice:</strong> AI answers do not constitute formal legal, financial, medical, accounting, or professional advice.</li>
+                <li><strong className="text-white">User Verification Duty:</strong> Large language models may occasionally produce incomplete, inaccurate, or hallucinated responses. You are responsible for independently verifying critical data before relying on AI outputs for business or legal decisions.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* Section 7: File Upload & Processing Policy */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <HardDrive className="w-4 h-4 text-red-500" />
+              <h2>7. File Upload & Ephemeral RAM Processing Policy</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+              <p>
+                We maintain strict technical protocols regarding user document privacy:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-slate-300">
+                <li>Client-side tasks (e.g., merge, split, rotate) run in your browser session without uploading files to our servers whenever possible.</li>
+                <li>Server-side processing tasks (e.g., OCR, AI Chat) load files into volatile RAM memory buffers and <strong className="text-emerald-400">automatically purge files within 1 hour</strong> or immediately after processing completes.</li>
+                <li>We do not store permanent copies of processed documents on long-term disk drives.</li>
+                <li>Your uploaded document content is <strong className="text-emerald-400">never used to train public foundational AI models</strong>.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* Section 8: Commercial Subscriptions & Billing */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <FileText className="w-4 h-4 text-red-500" />
+              <h2>8. Commercial Subscriptions, Billing & Cancellation</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+              <p>
+                SmartPDF AI offers free usage tiers alongside paid Pro and Enterprise subscriptions:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-slate-300">
+                <li><strong className="text-white">Billing Cycles:</strong> Paid subscriptions are billed in advance on a monthly or annual recurring basis.</li>
+                <li><strong className="text-white">Payment Processing:</strong> Transactions are handled by PCI-DSS compliant third-party payment gateways. SmartPDF AI does not store raw credit card numbers.</li>
+                <li><strong className="text-white">Cancellation:</strong> You may cancel your subscription at any time via your Account Settings. Cancellation takes effect at the end of the current paid billing period.</li>
+                <li><strong className="text-white">Refund Policy:</strong> Payments are non-refundable, except where required by mandatory consumer protection law.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* Section 9: Limitation of Liability */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <h2>9. Limitation of Liability & Warranty Disclaimer</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+              <p>
+                THE WEBSITE AND SERVICES ARE PROVIDED ON AN <strong className="text-white">"AS IS"</strong> AND <strong className="text-white">"AS AVAILABLE"</strong> BASIS WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR UNINTERRUPTED AVAILABILITY.
+              </p>
+              <p>
+                TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, SMARTPDF AI, ITS OFFICERS, DIRECTORS, EMPLOYEES, AND AFFILIATES SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, USE, GOODWILL, OR BUSINESS INTERRUPTION, ARISING FROM YOUR USE OF OR INABILITY TO USE THE SERVICE.
+              </p>
+              <p>
+                IN NO EVENT SHALL SMARTPDF AI'S TOTAL AGGREGATE LIABILITY FOR ALL CLAIMS EXCEED THE GREATER OF $100 USD OR THE AMOUNT PAID BY YOU TO SMARTPDF AI IN THE PRECEDING TWELVE (12) MONTHS.
+              </p>
+            </div>
+          </section>
+
+          {/* Section 10: Account Termination */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <Ban className="w-4 h-4 text-red-500" />
+              <h2>10. Account Termination & Service Suspension</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+              <p>
+                We reserve the right to suspend or terminate your account access immediately, without prior notice or liability, if you breach these Terms, engage in illegal activity, attempt to exploit platform security vulnerabilities, or cause harm to our system infrastructure or other users.
+              </p>
+              <p>
+                Upon termination, your right to access premium features will cease immediately.
+              </p>
+            </div>
+          </section>
+
+          {/* Section 11: Governing Law */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base border-b border-slate-800 pb-2">
+              <Gavel className="w-4 h-4 text-red-500" />
+              <h2>11. Governing Law & Dispute Resolution</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-2">
+              <p>
+                These Terms shall be governed by and construed in accordance with applicable laws, without giving effect to any choice or conflict of law provisions.
+              </p>
+              <p>
+                In the event of any legal dispute or claim arising under these Terms, you agree to first contact us at <a href="mailto:mmridanga@gmail.com" className="text-red-400 hover:underline">mmridanga@gmail.com</a> to attempt an informal, good-faith resolution prior to initiating formal legal proceedings.
+              </p>
+            </div>
+          </section>
+
+          {/* Section 12: Contact Us & Inquiries */}
+          <section className="space-y-4 pt-4 border-t border-slate-800">
+            <div className="flex items-center gap-2 text-white font-extrabold text-base">
+              <Mail className="w-4 h-4 text-red-500" />
+              <h2>12. Contact Information & Legal Inquiries</h2>
+            </div>
+            <div className="text-xs text-slate-300 leading-relaxed space-y-3">
+              <p>
+                If you have any questions, feedback, or legal inquiries regarding these Terms & Conditions, please contact our support and legal department:
+              </p>
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-2">
+                <h3 className="font-bold text-white text-sm">SmartPDF AI Legal Support</h3>
+                <div className="pt-2 flex flex-col sm:flex-row gap-4 text-xs font-semibold">
+                  <div className="flex items-center gap-2 text-white">
+                    <Mail className="w-4 h-4 text-red-400" />
+                    <span>Email: <a href="mailto:mmridanga@gmail.com" className="text-red-400 hover:underline">mmridanga@gmail.com</a></span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white">
+                    <Globe className="w-4 h-4 text-red-400" />
+                    <span>Website: <a href="https://smartpdfai.tech" className="text-red-400 hover:underline">https://smartpdfai.tech</a></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
         </div>
       </div>
     </div>
