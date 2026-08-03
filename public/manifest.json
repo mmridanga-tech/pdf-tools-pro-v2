@@ -1,6 +1,6 @@
 {
-  "short_name": "PDF Pro",
-  "name": "PDF Tools Pro - Secure Browser PDF Suite",
+  "short_name": "SmartPDF",
+  "name": "SmartPDF AI - Enterprise PDF & Document Productivity Suite",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -20,7 +20,7 @@
   "theme_color": "#0A0A0B",
   "display": "standalone",
   "orientation": "any",
-  "description": "Commercial browser-based PDF processing suite for merging, splitting, compressing, OCR, and encrypting PDF files securely.",
+  "description": "Enterprise browser-based PDF and AI processing suite for merging, splitting, compressing, converting, and chatting with documents securely.",
   "shortcuts": [
     {
       "name": "Merge PDF",
@@ -31,14 +31,26 @@
     {
       "name": "Compress PDF",
       "short_name": "Compress",
-      "description": "Reduce PDF size",
+      "description": "Reduce PDF file size",
       "url": "/compress"
     },
     {
-      "name": "Protect PDF",
-      "short_name": "Protect",
-      "description": "Encrypt PDF with password",
-      "url": "/protect-pdf"
+      "name": "AI PDF Chat",
+      "short_name": "AI Chat",
+      "description": "Chat with documents using Gemini AI",
+      "url": "/ai-chat"
+    },
+    {
+      "name": "Image to PDF",
+      "short_name": "Img -> PDF",
+      "description": "Convert images to PDF",
+      "url": "/image-to-pdf"
+    },
+    {
+      "name": "PDF to Image",
+      "short_name": "PDF -> Img",
+      "description": "Extract PDF pages to images",
+      "url": "/pdf-to-image"
     }
   ]
 }

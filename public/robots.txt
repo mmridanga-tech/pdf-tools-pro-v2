@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pdf-tools-pro.app/sitemap.xml
+Sitemap: https://smartpdf.ai/sitemap.xml

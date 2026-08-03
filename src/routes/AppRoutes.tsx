@@ -43,6 +43,7 @@ const TermsOfService = lazy(() => import('../pages/LegalPages').then((m) => ({ d
 const CookiesPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.CookiesPolicy })));
 const Disclaimer = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.Disclaimer })));
 const AboutUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.AboutUs })));
+const ContactUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.ContactUs })));
 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
@@ -142,6 +143,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/cookies" element={<CookiesPolicy />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/about" element={<AboutUs />} />
+          <Route path="/contact" element={<ContactUs />} />
 
           <Route path="*" element={<Home />} />
         </Routes>

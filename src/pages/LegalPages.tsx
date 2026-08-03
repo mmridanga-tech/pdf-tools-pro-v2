@@ -235,3 +235,106 @@ export const AboutUs: React.FC = () => {
     </div>
   );
 };
+
+export const ContactUs: React.FC = () => {
+  const [submitted, setSubmitted] = React.useState(false);
+  const [formData, setFormData] = React.useState({ name: '', email: '', subject: 'General Support', message: '' });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0A0A0B] py-12 px-4 sm:px-6 lg:px-8">
+      <SEO
+        title="Contact Us - SmartPDF AI Support & Enterprise Sales"
+        description="Get in touch with SmartPDF customer support, report bugs, or inquire about Enterprise SLA plans."
+      />
+      <div className="max-w-3xl mx-auto bg-[#121215] border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl space-y-8">
+        <div className="space-y-2 border-b border-slate-800/80 pb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold">
+            <Globe className="w-3.5 h-3.5" /> 24/7 Global Customer Support
+          </div>
+          <h1 className="text-3xl font-black text-white tracking-tight">Contact Us</h1>
+          <p className="text-xs text-slate-400">Have questions or feedback? Our team responds within 2 business hours.</p>
+        </div>
+
+        {submitted ? (
+          <div className="p-8 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center space-y-3">
+            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
+            <h3 className="text-lg font-bold text-white">Thank you for reaching out!</h3>
+            <p className="text-xs text-slate-300">Your message has been logged. A support specialist will contact you shortly at {formData.email}.</p>
+            <button
+              onClick={() => setSubmitted(false)}
+              className="mt-4 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors cursor-pointer"
+            >
+              Send Another Message
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Jane Doe"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="jane@company.com"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Subject Category</label>
+              <select
+                value={formData.subject}
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <option value="General Support">General Technical Support</option>
+                <option value="Enterprise Sales">Enterprise License & Billing</option>
+                <option value="Bug Report">Report a Feature Bug</option>
+                <option value="Privacy Inquiry">Privacy or Security Inquiry</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Your Message</label>
+              <textarea
+                required
+                rows={5}
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                placeholder="Describe how we can assist you..."
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-600/20 transition-all cursor-pointer"
+            >
+              Submit Support Ticket
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
