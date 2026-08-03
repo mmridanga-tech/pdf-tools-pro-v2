@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 import { FileUploader } from '../components/FileUploader';
 import { ToolHeader } from '../components/ToolHeader';
 import { SEO } from '../components/SEO';
+import { CompressPDFSEOContent } from '../components/seo/CompressPDFSEOContent';
 import {
   PDFCompressionService,
   PDFCompressQueueItem,
@@ -713,6 +714,9 @@ export const CompressPDF: React.FC = () => {
             </div>
           </motion.div>
         )}
+
+        {/* SEO Content Section */}
+        <CompressPDFSEOContent />
       </div>
     </motion.div>
   );

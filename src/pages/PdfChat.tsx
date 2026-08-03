@@ -35,6 +35,9 @@ import {
   SlidersHorizontal,
   ChevronRight,
   Layers,
+  Globe,
+  Table,
+  ListChecks,
 } from 'lucide-react';
 
 export const PdfChat: React.FC = () => {
@@ -67,6 +70,10 @@ export const PdfChat: React.FC = () => {
   // Explain Paragraph Modal State
   const [explainModalOpen, setExplainModalOpen] = useState<boolean>(false);
   const [explainText, setExplainText] = useState<string>('');
+
+  // Translate Modal State
+  const [translateModalOpen, setTranslateModalOpen] = useState<boolean>(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('Spanish');
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
@@ -145,18 +152,32 @@ export const PdfChat: React.FC = () => {
   const handleSendMessage = async (
     e?: React.FormEvent,
     customPrompt?: string,
-    mode: 'chat' | 'summarize' | 'explain' | 'search' = 'chat'
+    mode: 'chat' | 'summarize' | 'explain' | 'translate' | 'extractTables' | 'extractKeyPoints' | 'search' = 'chat',
+    targetLang?: string
   ) => {
     if (e) e.preventDefault();
     if (!activeDoc) return;
 
     const query = customPrompt || inputQuery;
-    if (!query.trim() || thinking) return;
+    if (!query.trim() && mode === 'chat') return;
+
+    const displayPrompt =
+      mode === 'summarize'
+        ? 'Generate executive summary'
+        : mode === 'explain'
+        ? `Explain concept: "${query}"`
+        : mode === 'translate'
+        ? `Translate document content into ${targetLang || selectedLanguage}`
+        : mode === 'extractTables'
+        ? 'Extract tables and structured data'
+        : mode === 'extractKeyPoints'
+        ? 'Extract core key points & findings'
+        : query;
 
     const userMsg: ChatMessage = {
       id: 'usr_' + Date.now(),
       sender: 'user',
-      text: query,
+      text: displayPrompt,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
@@ -170,7 +191,12 @@ export const PdfChat: React.FC = () => {
     setThinking(true);
 
     try {
-      const assistantMsg = await AIChatService.sendMessage(activeDoc, query, mode);
+      const assistantMsg = await AIChatService.sendMessage(
+        activeDoc,
+        query || 'Process document',
+        mode,
+        targetLang || selectedLanguage
+      );
 
       const finalMessages = [...updatedMessages, assistantMsg];
       setDocuments((prev) =>
@@ -480,16 +506,17 @@ export const PdfChat: React.FC = () => {
                   }`}
                 >
                   {/* Quick Action Tools Bar */}
-                  <div className="bg-[#18181D] px-5 py-3 border-b border-slate-800 flex items-center justify-between gap-3 overflow-x-auto scrollbar-none">
-                    <div className="flex items-center gap-2">
+                  <div className="bg-[#18181D] px-4 py-2.5 border-b border-slate-800 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => handleSendMessage(undefined, 'Summarize document', 'summarize')}
                         disabled={thinking}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                        title="AI Summary"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>Summarize PDF</span>
+                        <span>AI Summary</span>
                       </button>
 
                       <button
@@ -497,30 +524,55 @@ export const PdfChat: React.FC = () => {
                         onClick={() => setExplainModalOpen(true)}
                         disabled={thinking}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                        title="AI Explain"
                       >
                         <HelpCircle className="w-3.5 h-3.5" />
-                        <span>Explain Concept</span>
+                        <span>AI Explain</span>
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => handleSendMessage(undefined, 'Extract all key facts, numerical figures, and conclusions.', 'chat')}
+                        onClick={() => setTranslateModalOpen(true)}
+                        disabled={thinking}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                        title="AI Translate"
+                      >
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>AI Translate</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSendMessage(undefined, 'Extract all tables and matrix data into markdown tables.', 'extractTables')}
+                        disabled={thinking}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                        title="Extract Tables"
+                      >
+                        <Table className="w-3.5 h-3.5" />
+                        <span>Extract Tables</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSendMessage(undefined, 'Extract key bullet points and core takeaways.', 'extractKeyPoints')}
                         disabled={thinking}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shrink-0"
+                        title="Extract Key Points"
                       >
-                        <FileSearch className="w-3.5 h-3.5" />
-                        <span>Key Facts</span>
+                        <ListChecks className="w-3.5 h-3.5" />
+                        <span>Key Points</span>
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={handleExportChat}
-                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
-                        title="Export Chat Transcript"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-800 text-xs font-bold transition-all cursor-pointer"
+                        title="Download Chat History"
                       >
-                        <Download className="w-4 h-4" />
+                        <Download className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="hidden sm:inline">Download Chat</span>
                       </button>
                     </div>
                   </div>
@@ -709,6 +761,84 @@ export const PdfChat: React.FC = () => {
                     className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50"
                   >
                     Explain Concept
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* AI Translate Modal */}
+        <AnimatePresence>
+          {translateModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-[#141417] border border-slate-800 rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl"
+              >
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-purple-400" />
+                    <span>AI Translate PDF</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setTranslateModalOpen(false)}
+                    className="text-slate-500 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-400">
+                  Select your desired target language to translate key sections or summary of this PDF.
+                </p>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300">Target Language:</label>
+                  <select
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value)}
+                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-2xl text-xs text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                  >
+                    <option value="Spanish">Spanish (Español)</option>
+                    <option value="French">French (Français)</option>
+                    <option value="German">German (Deutsch)</option>
+                    <option value="Chinese">Chinese (中文)</option>
+                    <option value="Japanese">Japanese (日本語)</option>
+                    <option value="Hindi">Hindi (हिन्दी)</option>
+                    <option value="Portuguese">Portuguese (Português)</option>
+                    <option value="Arabic">Arabic (العربية)</option>
+                    <option value="Italian">Italian (Italiano)</option>
+                    <option value="Korean">Korean (한국어)</option>
+                    <option value="Russian">Russian (Русский)</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setTranslateModalOpen(false)}
+                    className="px-4 py-2 bg-slate-900 text-slate-300 hover:text-white rounded-xl text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTranslateModalOpen(false);
+                      handleSendMessage(
+                        undefined,
+                        `Translate document key points into ${selectedLanguage}`,
+                        'translate',
+                        selectedLanguage
+                      );
+                    }}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Translate PDF
                   </button>
                 </div>
               </motion.div>

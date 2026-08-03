@@ -96,12 +96,22 @@ export const AdminPanel: React.FC = () => {
             <h1 className="text-3xl font-black text-white tracking-tight">Admin & Telemetry Dashboard</h1>
           </div>
 
-          <button
-            onClick={() => toast.success('Telemetry data refreshed!')}
-            className="px-4 py-2.5 bg-[#18181d] hover:bg-[#22222b] text-slate-300 hover:text-white border border-slate-800 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <RefreshCw className="w-4 h-4" /> Refresh Telemetry
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href="/admin/content-generator"
+              className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-2xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-red-950/40"
+            >
+              <Zap className="w-4 h-4 fill-white" />
+              <span>SEO Content Studio</span>
+            </a>
+
+            <button
+              onClick={() => toast.success('Telemetry data refreshed!')}
+              className="px-4 py-2.5 bg-[#18181d] hover:bg-[#22222b] text-slate-300 hover:text-white border border-slate-800 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" /> Refresh Telemetry
+            </button>
+          </div>
         </div>
 
         {/* Top KPI Cards */}

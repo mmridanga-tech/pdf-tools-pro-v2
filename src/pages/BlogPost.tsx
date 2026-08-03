@@ -120,6 +120,29 @@ export const BlogPost: React.FC = () => {
         },
         keywords: post.keywords.join(', '),
       },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://smartpdfai.tech/',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Blog',
+            item: 'https://smartpdfai.tech/blog',
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: post.title,
+            item: articleUrl,
+          },
+        ],
+      },
       ...(post.faqs && post.faqs.length > 0
         ? [
             {
@@ -136,6 +159,55 @@ export const BlogPost: React.FC = () => {
           ]
         : []),
     ],
+  };
+
+  // Helper to render markdown links [Text](url)
+  const renderFormattedText = (text: string) => {
+    if (!text) return null;
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: (string | React.ReactNode)[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = linkRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      const label = match[1];
+      const url = match[2];
+      const isInternal = url.startsWith('/');
+
+      if (isInternal) {
+        parts.push(
+          <Link
+            key={match.index}
+            to={url}
+            className="text-red-400 font-bold underline hover:text-red-300 transition-colors"
+          >
+            {label}
+          </Link>
+        );
+      } else {
+        parts.push(
+          <a
+            key={match.index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-red-400 font-bold underline hover:text-red-300 transition-colors"
+          >
+            {label}
+          </a>
+        );
+      }
+      lastIndex = linkRegex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return <>{parts}</>;
   };
 
   return (
@@ -372,7 +444,7 @@ export const BlogPost: React.FC = () => {
 
                 {section.paragraphs?.map((p, pIdx) => (
                   <p key={pIdx} className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    {p}
+                    {renderFormattedText(p)}
                   </p>
                 ))}
 
@@ -393,7 +465,7 @@ export const BlogPost: React.FC = () => {
                       <span className="text-white">{section.callout.title}</span>
                     </div>
                     <p className="text-xs text-slate-300 leading-relaxed">
-                      {section.callout.text}
+                      {renderFormattedText(section.callout.text)}
                     </p>
                   </div>
                 )}
@@ -411,7 +483,7 @@ export const BlogPost: React.FC = () => {
                         </div>
                         <div className="space-y-1">
                           <h3 className="text-xs font-bold text-white">{step.title}</h3>
-                          <p className="text-xs text-slate-400 leading-normal">{step.description}</p>
+                          <p className="text-xs text-slate-400 leading-normal">{renderFormattedText(step.description)}</p>
                         </div>
                       </div>
                     ))}
@@ -424,7 +496,7 @@ export const BlogPost: React.FC = () => {
                     {section.listItems.map((item, lIdx) => (
                       <li key={lIdx} className="flex items-start gap-2">
                         <span className="text-red-500 font-bold mt-1">•</span>
-                        <span className="leading-relaxed">{item}</span>
+                        <span className="leading-relaxed">{renderFormattedText(item)}</span>
                       </li>
                     ))}
                   </ul>

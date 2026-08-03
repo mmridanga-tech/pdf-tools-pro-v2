@@ -17,15 +17,19 @@ import {
   FileText
 } from 'lucide-react';
 import { SEO } from '../components/SEO';
-import { BLOG_POSTS, BLOG_CATEGORIES, BlogPostItem } from '../data/blogData';
+import { getAllBlogPosts, BLOG_CATEGORIES, BlogPostItem } from '../data/blogData';
 
 export const BlogHome: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  const allPosts = useMemo(() => {
+    return getAllBlogPosts();
+  }, []);
+
   // Filtered posts based on search query & selected category
   const filteredPosts = useMemo(() => {
-    return BLOG_POSTS.filter((post) => {
+    return allPosts.filter((post) => {
       const matchesCategory =
         selectedCategory === 'all' || post.categorySlug === selectedCategory;
       
@@ -39,17 +43,17 @@ export const BlogHome: React.FC = () => {
 
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [allPosts, searchQuery, selectedCategory]);
 
   // Featured posts
   const featuredPosts = useMemo(() => {
-    return BLOG_POSTS.filter((p) => p.featured);
-  }, []);
+    return allPosts.filter((p) => p.featured);
+  }, [allPosts]);
 
   // Popular posts sorted by views
   const popularPosts = useMemo(() => {
-    return [...BLOG_POSTS].sort((a, b) => b.views - a.views).slice(0, 4);
-  }, []);
+    return [...allPosts].sort((a, b) => b.views - a.views).slice(0, 4);
+  }, [allPosts]);
 
   // JSON-LD Schema for Blog
   const blogJsonLd = {
@@ -63,7 +67,7 @@ export const BlogHome: React.FC = () => {
       name: 'SmartPDF AI',
       url: 'https://smartpdfai.tech',
     },
-    blogPost: BLOG_POSTS.map((post) => ({
+    blogPost: allPosts.map((post) => ({
       '@type': 'BlogPosting',
       headline: post.title,
       description: post.excerpt,

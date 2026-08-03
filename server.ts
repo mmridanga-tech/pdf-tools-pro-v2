@@ -9,6 +9,7 @@ import analyzerHandler from './api/gemini/analyzer.ts';
 import wordConvertHandler from './api/convert/word.ts';
 import pdfToWordHandler from './api/convert/pdfToWord.ts';
 import compressHandler from './api/convert/compress.ts';
+import contentGenHandler from './api/admin/generate-content.ts';
 
 async function startServer() {
   const app = express();
@@ -20,6 +21,7 @@ async function startServer() {
   app.post('/api/gemini/chat', chatHandler);
   app.post('/api/gemini/assistant', assistantHandler);
   app.post('/api/gemini/analyzer', analyzerHandler);
+  app.post('/api/admin/generate-content', contentGenHandler);
   app.all('/api/convert/word-to-pdf', wordConvertHandler);
   app.all('/api/convert/pdf-to-word', pdfToWordHandler);
   app.all('/api/convert/compress', compressHandler);

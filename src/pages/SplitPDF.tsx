@@ -11,6 +11,7 @@ import { useToast } from '../context/ToastContext';
 import { Scissors, FileText } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { saveRecentFile } from '../utils/storageUtils';
+import { SplitPDFSEOContent } from '../components/seo/SplitPDFSEOContent';
 
 export const SplitPDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -213,6 +214,9 @@ export const SplitPDF: React.FC = () => {
           onReset={handleReset}
           title="Splitting PDF"
         />
+
+        {/* SEO Content Section */}
+        <SplitPDFSEOContent />
       </div>
     </motion.div>
   );

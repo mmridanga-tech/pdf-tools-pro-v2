@@ -11,6 +11,7 @@ import { useToast } from '../context/ToastContext';
 import { Layers, ArrowUp, ArrowDown, Trash2, Plus, FileText } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { saveRecentFile } from '../utils/storageUtils';
+import { MergePDFSEOContent } from '../components/seo/MergePDFSEOContent';
 
 export const MergePDF: React.FC = () => {
   const [fileItems, setFileItems] = useState<PDFFileItem[]>([]);
@@ -236,6 +237,9 @@ export const MergePDF: React.FC = () => {
           onReset={handleReset}
           title="Merging PDFs"
         />
+
+        {/* SEO Content Section */}
+        <MergePDFSEOContent />
       </div>
     </motion.div>
   );

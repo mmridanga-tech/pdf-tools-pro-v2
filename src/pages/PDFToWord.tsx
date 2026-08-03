@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import JSZip from 'jszip';
 import { FileUploader } from '../components/FileUploader';
 import { ToolHeader } from '../components/ToolHeader';
+import { SEO } from '../components/SEO';
+import { PDFToWordSEOContent } from '../components/seo/PDFToWordSEOContent';
 import {
   PDFToWordService,
   PDFQueueItem,
@@ -190,6 +192,11 @@ export const PDFToWord: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen bg-[#0A0A0B] py-12"
     >
+      <SEO
+        title="Convert PDF to Word Online Free - High Fidelity DOCX"
+        description="Convert PDF files into editable Microsoft Word (.docx) documents preserving layout, fonts, images, tables, and OCR for scanned documents."
+      />
+
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <ToolHeader
           icon={FileText}
@@ -497,6 +504,9 @@ export const PDFToWord: React.FC = () => {
             </div>
           </motion.div>
         )}
+
+        {/* SEO Content Section */}
+        <PDFToWordSEOContent />
       </div>
     </motion.div>
   );

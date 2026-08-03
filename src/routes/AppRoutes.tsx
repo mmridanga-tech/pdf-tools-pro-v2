@@ -34,6 +34,7 @@ const AiAssistant = lazy(() => import('../pages/AiAssistant').then((m) => ({ def
 const DocumentAnalyzer = lazy(() => import('../pages/DocumentAnalyzer').then((m) => ({ default: m.DocumentAnalyzer })));
 const TeamWorkspace = lazy(() => import('../pages/TeamWorkspace').then((m) => ({ default: m.TeamWorkspace })));
 const AdminPanel = lazy(() => import('../pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
+const AdminContentGenerator = lazy(() => import('../pages/AdminContentGenerator').then((m) => ({ default: m.AdminContentGenerator })));
 const Pricing = lazy(() => import('../pages/Pricing').then((m) => ({ default: m.Pricing })));
 const CloudStoragePage = lazy(() => import('../pages/CloudStorage').then((m) => ({ default: m.CloudStoragePage })));
 const Settings = lazy(() => import('../pages/Settings').then((m) => ({ default: m.Settings })));
@@ -73,12 +74,15 @@ export const AppRoutes: React.FC = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/merge" element={<MergePDF />} />
+          <Route path="/merge-pdf" element={<MergePDF />} />
           <Route path="/split" element={<SplitPDF />} />
+          <Route path="/split-pdf" element={<SplitPDF />} />
           <Route path="/delete-pages" element={<DeletePDFPages />} />
           <Route path="/extract-pages" element={<ExtractPDFPages />} />
           <Route path="/rearrange-pages" element={<RearrangePDFPages />} />
           <Route path="/duplicate-pages" element={<DuplicatePDFPages />} />
           <Route path="/compress" element={<CompressPDF />} />
+          <Route path="/compress-pdf" element={<CompressPDF />} />
           <Route path="/pdf-to-word" element={<PDFToWord />} />
           <Route path="/word-to-pdf" element={<WordToPDF />} />
           <Route path="/rotate" element={<RotatePDF />} />
@@ -104,6 +108,7 @@ export const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/chat-pdf" element={<PdfChat />} />
           <Route path="/ai-chat" element={<PdfChat />} />
           <Route path="/ai-assistant" element={<AiAssistant />} />
           <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
@@ -123,6 +128,7 @@ export const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/admin/content-generator" element={<AdminContentGenerator />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route
             path="/cloud-storage"
