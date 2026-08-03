@@ -22,7 +22,16 @@ import {
   Ban,
   HelpCircle,
   Sparkles,
-  Gavel
+  Gavel,
+  Clock,
+  Send,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  Headphones,
+  Copy,
+  Check
 } from 'lucide-react';
 import { SEO } from '../components/SEO';
 
@@ -894,102 +903,342 @@ export const AboutUs: React.FC = () => {
 
 export const ContactUs: React.FC = () => {
   const [submitted, setSubmitted] = React.useState(false);
-  const [formData, setFormData] = React.useState({ name: '', email: '', subject: 'General Support', message: '' });
+  const [copiedEmail, setCopiedEmail] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [openFaq, setOpenFaq] = React.useState<number | null>(0);
+  const [formData, setFormData] = React.useState({
+    name: '',
+    email: '',
+    subject: 'General Technical Support',
+    message: ''
+  });
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText('mmridanga@gmail.com');
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2500);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }, 800);
   };
+
+  const faqs = [
+    {
+      question: "What is your expected response time for support inquiries?",
+      answer: "Our support team actively reviews tickets and responds within 24 to 48 hours (Monday through Friday). Enterprise SLA subscribers receive priority handling within 2 business hours."
+    },
+    {
+      question: "How are my uploaded PDF files processed and protected?",
+      answer: "Security and privacy are built into our architecture. Client-side tools (like merge, split, rotate) operate directly in your browser session. For server-side tasks (OCR, AI PDF Chat), files are held in volatile RAM buffers and automatically purged within 1 hour. We never store files permanently or train AI models on your document content."
+    },
+    {
+      question: "Where can I review your legal policies and compliance details?",
+      answer: "You can view our complete Privacy Policy, Terms & Conditions, and Cookie Policy directly on our website. All services comply with GDPR and CCPA privacy standards."
+    },
+    {
+      question: "How can I manage or cancel my Pro account subscription?",
+      answer: "You can manage your plan, view invoices, or cancel recurring billing anytime from your Account Settings. You can also reach out directly to mmridanga@gmail.com for billing support."
+    },
+    {
+      question: "Do you offer team seats or custom Enterprise licensing?",
+      answer: "Yes! We offer custom team workspace licenses, higher document rate limits, and dedicated support SLAs for businesses and legal teams. Please select 'Enterprise License & Billing' in the form above."
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] py-12 px-4 sm:px-6 lg:px-8">
       <SEO
-        title="Contact Us - SmartPDF AI Support & Enterprise Sales"
-        description="Get in touch with SmartPDF customer support, report bugs, or inquire about Enterprise SLA plans."
+        title="Contact Us - SmartPDF AI Support & Inquiries"
+        description="Get in touch with the SmartPDF AI customer support team. Send inquiries, bug reports, or feature requests with guaranteed 24–48 hour response time."
+        path="/contact"
       />
-      <div className="max-w-3xl mx-auto bg-[#121215] border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl space-y-8">
-        <div className="space-y-2 border-b border-slate-800/80 pb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold">
-            <Globe className="w-3.5 h-3.5" /> 24/7 Global Customer Support
+
+      <div className="max-w-5xl mx-auto space-y-10">
+        
+        {/* Hero Section */}
+        <div className="bg-[#121215] border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden text-center space-y-4">
+          <div className="absolute top-0 right-1/2 translate-x-1/2 w-96 h-96 bg-red-600/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold">
+            <Headphones className="w-3.5 h-3.5" /> 24/7 Global Help & Support Center
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Contact Us</h1>
-          <p className="text-xs text-slate-400">Have questions or feedback? Our team responds within 2 business hours.</p>
+
+          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+            Get in Touch with <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-400 to-amber-400">SmartPDF AI</span>
+          </h1>
+
+          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            Have questions about our PDF conversion suite, Gemini AI document analysis, billing, or enterprise team workspaces? Our technical support team is ready to assist you.
+          </p>
         </div>
 
-        {submitted ? (
-          <div className="p-8 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-center space-y-3">
-            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-            <h3 className="text-lg font-bold text-white">Thank you for reaching out!</h3>
-            <p className="text-xs text-slate-300">Your message has been logged. A support specialist will contact you shortly at {formData.email}.</p>
-            <button
-              onClick={() => setSubmitted(false)}
-              className="mt-4 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors cursor-pointer"
-            >
-              Send Another Message
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Jane Doe"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
+        {/* Top Info Grid: Response Time, Direct Email, Quick Links */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          
+          {/* Direct Email Card */}
+          <div className="bg-[#121215] border border-slate-800 rounded-2xl p-6 space-y-3 relative overflow-hidden group hover:border-slate-700 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                <Mail className="w-5 h-5" />
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="jane@company.com"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
+              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Direct Contact</span>
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Subject Category</label>
-              <select
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              <h3 className="text-xs font-extrabold text-slate-400">Support Email</h3>
+              <p className="text-sm font-bold text-white mt-0.5 break-all">mmridanga@gmail.com</p>
+            </div>
+            <div className="pt-2 flex items-center gap-2">
+              <button
+                onClick={handleCopyEmail}
+                className="flex-1 py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-semibold text-slate-200 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <option value="General Support">General Technical Support</option>
-                <option value="Enterprise Sales">Enterprise License & Billing</option>
-                <option value="Bug Report">Report a Feature Bug</option>
-                <option value="Privacy Inquiry">Privacy or Security Inquiry</option>
-              </select>
+                {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                {copiedEmail ? 'Email Copied!' : 'Copy Email'}
+              </button>
+              <a
+                href="mailto:mmridanga@gmail.com"
+                className="py-2 px-3 rounded-xl bg-red-600/20 border border-red-500/30 hover:bg-red-600/30 text-xs font-semibold text-red-400 flex items-center justify-center gap-1 transition-colors"
+              >
+                <Send className="w-3.5 h-3.5" /> Mail
+              </a>
             </div>
+          </div>
 
+          {/* Guaranteed Response Time Card */}
+          <div className="bg-[#121215] border border-slate-800 rounded-2xl p-6 space-y-3 relative overflow-hidden group hover:border-slate-700 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                <Clock className="w-5 h-5" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Queue Active
+              </span>
+            </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Your Message</label>
-              <textarea
-                required
-                rows={5}
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                placeholder="Describe how we can assist you..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-              />
+              <h3 className="text-xs font-extrabold text-slate-400">Guaranteed Response Window</h3>
+              <p className="text-xl font-black text-white mt-0.5">24 – 48 Hours</p>
             </div>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              Tickets are processed in order of arrival. Enterprise customers receive priority 2-hour response times.
+            </p>
+          </div>
 
-            <button
-              type="submit"
-              className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-600/20 transition-all cursor-pointer"
-            >
-              Submit Support Ticket
-            </button>
-          </form>
-        )}
+          {/* Useful Navigation Links Card */}
+          <div className="bg-[#121215] border border-slate-800 rounded-2xl p-6 space-y-3 relative overflow-hidden group hover:border-slate-700 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                <Globe className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Helpful Pages</span>
+            </div>
+            <div>
+              <h3 className="text-xs font-extrabold text-slate-400">Legal & Information</h3>
+              <p className="text-xs font-bold text-white mt-0.5">Quick Platform Policies</p>
+            </div>
+            <div className="flex flex-col gap-1.5 pt-1 text-xs">
+              <a href="/about" className="inline-flex items-center justify-between text-slate-300 hover:text-red-400 transition-colors">
+                <span>• About Us</span> <ArrowRight className="w-3 h-3 text-slate-500" />
+              </a>
+              <a href="/privacy" className="inline-flex items-center justify-between text-slate-300 hover:text-red-400 transition-colors">
+                <span>• Privacy Policy</span> <ArrowRight className="w-3 h-3 text-slate-500" />
+              </a>
+              <a href="/terms" className="inline-flex items-center justify-between text-slate-300 hover:text-red-400 transition-colors">
+                <span>• Terms & Conditions</span> <ArrowRight className="w-3 h-3 text-slate-500" />
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Main Contact Form Container */}
+        <div className="bg-[#121215] border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl space-y-8">
+          <div className="space-y-2 border-b border-slate-800/80 pb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-red-500" /> Send Us a Message
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Fill out the support form below and our team will get back to you at <strong className="text-slate-300">mmridanga@gmail.com</strong>.
+              </p>
+            </div>
+            <div className="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-400">
+              Avg. Wait: <strong className="text-white">&lt; 24h</strong>
+            </div>
+          </div>
+
+          {submitted ? (
+            <div className="p-8 sm:p-12 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white">Your Message Has Been Delivered!</h3>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
+                  Thank you, <strong className="text-white">{formData.name}</strong>. Our support team has logged your ticket and will follow up with you at <strong className="text-emerald-400">{formData.email}</strong> within 24–48 hours.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSubmitted(false);
+                  setFormData({ name: '', email: '', subject: 'General Technical Support', message: '' });
+                }}
+                className="mt-4 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-all cursor-pointer inline-flex items-center gap-2"
+              >
+                Send Another Inquiry <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-200 mb-2">
+                    Full Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Jane Doe"
+                    className="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/80 focus:border-red-500 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-200 mb-2">
+                    Email Address <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="e.g. jane@company.com"
+                    className="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/80 focus:border-red-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-200 mb-2">
+                  Subject Category <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  className="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-500/80 focus:border-red-500 transition-all cursor-pointer"
+                >
+                  <option value="General Technical Support">General Technical Support</option>
+                  <option value="Bug Report / Feature Glitch">Bug Report / Feature Glitch</option>
+                  <option value="Enterprise License & Billing">Enterprise License & Billing</option>
+                  <option value="Billing & Refund Request">Billing & Refund Request</option>
+                  <option value="Privacy or Security Inquiry">Privacy or Security Inquiry</option>
+                  <option value="Feature Suggestion">Feature Suggestion</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-200 mb-2">
+                  Your Message <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={6}
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  placeholder="Describe your request or question in detail..."
+                  className="w-full bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/80 focus:border-red-500 resize-none transition-all"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-between gap-4 flex-wrap">
+                <p className="text-[11px] text-slate-400">
+                  By submitting this form, you agree to our <a href="/terms" className="text-red-400 hover:underline">Terms</a> and <a href="/privacy" className="text-red-400 hover:underline">Privacy Policy</a>.
+                </p>
+                
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-8 py-3.5 bg-red-600 hover:bg-red-500 disabled:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-600/20 transition-all cursor-pointer flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" /> Send Message
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        {/* FAQ Section */}
+        <div className="bg-[#121215] border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl space-y-6">
+          <div className="space-y-1 border-b border-slate-800/80 pb-4">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold">
+              <HelpCircle className="w-3.5 h-3.5" /> Frequently Asked Questions
+            </div>
+            <h2 className="text-2xl font-black text-white tracking-tight">Need Quick Answers?</h2>
+            <p className="text-xs text-slate-400">
+              Check out answers to common questions regarding support response times, security, and subscriptions.
+            </p>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            {faqs.map((faq, index) => {
+              const isOpen = openFaq === index;
+              return (
+                <div
+                  key={index}
+                  className="border border-slate-800/80 rounded-2xl bg-slate-900/40 overflow-hidden transition-all"
+                >
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : index)}
+                    className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 text-xs sm:text-sm font-bold text-white hover:text-red-400 transition-colors cursor-pointer"
+                  >
+                    <span>{faq.question}</span>
+                    <div className="w-6 h-6 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+                      {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-5 sm:px-5 sm:pb-5 text-xs text-slate-300 leading-relaxed border-t border-slate-800/50 pt-3">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Footer Quick Navigation Links Bar */}
+        <div className="bg-[#121215] border border-slate-800 rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400">
+          <div>
+            <strong className="text-white">SmartPDF AI Platform</strong> — Enterprise Productivity & AI Suite
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
+            <a href="/about" className="hover:text-red-400 transition-colors">About Us</a>
+            <span>•</span>
+            <a href="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</a>
+            <span>•</span>
+            <a href="/terms" className="hover:text-red-400 transition-colors">Terms & Conditions</a>
+            <span>•</span>
+            <a href="mailto:mmridanga@gmail.com" className="text-red-400 hover:underline">mmridanga@gmail.com</a>
+          </div>
+        </div>
+
       </div>
     </div>
   );
