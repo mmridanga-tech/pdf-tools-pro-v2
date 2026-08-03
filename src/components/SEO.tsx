@@ -19,7 +19,7 @@ export const SEO: React.FC<SEOProps> = ({
     ? title
     : `${title} | SmartPDF AI`;
 
-  const canonicalUrl = `https://pdf-tools-pro-v2.vercel.app${path.startsWith('/') ? path : '/' + path}`;
+  const canonicalUrl = `https://smartpdfai.tech${path.startsWith('/') ? path : '/' + path}`;
 
   useEffect(() => {
     // Update Document Title

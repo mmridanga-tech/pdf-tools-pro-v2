@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pdf-tools-pro-v2.vercel.app/sitemap.xml
+Sitemap: https://smartpdfai.tech/sitemap.xml
