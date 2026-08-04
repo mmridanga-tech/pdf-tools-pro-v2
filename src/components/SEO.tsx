@@ -5,6 +5,9 @@ interface SEOProps {
   description?: string;
   path?: string;
   toolName?: string;
+  image?: string;
+  ogImage?: string;
+  twitterImage?: string;
   jsonLdSchema?: Record<string, unknown>;
 }
 
@@ -13,6 +16,9 @@ export const SEO: React.FC<SEOProps> = ({
   description = 'Free online PDF tools to merge, split, compress, protect, unlock, OCR, convert, and AI-chat with PDF files. 100% private client-side processing.',
   path = '/',
   toolName,
+  image,
+  ogImage,
+  twitterImage,
   jsonLdSchema,
 }) => {
   const fullTitle = toolName
@@ -48,10 +54,17 @@ export const SEO: React.FC<SEOProps> = ({
     setMetaTag('meta[property="og:type"]', 'property', 'og:type', 'website');
     setMetaTag('meta[property="og:site_name"]', 'property', 'og:site_name', 'SmartPDF AI');
 
+    const defaultOgImg = 'https://smartpdfai.tech/og-image.png';
+    const effectiveOgImg = ogImage || image || defaultOgImg;
+    const effectiveTwitterImg = twitterImage || image || effectiveOgImg;
+
+    setMetaTag('meta[property="og:image"]', 'property', 'og:image', effectiveOgImg);
+
     // Update Twitter Card Metadata
     setMetaTag('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary_large_image');
     setMetaTag('meta[name="twitter:title"]', 'name', 'twitter:title', fullTitle);
     setMetaTag('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+    setMetaTag('meta[name="twitter:image"]', 'name', 'twitter:image', effectiveTwitterImg);
 
     // Update Canonical URL Link
     let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;

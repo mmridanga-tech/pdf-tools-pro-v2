@@ -32,12 +32,14 @@ import {
   Quote,
   List,
   MessageCircle,
-  Code
+  Code,
+  FileText
 } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { BLOG_POSTS, getBlogPostBySlug, BlogPostItem } from '../data/blogData';
 import { useToast } from '../context/ToastContext';
 import { RelatedTools } from '../components/seo/RelatedTools';
+import { BlogInlineIllustration, IllustrationType } from '../components/blog/BlogInlineIllustration';
 
 // Code Block component with Copy Code functionality
 const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code, language }) => {
@@ -440,6 +442,9 @@ export const BlogPost: React.FC = () => {
         title={post.metaTitle}
         description={post.metaDescription}
         path={`/blog/${post.slug}`}
+        image={post.featuredImage}
+        ogImage={post.ogImage || post.featuredImage}
+        twitterImage={post.twitterImage || post.featuredImage}
         jsonLdSchema={schemaData}
       />
 
@@ -604,26 +609,34 @@ export const BlogPost: React.FC = () => {
           </button>
         </div>
 
-        {/* Featured Image Placeholder / Cover Banner */}
-        <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-[#121215] shadow-2xl group">
+        {/* Featured Image / Cover Banner with SmartPDF AI Branding */}
+        <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-[#121215] shadow-2xl group transition-all hover:border-red-500/40">
           <img
             src={post.featuredImage}
-            alt={post.title}
+            alt={post.imageAlt || `${post.title} - SmartPDF AI Technical Guide`}
+            loading="eager"
+            decoding="async"
             referrerPolicy="no-referrer"
             className="w-full h-64 sm:h-96 object-cover transform group-hover:scale-105 transition-transform duration-700"
             onError={(e) => {
-              // Fallback placeholder image
               (e.target as HTMLImageElement).src =
                 'https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1200&q=80';
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-transparent to-black/30" />
-          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-slate-300">
-            <span className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 font-mono text-[11px]">
-              SmartPDF AI Illustrated Technical Guide
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-transparent to-black/40 pointer-events-none" />
+          
+          <div className="absolute top-4 left-4 flex items-center gap-2">
+            <span className="bg-red-600/90 text-white font-black text-[11px] uppercase tracking-wider px-3 py-1 rounded-full border border-red-400/30 shadow-lg backdrop-blur-md flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5" /> SmartPDF AI Verified
             </span>
-            <span className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[11px]">
-              Updated for 2026 Standards
+          </div>
+
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs text-slate-300">
+            <span className="bg-black/70 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/10 font-mono text-[11px] flex items-center gap-1.5 text-slate-200">
+              <FileText className="w-3.5 h-3.5 text-red-400" /> SmartPDF AI Illustrated Technical Guide
+            </span>
+            <span className="bg-black/70 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/10 text-[11px] font-bold text-slate-300 hidden sm:inline-block">
+              100% Private Client-Side
             </span>
           </div>
         </div>
@@ -717,17 +730,39 @@ export const BlogPost: React.FC = () => {
               </div>
             </div>
 
-            {post.sections.map((section, idx) => (
-              <section key={idx} id={`section-${idx}`} className="space-y-5 scroll-mt-24">
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight border-b border-slate-800 pb-3">
-                  {section.heading}
-                </h2>
+            {post.sections.map((section, idx) => {
+              const illustrationType: IllustrationType | null = (() => {
+                if (idx !== 1) return null;
+                const h = section.heading.toLowerCase();
+                const cat = post.categorySlug.toLowerCase();
+                if (h.includes('convert') || h.includes('word') || h.includes('format') || cat.includes('conversion')) return 'conversion';
+                if (h.includes('merge') || h.includes('split') || h.includes('extract') || h.includes('combine') || cat.includes('merge')) return 'merging';
+                if (h.includes('compress') || h.includes('reduce') || h.includes('size') || h.includes('slow') || cat.includes('compress')) return 'compression';
+                if (h.includes('password') || h.includes('protect') || h.includes('encrypt') || h.includes('security') || cat.includes('security')) return 'security';
+                if (h.includes('ocr') || h.includes('optical') || h.includes('recogniz') || h.includes('scan') || cat.includes('ocr')) return 'ocr';
+                if (h.includes('ai') || h.includes('chat') || h.includes('summar') || cat.includes('ai')) return 'ai';
+                return 'conversion';
+              })();
 
-                {section.paragraphs?.map((p, pIdx) => (
-                  <div key={pIdx} className="text-xs sm:text-sm lg:text-base text-slate-300 leading-relaxed my-3">
-                    {renderFormattedText(p)}
-                  </div>
-                ))}
+              return (
+                <section key={idx} id={`section-${idx}`} className="space-y-5 scroll-mt-24">
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight border-b border-slate-800 pb-3">
+                    {section.heading}
+                  </h2>
+
+                  {section.paragraphs?.map((p, pIdx) => (
+                    <div key={pIdx} className="text-xs sm:text-sm lg:text-base text-slate-300 leading-relaxed my-3">
+                      {renderFormattedText(p)}
+                    </div>
+                  ))}
+
+                  {/* Lightweight Inline Illustration */}
+                  {illustrationType && (
+                    <BlogInlineIllustration
+                      type={illustrationType}
+                      title={`Technical Architecture: ${section.heading}`}
+                    />
+                  )}
 
                 {/* Callout Box */}
                 {section.callout && (
@@ -818,7 +853,8 @@ export const BlogPost: React.FC = () => {
                   </div>
                 )}
               </section>
-            ))}
+            );
+          })}
 
             {/* Interactive Tool CTA Banner */}
             {post.toolCta && (

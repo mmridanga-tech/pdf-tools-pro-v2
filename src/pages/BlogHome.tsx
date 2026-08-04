@@ -299,7 +299,9 @@ export const BlogHome: React.FC = () => {
                       <div className="h-40 overflow-hidden relative">
                         <img
                           src={post.featuredImage}
-                          alt={post.title}
+                          alt={post.imageAlt || `${post.title} - SmartPDF AI Guide`}
+                          loading="lazy"
+                          decoding="async"
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           onError={(e) => {

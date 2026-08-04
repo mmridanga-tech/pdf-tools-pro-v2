@@ -4,7 +4,7 @@ export interface BlogSection {
   paragraphs?: string[];
   listItems?: string[];
   callout?: {
-    type: 'tip' | 'warning' | 'info' | 'key-takeaway' | 'best-practice' | 'common-mistake';
+    type: "tip" | "warning" | "info" | "key-takeaway" | "best-practice" | "common-mistake";
     title: string;
     text: string;
   };
@@ -38,6 +38,9 @@ export interface BlogPostItem {
   lastUpdated?: string;
   readTime: string;
   featuredImage: string;
+  ogImage?: string;
+  twitterImage?: string;
+  imageAlt?: string;
   featured?: boolean;
   popular?: boolean;
   views: number;
@@ -57,44 +60,6 @@ export interface BlogPostItem {
   };
   sections: BlogSection[];
 }
-
-export const BLOG_AUTHOR = {
-  "name": "Mridanga Mondal",
-  "role": "Founder of SmartPDF AI & Electrical Engineer",
-  "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-  "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
-};
-
-export const BLOG_CATEGORIES = [
-  {
-    "name": "All Topics",
-    "slug": "all"
-  },
-  {
-    "name": "Tutorials & Guides",
-    "slug": "tutorials"
-  },
-  {
-    "name": "PDF Compression",
-    "slug": "compression"
-  },
-  {
-    "name": "Format Conversion",
-    "slug": "conversion"
-  },
-  {
-    "name": "Security & Privacy",
-    "slug": "security"
-  },
-  {
-    "name": "AI & Automation",
-    "slug": "ai-tools"
-  },
-  {
-    "name": "OCR & Text AI",
-    "slug": "ocr"
-  }
-];
 
 export const BLOG_POSTS: BlogPostItem[] = [
   {
@@ -394,7 +359,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Convert PDF to Word Without Losing Formatting (2026 Guide) - SmartPDF AI Guide"
   },
   {
     "id": "20",
@@ -757,7 +725,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "Best PDF to Word Converters Compared in 2026 - SmartPDF AI Guide"
   },
   {
     "id": "17",
@@ -1052,7 +1023,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Split PDF Files Like a Pro (2026 Guide) - SmartPDF AI Guide"
   },
   {
     "id": "18",
@@ -1338,7 +1312,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Extract Pages from a PDF Without Losing Formatting - SmartPDF AI Guide"
   },
   {
     "id": "13",
@@ -1629,7 +1606,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Merge PDF Files Without Losing Quality (2026 Guide) - SmartPDF AI Guide"
   },
   {
     "id": "14",
@@ -1991,7 +1971,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "Best Free PDF Merger Tools Compared in 2026 - SmartPDF AI Guide"
   },
   {
     "id": "15",
@@ -2287,7 +2270,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Compress PDF Files Without Losing Quality (2026 Complete Guide) - SmartPDF AI Guide"
   },
   {
     "id": "16",
@@ -2311,7 +2297,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 3, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "19 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 21900,
@@ -2586,7 +2572,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "Why Large PDF Files Slow Down Your Workflow (And How to Fix It) - SmartPDF AI Guide"
   },
   {
     "id": "11",
@@ -2896,7 +2885,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Protect PDF Files with Password (Complete Beginner Guide) - SmartPDF AI Guide"
   },
   {
     "id": "10",
@@ -2920,7 +2912,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 3, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "16 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1512314889357-e157c22f938d?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 24800,
@@ -3257,7 +3249,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1512314889357-e157c22f938d?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1512314889357-e157c22f938d?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "PDF vs Word: Which Format Should You Choose in 2026? - SmartPDF AI Guide"
   },
   {
     "id": "9",
@@ -3281,7 +3276,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 3, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "14 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1586282391129-76a6df230234?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 19200,
@@ -3577,7 +3572,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1586282391129-76a6df230234?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1586282391129-76a6df230234?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Merge Multiple PDF Files Without Losing Quality - SmartPDF AI Guide"
   },
   {
     "id": "1",
@@ -3873,7 +3871,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Merge PDF Files Online for Free (Without Losing Quality) - SmartPDF AI Guide"
   },
   {
     "id": "3",
@@ -4088,7 +4089,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "8 Best Free PDF Tools in 2026 for Professionals & Students - SmartPDF AI Guide"
   },
   {
     "id": "4",
@@ -4112,7 +4116,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "July 25, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "4 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
     "popular": true,
     "views": 9400,
@@ -4311,7 +4315,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "PDF vs Word: When to Use Which Document Format - SmartPDF AI Guide"
   },
   {
     "id": "5",
@@ -4334,7 +4341,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "July 20, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "5 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
     "popular": true,
     "views": 11200,
@@ -4515,7 +4522,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Convert PDF to Word Easily (With Formatting Intact) - SmartPDF AI Guide"
   },
   {
     "id": "6",
@@ -4538,7 +4548,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "July 15, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "6 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
     "popular": true,
     "views": 15400,
@@ -4713,7 +4723,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "Secure PDF Tips: Password Protection, Redaction & Encryption - SmartPDF AI Guide"
   },
   {
     "id": "7",
@@ -4736,7 +4749,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "July 10, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "5 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 21500,
@@ -4928,7 +4941,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "AI PDF Tools Guide: How to Summarize & Chat with PDFs - SmartPDF AI Guide"
   },
   {
     "id": "8",
@@ -4951,7 +4967,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "July 5, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "5 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
     "popular": false,
     "views": 8700,
@@ -5137,7 +5153,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "OCR Explained: How Optical Character Recognition Works for PDFs - SmartPDF AI Guide"
   },
   {
     "id": "21",
@@ -5161,7 +5180,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 4, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "21 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 24200,
@@ -5423,7 +5442,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Convert Word to PDF Without Losing Formatting (2026 Guide) - SmartPDF AI Guide"
   },
   {
     "id": "22",
@@ -5447,7 +5469,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 4, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "22 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 21500,
@@ -5785,7 +5807,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "Best Word to PDF Converters Compared in 2026 - SmartPDF AI Guide"
   },
   {
     "id": "23",
@@ -5809,7 +5834,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 4, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "22 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 25600,
@@ -6079,7 +6104,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "OCR Explained: How Optical Character Recognition Works for PDFs (2026 Guide) - SmartPDF AI Guide"
   },
   {
     "id": "24",
@@ -6103,7 +6131,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 4, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "22 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 23900,
@@ -6441,7 +6469,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "Best OCR Software for PDFs Compared in 2026 - SmartPDF AI Guide"
   },
   {
     "id": "25",
@@ -6465,7 +6496,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 4, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "23 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 26800,
@@ -6744,7 +6775,10 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Password Protect a PDF File (2026 Complete Guide) - SmartPDF AI Guide"
   },
   {
     "id": "26",
@@ -6768,7 +6802,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "publishDate": "August 4, 2026",
     "lastUpdated": "August 4, 2026",
     "readTime": "22 min read",
-    "featuredImage": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=1200&q=80",
+    "featuredImage": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
     "popular": true,
     "views": 25100,
@@ -7020,56 +7054,62 @@ export const BLOG_POSTS: BlogPostItem[] = [
           "text": "1. Client-side WebAssembly processing guarantees instant speed with 100% data privacy.\n2. Preserving structural node trees prevents layout shifting and font corruption.\n3. SmartPDF AI tools are 100% free with zero watermarks, zero file size limits, and zero registration requirements."
         }
       }
-    ]
+    ],
+    "ogImage": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&h=630&q=80",
+    "twitterImage": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&h=628&q=80",
+    "imageAlt": "How to Remove a Password from a PDF Safely - SmartPDF AI Guide"
   }
 ];
 
-export function getAllBlogPosts(): BlogPostItem[] {
-  if (typeof window !== 'undefined') {
-    try {
-      const custom = JSON.parse(localStorage.getItem('smartpdf_custom_blog_posts') || '[]');
-      if (custom.length === 0) return BLOG_POSTS;
-      const staticSlugs = new Set(BLOG_POSTS.map((p) => p.slug.toLowerCase()));
-      const filteredCustom = custom.filter((p: BlogPostItem) => !staticSlugs.has(p.slug.toLowerCase()));
-      return [...filteredCustom, ...BLOG_POSTS];
-    } catch {
-      return BLOG_POSTS;
-    }
-  }
-  return BLOG_POSTS;
-}
-
-export function publishBlogPost(post: BlogPostItem): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const custom = JSON.parse(localStorage.getItem('smartpdf_custom_blog_posts') || '[]');
-    const updated = [post, ...custom];
-    localStorage.setItem('smartpdf_custom_blog_posts', JSON.stringify(updated));
-  } catch (err) {
-    console.error('Failed to publish custom blog post to localStorage:', err);
-  }
-}
-
-export function getBlogPostBySlug(slugOrAlias?: string): BlogPostItem | undefined {
-  if (!slugOrAlias) return undefined;
-  const normalized = slugOrAlias.toLowerCase().trim();
-  const allPosts = getAllBlogPosts();
-  return allPosts.find(
-    (post) =>
-      post.slug.toLowerCase() === normalized ||
-      post.aliases?.some((alias) => alias.toLowerCase() === normalized)
+export function getBlogPostBySlug(slug: string | undefined): BlogPostItem | undefined {
+  if (!slug) return undefined;
+  const lowerSlug = slug.toLowerCase();
+  return BLOG_POSTS.find(
+    (p) => p.slug.toLowerCase() === lowerSlug || (p.aliases && p.aliases.map((a) => a.toLowerCase()).includes(lowerSlug))
   );
 }
 
-export function getBlogPostsByCategory(categorySlug: string): BlogPostItem[] {
-  if (!categorySlug || categorySlug === 'all') return BLOG_POSTS;
-  return BLOG_POSTS.filter((post) => post.categorySlug === categorySlug);
+export function getRelatedPosts(currentSlug: string, count: number = 3): BlogPostItem[] {
+  const currentPost = getBlogPostBySlug(currentSlug);
+  if (!currentPost) return BLOG_POSTS.slice(0, count);
+
+  const relatedBySlug = BLOG_POSTS.filter((p) => currentPost.relatedSlugs.includes(p.slug) && p.slug !== currentPost.slug);
+  if (relatedBySlug.length >= count) {
+    return relatedBySlug.slice(0, count);
+  }
+
+  const relatedByCategory = BLOG_POSTS.filter(
+    (p) => p.categorySlug === currentPost.categorySlug && p.slug !== currentPost.slug && !relatedBySlug.some((r) => r.slug === p.slug)
+  );
+
+  const combined = [...relatedBySlug, ...relatedByCategory];
+  if (combined.length >= count) {
+    return combined.slice(0, count);
+  }
+
+  const remaining = BLOG_POSTS.filter((p) => p.slug !== currentPost.slug && !combined.some((c) => c.slug === p.slug));
+  return [...combined, ...remaining].slice(0, count);
 }
 
-export function getFeaturedBlogPosts(): BlogPostItem[] {
-  return BLOG_POSTS.filter((post) => post.featured);
+export function getAllBlogPosts(): BlogPostItem[] {
+  return BLOG_POSTS;
 }
 
-export function getPopularBlogPosts(): BlogPostItem[] {
-  return BLOG_POSTS.filter((post) => post.popular);
+export const BLOG_CATEGORIES = [
+  { name: "All", slug: "all" },
+  { name: "PDF Conversion", slug: "pdf-conversion" },
+  { name: "PDF Merging & Splitting", slug: "pdf-merging" },
+  { name: "PDF Compression", slug: "pdf-compression" },
+  { name: "PDF Security", slug: "pdf-security" },
+  { name: "AI & OCR", slug: "ai-ocr" },
+  { name: "Workflows & Productivity", slug: "productivity" }
+];
+
+export function publishBlogPost(post: BlogPostItem): void {
+  const existingIndex = BLOG_POSTS.findIndex((p) => p.slug === post.slug);
+  if (existingIndex >= 0) {
+    BLOG_POSTS[existingIndex] = post;
+  } else {
+    BLOG_POSTS.unshift(post);
+  }
 }

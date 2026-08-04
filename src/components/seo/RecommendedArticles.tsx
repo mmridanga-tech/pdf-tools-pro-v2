@@ -67,7 +67,9 @@ export const RecommendedArticles: React.FC<RecommendedArticlesProps> = ({
               <div className="h-40 overflow-hidden relative">
                 <img
                   src={article.featuredImage}
-                  alt={article.title}
+                  alt={article.imageAlt || `${article.title} - SmartPDF AI Guide`}
+                  loading="lazy"
+                  decoding="async"
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   onError={(e) => {
