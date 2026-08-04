@@ -461,15 +461,17 @@ export const BlogPost: React.FC = () => {
                   <div className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 my-4 ${
                     section.callout.type === 'key-takeaway'
                       ? 'bg-red-500/10 border-red-500/30 text-slate-200'
-                      : section.callout.type === 'warning'
+                      : section.callout.type === 'warning' || section.callout.type === 'common-mistake'
                       ? 'bg-amber-500/10 border-amber-500/30 text-slate-200'
+                      : section.callout.type === 'tip' || section.callout.type === 'best-practice'
+                      ? 'bg-purple-500/10 border-purple-500/30 text-slate-200'
                       : 'bg-blue-500/10 border-blue-500/30 text-slate-200'
                   }`}>
                     <div className="flex items-center gap-2 font-bold text-xs">
                       {section.callout.type === 'key-takeaway' && <CheckCircle2 className="w-4 h-4 text-red-400" />}
-                      {section.callout.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-400" />}
+                      {(section.callout.type === 'warning' || section.callout.type === 'common-mistake') && <AlertTriangle className="w-4 h-4 text-amber-400" />}
                       {section.callout.type === 'info' && <Info className="w-4 h-4 text-blue-400" />}
-                      {section.callout.type === 'tip' && <Sparkles className="w-4 h-4 text-purple-400" />}
+                      {(section.callout.type === 'tip' || section.callout.type === 'best-practice') && <Sparkles className="w-4 h-4 text-purple-400" />}
                       <span className="text-white">{section.callout.title}</span>
                     </div>
                     <p className="text-xs text-slate-300 leading-relaxed">
