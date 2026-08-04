@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Clock,
@@ -26,12 +26,49 @@ import {
   Send,
   UserCheck,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Printer,
+  ArrowUp,
+  Quote,
+  List,
+  MessageCircle,
+  Code
 } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { BLOG_POSTS, getBlogPostBySlug, BlogPostItem } from '../data/blogData';
 import { useToast } from '../context/ToastContext';
 import { RelatedTools } from '../components/seo/RelatedTools';
+
+// Code Block component with Copy Code functionality
+const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code, language }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="my-5 rounded-2xl bg-[#0B0C0E] border border-slate-800 shadow-xl overflow-hidden font-mono text-xs sm:text-sm text-slate-200">
+      <div className="px-4 py-2 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center gap-2">
+          <Code className="w-3.5 h-3.5 text-red-500" />
+          <span className="font-bold uppercase tracking-wider text-[11px] text-slate-300">{language || 'Snippet'}</span>
+        </div>
+        <button
+          onClick={handleCopyCode}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer text-[11px] font-sans"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          <span>{copied ? 'Copied!' : 'Copy Code'}</span>
+        </button>
+      </div>
+      <pre className="p-4 sm:p-5 overflow-x-auto text-slate-200 leading-relaxed font-mono selection:bg-red-500/30">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+};
 
 export const BlogPost: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -43,6 +80,22 @@ export const BlogPost: React.FC = () => {
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  // Track scroll progress for reading bar & back to top button
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        const currentProgress = (window.scrollY / totalHeight) * 100;
+        setScrollProgress(Math.min(100, Math.max(0, currentProgress)));
+      }
+      setShowBackToTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Match post by slug or alias
   const post = getBlogPostBySlug(slug);
@@ -168,57 +221,221 @@ export const BlogPost: React.FC = () => {
     ],
   };
 
-  // Helper to render markdown links [Text](url)
-  const renderFormattedText = (text: string) => {
+  // Helper to render formatted text with links [Text](url), code blocks, inline code, blockquotes, and bold text
+  const renderFormattedText = (text: string): React.ReactNode => {
     if (!text) return null;
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    const parts: (string | React.ReactNode)[] = [];
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
 
-    while ((match = linkRegex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
-      }
-      const label = match[1];
-      const url = match[2];
-      const isInternal = url.startsWith('/');
-
-      if (isInternal) {
-        parts.push(
-          <Link
-            key={match.index}
-            to={url}
-            className="text-red-400 font-bold underline hover:text-red-300 transition-colors"
-          >
-            {label}
-          </Link>
-        );
-      } else {
-        parts.push(
-          <a
-            key={match.index}
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-red-400 font-bold underline hover:text-red-300 transition-colors"
-          >
-            {label}
-          </a>
-        );
-      }
-      lastIndex = linkRegex.lastIndex;
+    // Blockquote handling (lines starting with > )
+    if (text.startsWith('> ')) {
+      const quoteText = text.replace(/^>\s*/, '');
+      return (
+        <blockquote className="my-5 p-4 sm:p-5 rounded-2xl bg-slate-900/90 border-l-4 border-red-500 text-slate-200 italic text-xs sm:text-sm leading-relaxed flex items-start gap-3 shadow-lg">
+          <Quote className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <div className="flex-1">{renderFormattedText(quoteText)}</div>
+        </blockquote>
+      );
     }
 
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
+    // Code block handling (starting and ending with ```)
+    if (text.startsWith('```') && text.endsWith('```')) {
+      const rawCode = text.slice(3, -3).trim();
+      const lines = rawCode.split('\n');
+      const firstLine = lines[0].trim();
+      let language = 'code';
+      let codeContent = rawCode;
+
+      if (/^[a-zA-Z0-9_-]+$/.test(firstLine) && lines.length > 1) {
+        language = firstLine;
+        codeContent = lines.slice(1).join('\n');
+      }
+
+      return <CodeBlock code={codeContent} language={language} />;
+    }
+
+    // Token matching for [Link](url), `code`, and **bold**
+    const tokenRegex = /(\[[^\]]+\]\([^)]+\)|`[^`]+`|\*\*[^*]+\*\*)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIdx = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = tokenRegex.exec(text)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(text.substring(lastIdx, match.index));
+      }
+
+      const token = match[0];
+
+      if (token.startsWith('[') && token.includes('](')) {
+        const linkMatch = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token);
+        if (linkMatch) {
+          const label = linkMatch[1];
+          const url = linkMatch[2];
+          const isInternal = url.startsWith('/');
+
+          if (isInternal) {
+            parts.push(
+              <Link
+                key={match.index}
+                to={url}
+                className="text-red-400 font-bold underline hover:text-red-300 transition-colors"
+              >
+                {label}
+              </Link>
+            );
+          } else {
+            parts.push(
+              <a
+                key={match.index}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-red-400 font-bold underline hover:text-red-300 transition-colors"
+              >
+                {label}
+              </a>
+            );
+          }
+        }
+      } else if (token.startsWith('`') && token.endsWith('`')) {
+        const codeText = token.slice(1, -1);
+        parts.push(
+          <code
+            key={match.index}
+            className="px-1.5 py-0.5 rounded bg-slate-800 text-red-300 border border-slate-700/60 font-mono text-[11px] sm:text-xs font-semibold"
+          >
+            {codeText}
+          </code>
+        );
+      } else if (token.startsWith('**') && token.endsWith('**')) {
+        const boldText = token.slice(2, -2);
+        parts.push(
+          <strong key={match.index} className="font-bold text-white">
+            {boldText}
+          </strong>
+        );
+      }
+
+      lastIdx = tokenRegex.lastIndex;
+    }
+
+    if (lastIdx < text.length) {
+      parts.push(text.substring(lastIdx));
     }
 
     return <>{parts}</>;
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0B] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 text-slate-200">
+    <div className="min-h-screen bg-[#0A0A0B] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 text-slate-200 relative">
+      {/* Print Stylesheet */}
+      <style>{`
+        @media print {
+          nav, footer, aside, .no-print, button:not(.print-keep), .floating-share, .back-to-top {
+            display: none !important;
+          }
+          body {
+            background: white !important;
+            color: black !important;
+          }
+          main, header, section {
+            border: none !important;
+            background: white !important;
+            color: black !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 0 20px 0 !important;
+          }
+          h1, h2, h3, h4, p, span, td, th {
+            color: black !important;
+          }
+        }
+      `}</style>
+
+      {/* Top Reading Progress Bar */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-900/80 z-50 pointer-events-none no-print">
+        <div
+          className="h-full bg-gradient-to-r from-red-600 via-red-500 to-amber-500 transition-all duration-150 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
+
+      {/* Desktop Sticky Floating Share Bar */}
+      <div className="fixed left-4 top-1/3 z-40 hidden xl:flex flex-col gap-2 p-2 bg-[#121215]/90 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl no-print">
+        <button
+          onClick={handleCopyLink}
+          className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer relative group"
+          title="Copy Article Link"
+        >
+          {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          <span className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-slate-800 shadow-lg">
+            {copiedLink ? 'Copied!' : 'Copy Link'}
+          </span>
+        </button>
+
+        <a
+          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(articleUrl)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-sky-400 transition-colors cursor-pointer relative group"
+          title="Share on X (Twitter)"
+        >
+          <Twitter className="w-4 h-4" />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-slate-800 shadow-lg">
+            Share on X
+          </span>
+        </a>
+
+        <a
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(articleUrl)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-blue-400 transition-colors cursor-pointer relative group"
+          title="Share on LinkedIn"
+        >
+          <Linkedin className="w-4 h-4" />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-slate-800 shadow-lg">
+            Share on LinkedIn
+          </span>
+        </a>
+
+        <a
+          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-colors cursor-pointer relative group"
+          title="Share on Facebook"
+        >
+          <Facebook className="w-4 h-4" />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-slate-800 shadow-lg">
+            Share on Facebook
+          </span>
+        </a>
+
+        <a
+          href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${post.title} - ${articleUrl}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer relative group"
+          title="Share on WhatsApp"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-slate-800 shadow-lg">
+            Share on WhatsApp
+          </span>
+        </a>
+
+        <button
+          onClick={() => window.print()}
+          className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-400 transition-colors cursor-pointer relative group"
+          title="Print Article"
+        >
+          <Printer className="w-4 h-4" />
+          <span className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-slate-800 shadow-lg">
+            Print Article
+          </span>
+        </button>
+      </div>
+
       <SEO
         title={post.metaTitle}
         description={post.metaDescription}
@@ -229,7 +446,7 @@ export const BlogPost: React.FC = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-xs text-slate-400 flex-wrap" aria-label="Breadcrumb">
+        <nav className="flex items-center gap-2 text-xs text-slate-400 flex-wrap no-print" aria-label="Breadcrumb">
           <Link to="/" className="hover:text-white transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
           <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
@@ -240,7 +457,7 @@ export const BlogPost: React.FC = () => {
         </nav>
 
         {/* Back Link Button */}
-        <div>
+        <div className="no-print">
           <button
             onClick={() => navigate('/blog')}
             className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white font-bold transition-colors cursor-pointer group"
@@ -266,7 +483,7 @@ export const BlogPost: React.FC = () => {
               <RefreshCw className="w-3.5 h-3.5 text-slate-500" /> <span className="font-medium text-slate-300">Last Updated:</span> {post.lastUpdated || post.publishDate || 'August 4, 2026'}
             </span>
             <span className="text-xs text-slate-400 flex items-center gap-1.5" title="Reading Time">
-              <Clock className="w-3.5 h-3.5 text-slate-500" /> <span className="font-medium text-slate-300">Reading Time:</span> {post.readTime}
+              <Clock className="w-3.5 h-3.5 text-slate-500" /> <span className="font-medium text-slate-300">Reading Time:</span> <span className="px-2 py-0.5 rounded bg-slate-800 text-red-400 font-bold text-[11px]">{post.readTime}</span>
             </span>
             <span className="text-xs text-slate-400 flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-slate-500" /> {post.views.toLocaleString()} Readers
@@ -307,14 +524,14 @@ export const BlogPost: React.FC = () => {
             </Link>
 
             {/* Social Share Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleCopyLink}
                 className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs text-slate-300 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Copy Article Link"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                <span>{copiedLink ? 'Copied!' : 'Share'}</span>
+                <span>{copiedLink ? 'Copied!' : 'Copy Link'}</span>
               </button>
 
               <a
@@ -348,15 +565,44 @@ export const BlogPost: React.FC = () => {
               </a>
 
               <a
-                href={`mailto:?subject=${encodeURIComponent(post.title)}&body=${encodeURIComponent(`Check out this article on SmartPDF AI: ${articleUrl}`)}`}
-                className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-                title="Share via Email"
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`${post.title} - ${articleUrl}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 transition-colors"
+                title="Share on WhatsApp"
               >
-                <Mail className="w-3.5 h-3.5" />
+                <MessageCircle className="w-3.5 h-3.5" />
               </a>
+
+              <button
+                onClick={() => window.print()}
+                className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+                title="Print Article"
+              >
+                <Printer className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </header>
+
+        {/* Jump to Table of Contents Quick Button for Mobile */}
+        <div className="lg:hidden no-print">
+          <button
+            onClick={() => {
+              const el = document.getElementById('table-of-contents');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+                setMobileTocOpen(true);
+              }
+            }}
+            className="w-full py-2.5 px-4 bg-[#121215] border border-slate-800 hover:border-red-500/40 text-xs font-bold text-slate-200 hover:text-white rounded-2xl flex items-center justify-between transition-all shadow-lg cursor-pointer"
+          >
+            <span className="flex items-center gap-2">
+              <List className="w-4 h-4 text-red-500" /> Jump to Table of Contents ({post.sections.length} Sections)
+            </span>
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${mobileTocOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
 
         {/* Featured Image Placeholder / Cover Banner */}
         <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-[#121215] shadow-2xl group">
@@ -382,11 +628,11 @@ export const BlogPost: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Table of Contents Dropdown Toggle */}
-        <div className="lg:hidden bg-[#121215] border border-slate-800 rounded-2xl p-4">
+        {/* Mobile Table of Contents Dropdown Container */}
+        <div id="table-of-contents" className="lg:hidden bg-[#121215] border border-slate-800 rounded-2xl p-4 no-print scroll-mt-20">
           <button
             onClick={() => setMobileTocOpen(!mobileTocOpen)}
-            className="w-full flex items-center justify-between text-xs font-bold text-white"
+            className="w-full flex items-center justify-between text-xs font-bold text-white cursor-pointer"
           >
             <span className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-red-500" /> Table of Contents ({post.sections.length} Sections)
@@ -448,7 +694,7 @@ export const BlogPost: React.FC = () => {
           </aside>
 
           {/* Article Text Content Column */}
-          <main className="lg:col-span-3 space-y-8 bg-[#121215] border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl">
+          <main className="lg:col-span-3 space-y-10 sm:space-y-12 bg-[#121215] border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl">
             
             {/* Editorial Review Note & Content Disclaimer */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-lg">
@@ -472,20 +718,20 @@ export const BlogPost: React.FC = () => {
             </div>
 
             {post.sections.map((section, idx) => (
-              <section key={idx} id={`section-${idx}`} className="space-y-4 scroll-mt-24">
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight border-b border-slate-800 pb-2">
+              <section key={idx} id={`section-${idx}`} className="space-y-5 scroll-mt-24">
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight border-b border-slate-800 pb-3">
                   {section.heading}
                 </h2>
 
                 {section.paragraphs?.map((p, pIdx) => (
-                  <p key={pIdx} className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  <div key={pIdx} className="text-xs sm:text-sm lg:text-base text-slate-300 leading-relaxed my-3">
                     {renderFormattedText(p)}
-                  </p>
+                  </div>
                 ))}
 
                 {/* Callout Box */}
                 {section.callout && (
-                  <div className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 my-4 ${
+                  <div className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 my-6 ${
                     section.callout.type === 'key-takeaway'
                       ? 'bg-red-500/10 border-red-500/30 text-slate-200'
                       : section.callout.type === 'warning' || section.callout.type === 'common-mistake'
@@ -501,7 +747,7 @@ export const BlogPost: React.FC = () => {
                       {(section.callout.type === 'tip' || section.callout.type === 'best-practice') && <Sparkles className="w-4 h-4 text-purple-400" />}
                       <span className="text-white">{section.callout.title}</span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                       {renderFormattedText(section.callout.text)}
                     </p>
                   </div>
@@ -513,14 +759,14 @@ export const BlogPost: React.FC = () => {
                     {section.steps.map((step) => (
                       <div
                         key={step.number}
-                        className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex gap-4 items-start"
+                        className="p-4 sm:p-5 bg-slate-900/80 border border-slate-800 rounded-2xl flex gap-4 items-start shadow-md"
                       >
                         <div className="w-7 h-7 rounded-xl bg-red-600 text-white font-black text-xs flex items-center justify-center shrink-0">
                           {step.number}
                         </div>
                         <div className="space-y-1">
-                          <h3 className="text-xs font-bold text-white">{step.title}</h3>
-                          <p className="text-xs text-slate-400 leading-normal">{renderFormattedText(step.description)}</p>
+                          <h3 className="text-xs sm:text-sm font-bold text-white">{step.title}</h3>
+                          <div className="text-xs sm:text-sm text-slate-400 leading-relaxed">{renderFormattedText(step.description)}</div>
                         </div>
                       </div>
                     ))}
@@ -529,10 +775,10 @@ export const BlogPost: React.FC = () => {
 
                 {/* Bulleted List Items */}
                 {section.listItems && (
-                  <ul className="space-y-2 text-xs sm:text-sm text-slate-300 pl-2">
+                  <ul className="space-y-2 text-xs sm:text-sm text-slate-300 pl-2 my-4">
                     {section.listItems.map((item, lIdx) => (
-                      <li key={lIdx} className="flex items-start gap-2">
-                        <span className="text-red-500 font-bold mt-1">•</span>
+                      <li key={lIdx} className="flex items-start gap-2.5">
+                        <span className="text-red-500 font-bold mt-1 shrink-0">•</span>
                         <span className="leading-relaxed">{renderFormattedText(item)}</span>
                       </li>
                     ))}
@@ -541,29 +787,34 @@ export const BlogPost: React.FC = () => {
 
                 {/* Comparison / Data Table */}
                 {section.table && (
-                  <div className="overflow-x-auto my-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl">
-                    <table className="w-full text-left text-xs sm:text-sm text-slate-200 border-collapse">
-                      <thead>
-                        <tr className="bg-slate-800/90 border-b border-slate-700 text-white font-bold">
-                          {section.table.headers.map((header, hIdx) => (
-                            <th key={hIdx} className="py-3.5 px-4 font-black tracking-wider uppercase text-[11px] sm:text-xs text-red-400">
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/80">
-                        {section.table.rows.map((row, rIdx) => (
-                          <tr key={rIdx} className="hover:bg-slate-800/40 transition-colors">
-                            {row.map((cell, cIdx) => (
-                              <td key={cIdx} className={`py-3 px-4 text-xs sm:text-sm leading-normal ${cIdx === 0 ? 'font-bold text-white' : 'text-slate-300'}`}>
-                                {renderFormattedText(cell)}
-                              </td>
+                  <div className="my-6 space-y-1">
+                    <div className="text-[11px] text-slate-500 text-right sm:hidden italic">
+                      ← Scroll table horizontally →
+                    </div>
+                    <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl scrollbar-thin scrollbar-thumb-slate-700">
+                      <table className="w-full text-left text-xs sm:text-sm text-slate-200 border-collapse min-w-[500px]">
+                        <thead>
+                          <tr className="bg-slate-800/90 border-b border-slate-700 text-white font-bold">
+                            {section.table.headers.map((header, hIdx) => (
+                              <th key={hIdx} className="py-3.5 px-4 font-black tracking-wider uppercase text-[11px] sm:text-xs text-red-400 whitespace-nowrap">
+                                {header}
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/80">
+                          {section.table.rows.map((row, rIdx) => (
+                            <tr key={rIdx} className="hover:bg-slate-800/50 transition-colors odd:bg-slate-900/40 even:bg-slate-900/80">
+                              {row.map((cell, cIdx) => (
+                                <td key={cIdx} className={`py-3.5 px-4 text-xs sm:text-sm leading-relaxed ${cIdx === 0 ? 'font-bold text-white' : 'text-slate-300'}`}>
+                                  {renderFormattedText(cell)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </section>
@@ -807,6 +1058,18 @@ export const BlogPost: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Back to Top Floating Button */}
+      {showBackToTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-40 p-3.5 bg-red-600 hover:bg-red-500 text-white rounded-full shadow-2xl border border-red-400/30 transition-all transform hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center group no-print back-to-top"
+          title="Back to Top"
+          aria-label="Back to Top"
+        >
+          <ArrowUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
+        </button>
+      )}
     </div>
   );
 };
