@@ -40,12 +40,12 @@ export const AuthorProfile: React.FC = () => {
 
   const authorDetails = {
     name: 'Mridanga Mondal',
-    role: 'Founder & Electrical Engineer',
+    role: 'Founder of SmartPDF AI',
     company: 'SmartPDF AI',
     email: 'mmridanga@gmail.com',
     location: 'Kolkata, India / Global Remote',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-    bio: 'Mridanga Mondal is the Founder of SmartPDF AI and an Electrical Engineer passionate about building privacy-first browser-based PDF tools powered by AI. He specializes in document workflow automation, PDF technologies, OCR, web applications, and productivity software. His goal is to create secure, fast and easy-to-use PDF solutions for students, professionals and businesses worldwide.',
+    bio: 'Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications.',
     mission: 'To empower students, working professionals, and global enterprises with ultra-fast, zero-knowledge browser utilities that process sensitive document workflows 100% locally inside user RAM memory.',
     socials: {
       github: 'https://github.com/mmridanga',

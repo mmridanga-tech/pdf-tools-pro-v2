@@ -32,6 +32,7 @@ export interface BlogPostItem {
     name: string;
     role: string;
     avatar: string;
+    bio?: string;
   };
   publishDate: string;
   readTime: string;
@@ -56,6 +57,13 @@ export interface BlogPostItem {
   sections: BlogSection[];
 }
 
+export const BLOG_AUTHOR = {
+  name: 'Mridanga Mondal',
+  role: 'Founder of SmartPDF AI',
+  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+  bio: 'Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications.',
+};
+
 export const BLOG_CATEGORIES = [
   { name: 'All Topics', slug: 'all' },
   { name: 'Tutorials & Guides', slug: 'tutorials' },
@@ -76,11 +84,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Learn how to convert PDF to Word without losing formatting in 2026. This comprehensive guide covers PDF vs DOCX structure differences, OCR vs direct conversion, step-by-step instructions, comparison tables, best practices, and 8 detailed FAQs.',
     category: 'Format Conversion',
     categorySlug: 'conversion',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '20 min read',
     featuredImage: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80',
@@ -286,11 +290,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Compare the best PDF to Word converters in 2026. Comprehensive evaluation of SmartPDF AI, Adobe Acrobat Pro, Smallpdf, iLovePDF, PDF24 Creator, and ABBYY FineReader across features, formatting accuracy, pros & cons, and 8 FAQs.',
     category: 'Software Reviews',
     categorySlug: 'reviews',
-    author: {
-      name: 'Marcus Vance',
-      role: 'Lead Performance & Security Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '21 min read',
     featuredImage: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80',
@@ -497,11 +497,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Master splitting PDF files in 2026. This comprehensive guide covers PDF page tree architecture, step-by-step page splitting methods, expert best practices, common pitfall analysis, and 8 detailed FAQs.',
     category: 'Tutorials & Guides',
     categorySlug: 'tutorials',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '19 min read',
     featuredImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=80',
@@ -704,11 +700,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Extract PDF pages without losing formatting in 2026. This comprehensive guide covers vector object retention, side-by-side extraction methods comparison table, best use cases across industries, step-by-step instructions, and 8 FAQs.',
     category: 'PDF Editing',
     categorySlug: 'editing',
-    author: {
-      name: 'Marcus Vance',
-      role: 'Lead Performance & Security Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '18 min read',
     featuredImage: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1200&q=80',
@@ -890,11 +882,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Learn how to merge PDF files without losing quality in 2026. This comprehensive guide covers PDF structure, font stream preservation, step-by-step instructions, expert best practices, common pitfall analysis, and 8 detailed FAQs.',
     category: 'Tutorials & Guides',
     categorySlug: 'tutorials',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '18 min read',
     featuredImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&q=80',
@@ -1096,11 +1084,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Compare the best free PDF merger tools in 2026. Comprehensive evaluation of SmartPDF AI, Adobe Acrobat Online, Smallpdf, iLovePDF, PDF24, and PDFsam across performance, security, pricing, and pros/cons.',
     category: 'Software Reviews',
     categorySlug: 'reviews',
-    author: {
-      name: 'Marcus Vance',
-      role: 'Lead Performance & Security Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '20 min read',
     featuredImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
@@ -1307,11 +1291,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Learn how to compress PDF files without losing quality in 2026. This comprehensive 2,500-word guide covers PDF structure, lossy vs. lossless compression, WebAssembly browser privacy, step-by-step instructions, expert best practices, common mistakes, and 8 detailed FAQs.',
     category: 'PDF Compression',
     categorySlug: 'compression',
-    author: {
-      name: 'Marcus Vance',
-      role: 'Lead Performance & Security Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '20 min read',
     featuredImage: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80',
@@ -1512,11 +1492,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Discover why large PDF files slow down your organizational workflow in 2026. This comprehensive 2,500-word guide covers the root causes of PDF bloat, business productivity costs, 4 practical industry scenarios, comparison matrix, step-by-step fix plan, and 8 FAQs.',
     category: 'Productivity & Optimization',
     categorySlug: 'tutorials',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '19 min read',
     featuredImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80',
@@ -1712,11 +1688,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Learn how to password protect your PDF files in 2026 with enterprise 256-bit AES encryption. Complete step-by-step guide covering user vs owner passwords, browser privacy, best practices, 10 FAQs, and common security mistakes.',
     category: 'Security & Encryption',
     categorySlug: 'security',
-    author: {
-      name: 'Mridanga Mondal',
-      role: 'Founder & Electrical Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '18 min read',
     featuredImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80',
@@ -1911,11 +1883,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Comparing PDF vs Microsoft Word in 2026? Discover crucial differences in layout stability, editability, security, file compression, and cross-platform compatibility. Includes a comparison table, 10 FAQs, and workflow tips.',
     category: 'Format Conversion',
     categorySlug: 'conversion',
-    author: {
-      name: 'Mridanga Mondal',
-      role: 'Founder & Electrical Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '16 min read',
     featuredImage: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80',
@@ -2166,11 +2134,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Discover how to merge multiple PDF files without losing image quality, vector formatting, or layout accuracy. Learn step-by-step instructions, expert best practices, common mistakes to avoid, and 10 detailed FAQs.',
     category: 'Tutorials & Guides',
     categorySlug: 'tutorials',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '14 min read',
     featuredImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&q=80',
@@ -2385,11 +2349,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Learn how to merge PDF files online for free without losing quality. Discover expert techniques, common mistakes to avoid, and step-by-step instructions for lossless PDF compilation.',
     category: 'Tutorials & Guides',
     categorySlug: 'tutorials',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'August 3, 2026',
     readTime: '12 min read',
     featuredImage: 'https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1200&q=80',
@@ -2586,11 +2546,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Compare the best free PDF utilities in 2026. Explore privacy standards, AI feature sets, file size limits, and browser-native capabilities.',
     category: 'Tools Review',
     categorySlug: 'tutorials',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'July 28, 2026',
     readTime: '6 min read',
     featuredImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
@@ -2653,11 +2609,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Debating between saving as PDF or Microsoft Word DOCX? Learn when to choose fixed visual layout versus editable text formatting.',
     category: 'Format Conversion',
     categorySlug: 'conversion',
-    author: {
-      name: 'Marcus Vance',
-      role: 'Lead Performance & Security Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'July 25, 2026',
     readTime: '4 min read',
     featuredImage: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80',
@@ -2723,11 +2675,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Step-by-step guide to converting PDFs into editable DOCX files. Preserves headers, columns, tables, fonts, and inline image alignment.',
     category: 'Format Conversion',
     categorySlug: 'conversion',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'July 20, 2026',
     readTime: '5 min read',
     featuredImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
@@ -2796,11 +2744,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Learn how to apply 256-bit AES encryption, user passwords, permission restrictions, and permanent text redaction to sensitive PDF files.',
     category: 'Security & Privacy',
     categorySlug: 'security',
-    author: {
-      name: 'Marcus Vance',
-      role: 'Lead Performance & Security Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'July 15, 2026',
     readTime: '6 min read',
     featuredImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80',
@@ -2862,11 +2806,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Discover how generative AI is transforming document analysis. Learn prompt engineering tips for querying financial reports and research papers.',
     category: 'AI & Automation',
     categorySlug: 'ai-tools',
-    author: {
-      name: 'Elena Rostova',
-      role: 'Senior Document Workflow Architect',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'July 10, 2026',
     readTime: '5 min read',
     featuredImage: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&q=80',
@@ -2927,11 +2867,7 @@ export const BLOG_POSTS: BlogPostItem[] = [
     excerpt: 'Understand the underlying computer vision technology behind OCR. Learn how neural networks identify characters, fonts, and multilingual scripts.',
     category: 'OCR & Text AI',
     categorySlug: 'ocr',
-    author: {
-      name: 'Marcus Vance',
-      role: 'Lead Performance & Security Engineer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
+    author: BLOG_AUTHOR,
     publishDate: 'July 5, 2026',
     readTime: '5 min read',
     featuredImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',

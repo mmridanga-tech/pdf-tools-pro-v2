@@ -109,9 +109,10 @@ export const AdminContentGenerator: React.FC = () => {
         category: data.category || 'Tutorials & Guides',
         categorySlug: data.categorySlug || 'tutorials',
         author: {
-          name: data.authorName || 'Elena Rostova',
-          role: data.authorRole || 'Senior Document Workflow Architect',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+          name: data.authorName || 'Mridanga Mondal',
+          role: data.authorRole || 'Founder of SmartPDF AI',
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+          bio: 'Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications.',
         },
         publishDate: new Date().toLocaleDateString('en-US', {
           month: 'long',

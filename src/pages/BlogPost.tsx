@@ -115,6 +115,8 @@ export const BlogPost: React.FC = () => {
           '@type': 'Person',
           name: post.author.name,
           jobTitle: post.author.role,
+          url: 'https://smartpdfai.tech/author/mridanga-mondal',
+          description: post.author.bio || 'Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools.',
         },
         publisher: {
           '@type': 'Organization',
