@@ -24,7 +24,9 @@ import {
   Tag,
   ChevronDown,
   Send,
-  UserCheck
+  UserCheck,
+  ShieldCheck,
+  RefreshCw
 } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { BLOG_POSTS, getBlogPostBySlug, BlogPostItem } from '../data/blogData';
@@ -257,13 +259,16 @@ export const BlogPost: React.FC = () => {
             <span className="px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider">
               {post.category}
             </span>
-            <span className="text-xs text-slate-400 flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-slate-500" /> {post.publishDate}
+            <span className="text-xs text-slate-400 flex items-center gap-1.5" title="Published Date">
+              <Calendar className="w-3.5 h-3.5 text-slate-500" /> <span className="font-medium text-slate-300">Published:</span> {post.publishDate}
             </span>
-            <span className="text-xs text-slate-400 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-slate-500" /> {post.readTime}
+            <span className="text-xs text-slate-400 flex items-center gap-1.5" title="Last Updated Date">
+              <RefreshCw className="w-3.5 h-3.5 text-slate-500" /> <span className="font-medium text-slate-300">Last Updated:</span> {post.lastUpdated || post.publishDate || 'August 4, 2026'}
             </span>
-            <span className="text-xs text-slate-400 flex items-center gap-1">
+            <span className="text-xs text-slate-400 flex items-center gap-1.5" title="Reading Time">
+              <Clock className="w-3.5 h-3.5 text-slate-500" /> <span className="font-medium text-slate-300">Reading Time:</span> {post.readTime}
+            </span>
+            <span className="text-xs text-slate-400 flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-slate-500" /> {post.views.toLocaleString()} Readers
             </span>
           </div>
@@ -444,6 +449,28 @@ export const BlogPost: React.FC = () => {
 
           {/* Article Text Content Column */}
           <main className="lg:col-span-3 space-y-8 bg-[#121215] border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl">
+            
+            {/* Editorial Review Note & Content Disclaimer */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-lg">
+              <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0 mt-0.5">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-extrabold text-white uppercase tracking-wider text-[11px]">Editorial Accuracy Note</span>
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    Reviewed for Accuracy
+                  </span>
+                </div>
+                <p className="text-slate-200 leading-relaxed font-medium">
+                  This article has been reviewed for accuracy and updated to reflect the latest PDF technologies and best practices.
+                </p>
+                <p className="text-[11px] text-slate-400 italic pt-0.5">
+                  We regularly review and update our content to ensure accuracy and usefulness.
+                </p>
+              </div>
+            </div>
+
             {post.sections.map((section, idx) => (
               <section key={idx} id={`section-${idx}`} className="space-y-4 scroll-mt-24">
                 <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight border-b border-slate-800 pb-2">
@@ -582,6 +609,41 @@ export const BlogPost: React.FC = () => {
           </main>
 
         </div>
+
+        {/* About the Author Section */}
+        <section className="bg-[#121215] border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl">
+          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            <UserCheck className="w-5 h-5 text-red-500" />
+            <h3 className="text-lg font-black text-white">About the Author</h3>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pt-1">
+            <img
+              src={post.author.avatar}
+              alt={post.author.name}
+              referrerPolicy="no-referrer"
+              className="w-16 h-16 rounded-full object-cover border-2 border-red-500/40 shrink-0 shadow-md"
+            />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-base font-bold text-white">{post.author.name}</h4>
+                <span className="px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold">
+                  {post.author.role}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                {post.author.bio}
+              </p>
+              <div className="pt-1 flex items-center gap-3">
+                <Link
+                  to="/author/mridanga-mondal"
+                  className="text-xs text-red-400 font-bold hover:underline inline-flex items-center gap-1"
+                >
+                  View Author Profile & Articles <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Frequently Asked Questions Section */}
         {post.faqs && post.faqs.length > 0 && (

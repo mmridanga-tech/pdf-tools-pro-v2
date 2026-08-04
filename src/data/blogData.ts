@@ -35,6 +35,7 @@ export interface BlogPostItem {
     bio?: string;
   };
   publishDate: string;
+  lastUpdated?: string;
   readTime: string;
   featuredImage: string;
   featured?: boolean;
@@ -59,9 +60,9 @@ export interface BlogPostItem {
 
 export const BLOG_AUTHOR = {
   "name": "Mridanga Mondal",
-  "role": "Founder of SmartPDF AI",
+  "role": "Founder of SmartPDF AI & Electrical Engineer",
   "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-  "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+  "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
 };
 
 export const BLOG_CATEGORIES = [
@@ -111,11 +112,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "conversion",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "20 min read",
     "featuredImage": "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -409,11 +411,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "reviews",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "21 min read",
     "featuredImage": "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -771,11 +774,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "tutorials",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "19 min read",
     "featuredImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -1065,11 +1069,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "editing",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "18 min read",
     "featuredImage": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -1350,11 +1355,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "tutorials",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "18 min read",
     "featuredImage": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -1640,11 +1646,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "reviews",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "20 min read",
     "featuredImage": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -2001,11 +2008,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "compression",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "20 min read",
     "featuredImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -2296,11 +2304,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "tutorials",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "19 min read",
     "featuredImage": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -2594,11 +2603,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "security",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "18 min read",
     "featuredImage": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -2903,11 +2913,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "conversion",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "16 min read",
     "featuredImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -3263,11 +3274,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "tutorials",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "14 min read",
     "featuredImage": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -3583,11 +3595,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "tutorials",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 3, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "12 min read",
     "featuredImage": "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -3876,11 +3889,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "tutorials",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "July 28, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "6 min read",
     "featuredImage": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
@@ -4091,11 +4105,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "conversion",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "July 25, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "4 min read",
     "featuredImage": "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
@@ -4312,11 +4327,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "conversion",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "July 20, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "5 min read",
     "featuredImage": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
@@ -4515,11 +4531,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "security",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "July 15, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "6 min read",
     "featuredImage": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
@@ -4712,11 +4729,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "ai-tools",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "July 10, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "5 min read",
     "featuredImage": "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -4926,11 +4944,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "ocr",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "July 5, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "5 min read",
     "featuredImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
     "featured": false,
@@ -5135,11 +5154,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "conversion",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 4, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "21 min read",
     "featuredImage": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -5420,11 +5440,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "reviews",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 4, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "22 min read",
     "featuredImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -5781,11 +5802,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "editing",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 4, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "22 min read",
     "featuredImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -6074,11 +6096,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "reviews",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 4, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "22 min read",
     "featuredImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -6435,11 +6458,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "security",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 4, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "23 min read",
     "featuredImage": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
@@ -6737,11 +6761,12 @@ export const BLOG_POSTS: BlogPostItem[] = [
     "categorySlug": "security",
     "author": {
       "name": "Mridanga Mondal",
-      "role": "Founder of SmartPDF AI",
+      "role": "Founder of SmartPDF AI & Electrical Engineer",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80",
-      "bio": "Founder of SmartPDF AI, Electrical Engineer, and creator of privacy-first AI-powered PDF tools. Specializing in PDF technologies, OCR, document automation, and web applications."
+      "bio": "Mridanga Mondal is the founder of SmartPDF AI and an Electrical Engineer with experience in document workflows, PDF tools, OCR, productivity software, and AI-powered web applications. He focuses on creating secure, privacy-first, and easy-to-use PDF solutions."
     },
     "publishDate": "August 4, 2026",
+    "lastUpdated": "August 4, 2026",
     "readTime": "22 min read",
     "featuredImage": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=1200&q=80",
     "featured": true,
