@@ -188,7 +188,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             fileInputRef.current?.click();
           }
         }}
-        className={`relative group cursor-pointer rounded-3xl border-2 border-dashed transition-all p-10 md:p-14 text-center flex flex-col items-center justify-center overflow-hidden focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
+        className={`relative group cursor-pointer rounded-3xl border-2 border-dashed transition-all p-6 sm:p-10 md:p-14 text-center flex flex-col items-center justify-center overflow-hidden focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
           isDragging
             ? 'border-red-500 bg-red-500/10 scale-[1.01] shadow-2xl shadow-red-500/20'
             : 'border-slate-800/90 hover:border-red-500/50 bg-[#141417]/90 hover:bg-[#18181d] shadow-xl hover:shadow-2xl'
@@ -209,15 +209,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         <motion.div
           whileHover={{ scale: 1.1, rotate: 2 }}
           transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-          className="w-16 h-16 mb-5 rounded-2xl bg-gradient-to-tr from-red-600/20 to-rose-500/20 text-red-500 border border-red-500/30 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-all duration-300 shadow-md"
+          className="w-14 h-14 sm:w-16 sm:h-16 mb-4 sm:mb-5 rounded-2xl bg-gradient-to-tr from-red-600/20 to-rose-500/20 text-red-500 border border-red-500/30 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-all duration-300 shadow-md"
         >
-          {multiple ? <FilePlus className="w-8 h-8" /> : <Upload className="w-8 h-8" />}
+          {multiple ? <FilePlus className="w-7 h-7 sm:w-8 sm:h-8" /> : <Upload className="w-7 h-7 sm:w-8 sm:h-8" />}
         </motion.div>
 
-        <h3 className="text-xl sm:text-2xl font-extrabold text-white mb-2 tracking-tight">{title}</h3>
-        <p className="text-sm text-slate-400 mb-8 max-w-sm font-normal">{description}</p>
+        <h3 className="text-lg sm:text-2xl font-extrabold text-white mb-2 tracking-tight">{title}</h3>
+        <p className="text-xs sm:text-sm text-slate-400 mb-6 sm:mb-8 max-w-sm font-normal leading-relaxed">{description}</p>
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
           <motion.button
             type="button"
             whileHover={{ scale: 1.03 }}
@@ -226,7 +226,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               e.stopPropagation();
               fileInputRef.current?.click();
             }}
-            className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-xl shadow-red-600/25 transition-all cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-xl shadow-red-600/25 transition-all cursor-pointer min-h-[44px]"
           >
             {getComputedButtonText()}
           </motion.button>
@@ -239,10 +239,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               e.stopPropagation();
               setIsCloudPickerOpen(true);
             }}
-            className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-bold text-sm shadow-lg transition-all cursor-pointer gap-2"
+            className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-bold text-sm shadow-lg transition-all cursor-pointer gap-2 min-h-[44px]"
           >
             <Cloud className="w-4 h-4 text-red-400" />
-            <span>Import from Cloud Drive</span>
+            <span>Import from Cloud</span>
           </motion.button>
         </div>
 

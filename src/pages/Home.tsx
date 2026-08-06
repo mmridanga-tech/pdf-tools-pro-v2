@@ -608,38 +608,38 @@ export const Home: React.FC = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+        <div className="text-center mb-8 sm:mb-14">
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-2 sm:mb-3">
             Frequently Asked Questions
           </h2>
-          <p className="text-slate-400 text-base">Everything you need to know about PDF Tools Pro.</p>
+          <p className="text-slate-400 text-sm sm:text-base">Everything you need to know about SmartPDF AI.</p>
         </div>
 
-        <div className="space-y-4">
-          <div className="p-7 rounded-2xl bg-[#141417] border border-slate-800/80 hover:border-slate-700 transition-colors">
-            <h3 className="text-lg font-bold text-white mb-2">
+        <div className="space-y-3.5 sm:space-y-4">
+          <div className="p-5 sm:p-7 rounded-2xl bg-[#141417] border border-slate-800/80 hover:border-slate-700 transition-colors shadow-lg">
+            <h3 className="text-base sm:text-lg font-bold text-white mb-2 leading-snug">
               Are my PDF files uploaded to any external server?
             </h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
               No! All PDF merging, splitting, rotation, and conversion operations are processed 100% locally in your web browser using WebAssembly and client-side JavaScript. Your files never leave your computer.
             </p>
           </div>
 
-          <div className="p-7 rounded-2xl bg-[#141417] border border-slate-800/80 hover:border-slate-700 transition-colors">
-            <h3 className="text-lg font-bold text-white mb-2">
-              Is PDF Tools Pro completely free to use?
+          <div className="p-5 sm:p-7 rounded-2xl bg-[#141417] border border-slate-800/80 hover:border-slate-700 transition-colors shadow-lg">
+            <h3 className="text-base sm:text-lg font-bold text-white mb-2 leading-snug">
+              Is SmartPDF AI completely free to use?
             </h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
               Yes, all tools are completely free with no limits on the number of files or pages you process.
             </p>
           </div>
 
-          <div className="p-7 rounded-2xl bg-[#141417] border border-slate-800/80 hover:border-slate-700 transition-colors">
-            <h3 className="text-lg font-bold text-white mb-2">
+          <div className="p-5 sm:p-7 rounded-2xl bg-[#141417] border border-slate-800/80 hover:border-slate-700 transition-colors shadow-lg">
+            <h3 className="text-base sm:text-lg font-bold text-white mb-2 leading-snug">
               Can I convert PDF files into editable Word documents?
             </h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
               Yes! Our PDF to Word tool parses the structural layers of your PDF file and extracts text directly into native Microsoft Word (.docx) format.
             </p>
           </div>

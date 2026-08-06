@@ -175,16 +175,16 @@ export const Navbar: React.FC = () => {
             </nav>
 
             {/* Right Header Actions */}
-            <div className="flex items-center gap-3">
-              {/* Command Palette Button */}
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              {/* Command Palette Button (Mobile & Desktop) */}
               <button
                 onClick={() => setCommandPaletteOpen(true)}
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-xl border border-slate-800 transition-colors shadow-sm cursor-pointer"
-                aria-label="Search tools with keyboard shortcut"
+                className="flex items-center gap-2 px-3 py-2 sm:py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-xl border border-slate-800 transition-colors shadow-sm cursor-pointer min-h-[40px] sm:min-h-0"
+                aria-label="Search tools"
               >
-                <Search className="w-3.5 h-3.5 text-slate-400" />
-                <span>Search</span>
-                <kbd className="px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 bg-slate-950 rounded border border-slate-800">
+                <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="hidden sm:inline">Search</span>
+                <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 bg-slate-950 rounded border border-slate-800">
                   ⌘K
                 </kbd>
               </button>
@@ -194,7 +194,7 @@ export const Navbar: React.FC = () => {
                 <div className="relative">
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 pl-2.5 bg-[#18181d] hover:bg-[#202028] border border-slate-800 rounded-2xl transition-colors cursor-pointer"
+                    className="flex items-center gap-2 p-1.5 pl-2.5 bg-[#18181d] hover:bg-[#202028] border border-slate-800 rounded-2xl transition-colors cursor-pointer min-h-[40px]"
                   >
                     <img
                       src={user.avatar}
@@ -213,7 +213,7 @@ export const Navbar: React.FC = () => {
                         initial={{ opacity: 0, scale: 0.95, y: 5 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 5 }}
-                        className="absolute right-0 mt-2 w-56 bg-[#121215] border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 space-y-1"
+                        className="absolute right-0 mt-2 w-60 bg-[#121215] border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 space-y-1"
                       >
                         <div className="px-3 py-2 border-b border-slate-800/80 mb-1">
                           <p className="text-xs font-bold text-white">{user.name}</p>
@@ -226,7 +226,7 @@ export const Navbar: React.FC = () => {
                         <Link
                           to="/dashboard"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
                         >
                           <LayoutDashboard className="w-4 h-4 text-slate-400" /> Dashboard & History
                         </Link>
@@ -234,7 +234,7 @@ export const Navbar: React.FC = () => {
                         <Link
                           to="/settings"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
                         >
                           <Settings className="w-4 h-4 text-slate-400" /> Settings
                         </Link>
@@ -242,7 +242,7 @@ export const Navbar: React.FC = () => {
                         <Link
                           to="/help"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
                         >
                           <HelpCircle className="w-4 h-4 text-slate-400" /> Help & Support
                         </Link>
@@ -250,7 +250,7 @@ export const Navbar: React.FC = () => {
                         <Link
                           to="/team"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
                         >
                           <Users className="w-4 h-4 text-slate-400" /> Team Workspace
                         </Link>
@@ -258,7 +258,7 @@ export const Navbar: React.FC = () => {
                         <Link
                           to="/pricing"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-slate-800/60 rounded-xl transition-colors"
+                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
                         >
                           <Zap className="w-4 h-4" /> Upgrade Plan
                         </Link>
@@ -267,7 +267,7 @@ export const Navbar: React.FC = () => {
                           <Link
                             to="/admin"
                             onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-slate-800/60 rounded-xl transition-colors"
+                            className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
                           >
                             <ShieldAlert className="w-4 h-4" /> Admin Console
                           </Link>
@@ -278,7 +278,7 @@ export const Navbar: React.FC = () => {
                             logout();
                             setUserDropdownOpen(false);
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition-colors text-left cursor-pointer mt-1 border-t border-slate-800/60"
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition-colors text-left cursor-pointer mt-1 border-t border-slate-800/60 min-h-[40px]"
                         >
                           <LogOut className="w-4 h-4" /> Log Out
                         </button>
@@ -289,7 +289,7 @@ export const Navbar: React.FC = () => {
               ) : (
                 <button
                   onClick={() => openAuthModal('login')}
-                  className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-2xl text-xs font-bold shadow-md transition-all cursor-pointer"
+                  className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-2xl text-xs font-bold shadow-md transition-all cursor-pointer min-h-[40px]"
                 >
                   Sign In
                 </button>
@@ -298,10 +298,10 @@ export const Navbar: React.FC = () => {
               {/* Mobile Hamburger Menu Toggle */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="xl:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
+                className="xl:hidden p-2.5 rounded-xl text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
                 aria-label="Toggle navigation menu"
               >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
@@ -315,15 +315,23 @@ export const Navbar: React.FC = () => {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="xl:hidden border-b border-slate-800 bg-[#0C0C0E] px-4 pt-2 pb-6 space-y-2 shadow-2xl overflow-hidden"
+              className="xl:hidden border-b border-slate-800 bg-[#0C0C0E] px-4 pt-3 pb-6 space-y-2.5 shadow-2xl max-h-[85vh] overflow-y-auto"
             >
               <p className="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                Main Pages
+                Main Navigation
               </p>
+              <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-200 font-bold text-sm min-h-[44px]"
+              >
+                <span>Tools Suite</span>
+                <ArrowRight className="w-4 h-4 text-slate-500" />
+              </Link>
               <Link
                 to="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm"
+                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm min-h-[44px]"
               >
                 <span>Dashboard & History</span>
                 <ArrowRight className="w-4 h-4 text-slate-500" />
@@ -331,31 +339,37 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/ai-chat"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-900 text-amber-400 font-bold text-sm"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-amber-500/5 hover:bg-amber-500/10 text-amber-400 font-bold text-sm border border-amber-500/20 min-h-[44px]"
               >
-                <span>AI PDF Chat</span>
-                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-400" /> AI PDF Chat
+                </span>
+                <ArrowRight className="w-4 h-4 text-amber-400" />
               </Link>
               <Link
                 to="/ai-assistant"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-900 text-purple-400 font-bold text-sm"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 font-bold text-sm border border-purple-500/20 min-h-[44px]"
               >
-                <span>AI Assistant Suite</span>
-                <Zap className="w-4 h-4 text-purple-400" />
+                <span className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-purple-400" /> AI Assistant Suite
+                </span>
+                <ArrowRight className="w-4 h-4 text-purple-400" />
               </Link>
               <Link
                 to="/document-analyzer"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-900 text-emerald-400 font-bold text-sm"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 min-h-[44px]"
               >
-                <span>Doc Analyzer v1.2</span>
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> Doc Analyzer
+                </span>
+                <ArrowRight className="w-4 h-4 text-emerald-400" />
               </Link>
               <Link
                 to="/team"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm"
+                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm min-h-[44px]"
               >
                 <span>Team Workspaces</span>
                 <Users className="w-4 h-4 text-slate-500" />
@@ -363,41 +377,49 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/pricing"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm"
+                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm min-h-[44px]"
               >
                 <span>Pricing Plans</span>
                 <ArrowRight className="w-4 h-4 text-slate-500" />
               </Link>
+              <Link
+                to="/blog"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm min-h-[44px]"
+              >
+                <span>Knowledge Hub & Articles</span>
+                <ArrowRight className="w-4 h-4 text-slate-500" />
+              </Link>
 
-              <p className="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider pt-2 mb-1">
+              <p className="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider pt-3 mb-1">
                 Company & Legal
               </p>
               <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-300">
                 <Link
                   to="/about"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 bg-slate-900/60 rounded-xl hover:bg-slate-800"
+                  className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center min-h-[44px]"
                 >
                   About Us
                 </Link>
                 <Link
                   to="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 bg-slate-900/60 rounded-xl hover:bg-slate-800"
+                  className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center min-h-[44px]"
                 >
                   Contact Us
                 </Link>
                 <Link
                   to="/privacy"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 bg-slate-900/60 rounded-xl hover:bg-slate-800"
+                  className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center min-h-[44px]"
                 >
                   Privacy Policy
                 </Link>
                 <Link
                   to="/terms"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 bg-slate-900/60 rounded-xl hover:bg-slate-800"
+                  className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center min-h-[44px]"
                 >
                   Terms & Conditions
                 </Link>

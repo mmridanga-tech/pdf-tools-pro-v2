@@ -642,26 +642,27 @@ export const BlogPost: React.FC = () => {
         </div>
 
         {/* Mobile Table of Contents Dropdown Container */}
-        <div id="table-of-contents" className="lg:hidden bg-[#121215] border border-slate-800 rounded-2xl p-4 no-print scroll-mt-20">
+        <div id="table-of-contents" className="lg:hidden bg-[#121215] border border-slate-800 rounded-2xl p-4.5 no-print scroll-mt-20 shadow-xl">
           <button
             onClick={() => setMobileTocOpen(!mobileTocOpen)}
-            className="w-full flex items-center justify-between text-xs font-bold text-white cursor-pointer"
+            className="w-full flex items-center justify-between text-xs font-bold text-white cursor-pointer min-h-[40px]"
           >
             <span className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-red-500" /> Table of Contents ({post.sections.length} Sections)
+              <BookOpen className="w-4 h-4 text-red-500 shrink-0" /> Table of Contents ({post.sections.length} Sections)
             </span>
-            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${mobileTocOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${mobileTocOpen ? 'rotate-180' : ''}`} />
           </button>
           {mobileTocOpen && (
-            <ul className="mt-3 pt-3 border-t border-slate-800 space-y-2 text-xs text-slate-300">
+            <ul className="mt-3 pt-3 border-t border-slate-800 space-y-1 text-xs text-slate-300">
               {post.sections.map((sec, idx) => (
                 <li key={idx}>
                   <a
                     href={`#section-${idx}`}
                     onClick={() => setMobileTocOpen(false)}
-                    className="hover:text-red-400 transition-colors block py-1"
+                    className="hover:text-red-400 transition-colors flex items-center py-2 px-2.5 rounded-xl hover:bg-slate-900/80 active:bg-slate-800 text-slate-200 font-medium min-h-[40px]"
                   >
-                    {sec.heading}
+                    <span className="text-red-500/80 font-bold mr-2 text-[11px]">{idx + 1}.</span>
+                    <span className="line-clamp-1">{sec.heading}</span>
                   </a>
                 </li>
               ))}
@@ -707,7 +708,7 @@ export const BlogPost: React.FC = () => {
           </aside>
 
           {/* Article Text Content Column */}
-          <main className="lg:col-span-3 space-y-10 sm:space-y-12 bg-[#121215] border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl">
+          <main className="lg:col-span-3 space-y-8 sm:space-y-12 bg-[#121215] border border-slate-800 rounded-3xl p-4 sm:p-8 lg:p-10 shadow-2xl overflow-hidden">
             
             {/* Editorial Review Note & Content Disclaimer */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 shadow-lg">
@@ -745,13 +746,13 @@ export const BlogPost: React.FC = () => {
               })();
 
               return (
-                <section key={idx} id={`section-${idx}`} className="space-y-5 scroll-mt-24">
+                <section key={idx} id={`section-${idx}`} className="space-y-4 sm:space-y-5 scroll-mt-24">
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight border-b border-slate-800 pb-3">
                     {section.heading}
                   </h2>
 
                   {section.paragraphs?.map((p, pIdx) => (
-                    <div key={pIdx} className="text-xs sm:text-sm lg:text-base text-slate-300 leading-relaxed my-3">
+                    <div key={pIdx} className="text-sm sm:text-base text-slate-200 leading-relaxed my-3 font-normal">
                       {renderFormattedText(p)}
                     </div>
                   ))}
@@ -766,7 +767,7 @@ export const BlogPost: React.FC = () => {
 
                 {/* Callout Box */}
                 {section.callout && (
-                  <div className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 my-6 ${
+                  <div className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 my-5 sm:my-6 ${
                     section.callout.type === 'key-takeaway'
                       ? 'bg-red-500/10 border-red-500/30 text-slate-200'
                       : section.callout.type === 'warning' || section.callout.type === 'common-mistake'
@@ -775,11 +776,11 @@ export const BlogPost: React.FC = () => {
                       ? 'bg-purple-500/10 border-purple-500/30 text-slate-200'
                       : 'bg-blue-500/10 border-blue-500/30 text-slate-200'
                   }`}>
-                    <div className="flex items-center gap-2 font-bold text-xs">
-                      {section.callout.type === 'key-takeaway' && <CheckCircle2 className="w-4 h-4 text-red-400" />}
-                      {(section.callout.type === 'warning' || section.callout.type === 'common-mistake') && <AlertTriangle className="w-4 h-4 text-amber-400" />}
-                      {section.callout.type === 'info' && <Info className="w-4 h-4 text-blue-400" />}
-                      {(section.callout.type === 'tip' || section.callout.type === 'best-practice') && <Sparkles className="w-4 h-4 text-purple-400" />}
+                    <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
+                      {section.callout.type === 'key-takeaway' && <CheckCircle2 className="w-4 h-4 text-red-400 shrink-0" />}
+                      {(section.callout.type === 'warning' || section.callout.type === 'common-mistake') && <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />}
+                      {section.callout.type === 'info' && <Info className="w-4 h-4 text-blue-400 shrink-0" />}
+                      {(section.callout.type === 'tip' || section.callout.type === 'best-practice') && <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />}
                       <span className="text-white">{section.callout.title}</span>
                     </div>
                     <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -794,12 +795,12 @@ export const BlogPost: React.FC = () => {
                     {section.steps.map((step) => (
                       <div
                         key={step.number}
-                        className="p-4 sm:p-5 bg-slate-900/80 border border-slate-800 rounded-2xl flex gap-4 items-start shadow-md"
+                        className="p-4 sm:p-5 bg-slate-900/80 border border-slate-800 rounded-2xl flex gap-3.5 sm:gap-4 items-start shadow-md"
                       >
-                        <div className="w-7 h-7 rounded-xl bg-red-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                        <div className="w-7 h-7 rounded-xl bg-red-600 text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
                           {step.number}
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1 min-w-0 flex-1">
                           <h3 className="text-xs sm:text-sm font-bold text-white">{step.title}</h3>
                           <div className="text-xs sm:text-sm text-slate-400 leading-relaxed">{renderFormattedText(step.description)}</div>
                         </div>
@@ -810,7 +811,7 @@ export const BlogPost: React.FC = () => {
 
                 {/* Bulleted List Items */}
                 {section.listItems && (
-                  <ul className="space-y-2 text-xs sm:text-sm text-slate-300 pl-2 my-4">
+                  <ul className="space-y-2 text-xs sm:text-sm text-slate-300 pl-1 sm:pl-2 my-4">
                     {section.listItems.map((item, lIdx) => (
                       <li key={lIdx} className="flex items-start gap-2.5">
                         <span className="text-red-500 font-bold mt-1 shrink-0">•</span>
@@ -822,12 +823,12 @@ export const BlogPost: React.FC = () => {
 
                 {/* Comparison / Data Table */}
                 {section.table && (
-                  <div className="my-6 space-y-1">
-                    <div className="text-[11px] text-slate-500 text-right sm:hidden italic">
-                      ← Scroll table horizontally →
+                  <div className="my-6 space-y-1.5">
+                    <div className="text-[11px] text-slate-400 text-right sm:hidden italic flex items-center justify-end gap-1">
+                      <span>← Swipe table horizontally →</span>
                     </div>
-                    <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl scrollbar-thin scrollbar-thumb-slate-700">
-                      <table className="w-full text-left text-xs sm:text-sm text-slate-200 border-collapse min-w-[500px]">
+                    <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl scrollbar-thin scrollbar-thumb-slate-700 touch-pan-x">
+                      <table className="w-full text-left text-xs sm:text-sm text-slate-200 border-collapse min-w-[480px]">
                         <thead>
                           <tr className="bg-slate-800/90 border-b border-slate-700 text-white font-bold">
                             {section.table.headers.map((header, hIdx) => (
