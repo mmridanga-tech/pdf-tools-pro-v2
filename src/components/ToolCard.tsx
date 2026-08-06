@@ -117,7 +117,7 @@ export const ToolCard: React.FC<ToolCardProps> = React.memo(({ tool }) => {
     >
       <Link
         to={tool.path}
-        className="group relative h-full bg-[#111218]/90 hover:bg-[#151722] rounded-2xl p-6 border border-slate-800/80 hover:border-red-500/40 shadow-xl hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-red-500/50"
+        className="group relative h-full bg-[#111218]/90 hover:bg-[#151722] rounded-[20px] p-6 border border-slate-800/80 hover:border-red-500/40 shadow-xl hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-red-500/50"
       >
         {/* Ambient background glow on hover */}
         <div className={`absolute -right-10 -top-10 w-32 h-32 ${badgeDetails.glow} rounded-full blur-2xl group-hover:scale-150 transition-all duration-500 pointer-events-none opacity-60 group-hover:opacity-100`} />
@@ -125,18 +125,18 @@ export const ToolCard: React.FC<ToolCardProps> = React.memo(({ tool }) => {
         <div>
           {/* Header with Icon and Badge */}
           <div className="flex items-center justify-between mb-5">
-            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${badgeDetails.iconBg} border flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-300 shadow-md`}>
+            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${badgeDetails.iconBg} border flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-300 shadow-md`}>
               <IconComponent className="w-6 h-6 transition-transform duration-300 group-hover:rotate-3" />
             </div>
 
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold tracking-wide rounded-full border transition-all duration-300 ${badgeDetails.badgeStyle}`}>
-              <BadgeIcon className="w-3 h-3" />
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold tracking-wide rounded-full border transition-all duration-300 ${badgeDetails.badgeStyle}`}>
+              <BadgeIcon className="w-3.5 h-3.5" />
               <span>{badgeDetails.label}</span>
             </span>
           </div>
 
           {/* Title & Description */}
-          <h3 className="text-lg font-bold text-slate-100 group-hover:text-white mb-2.5 tracking-tight transition-colors flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-100 group-hover:text-white mb-2 font-display tracking-tight transition-colors flex items-center justify-between">
             <span>{tool.name}</span>
           </h3>
           <p className="text-slate-400 text-sm leading-relaxed mb-6 group-hover:text-slate-300 transition-colors line-clamp-2">
@@ -147,7 +147,7 @@ export const ToolCard: React.FC<ToolCardProps> = React.memo(({ tool }) => {
         {/* Action Button Footer */}
         <div className="flex items-center justify-between text-xs font-semibold text-slate-300 group-hover:text-white pt-4 mt-auto border-t border-slate-800/80 group-hover:border-slate-700/80 transition-colors">
           <span className="group-hover:text-red-400 transition-colors font-bold">Use Tool</span>
-          <div className="w-7 h-7 rounded-lg bg-slate-800/80 group-hover:bg-red-500 group-hover:text-white flex items-center justify-center text-slate-400 transition-all duration-300 group-hover:translate-x-1 shadow-sm">
+          <div className="w-7.5 h-7.5 rounded-xl bg-slate-800/80 group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-rose-600 group-hover:text-white flex items-center justify-center text-slate-400 transition-all duration-300 group-hover:translate-x-1 shadow-sm border border-slate-700/60 group-hover:border-red-500/50">
             <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>
