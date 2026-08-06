@@ -6,11 +6,27 @@ import { DocxOpenXmlParser, DocxXmlInfo } from './docxOpenXmlParser';
 
 export type ConversionEngineMode = 'client' | 'server' | 'auto';
 
+export interface ConversionValidationResult {
+  isValid: boolean;
+  warnings: string[];
+  expected: {
+    pageCount: number;
+    imageCount: number;
+    tableCount: number;
+  };
+  actual: {
+    pageCount: number;
+    imageCount: number;
+    tableCount: number;
+  };
+}
+
 export interface WordConversionOptions {
   engine?: ConversionEngineMode;
   serverEndpoint?: string;
   qualityScale?: number; // default 2 (high DPI)
   onProgress?: (percent: number, statusMsg?: string) => void;
+  onValidation?: (validation: ConversionValidationResult) => void;
 }
 
 export interface FileQueueItem {
@@ -25,6 +41,7 @@ export interface FileQueueItem {
   pdfBlob?: Blob;
   error?: string;
   conversionTimeMs?: number;
+  validation?: ConversionValidationResult;
 }
 
 /**
@@ -136,7 +153,7 @@ export class WordConverterService {
     container.style.color = '#111111';
     container.style.zIndex = '-9999';
     container.style.fontFamily =
-      "'Calibri', 'Segoe UI', 'Arial', 'Liberation Sans', 'Times New Roman', sans-serif";
+      "'Calibri', 'Segoe UI', 'Arial', 'Liberation Sans', 'Times New Roman', 'Cambria', 'Georgia', 'DejaVu Sans', sans-serif";
     container.style.boxSizing = 'border-box';
     document.body.appendChild(container);
 
@@ -164,8 +181,11 @@ export class WordConverterService {
       p, .docx p {
         margin-top: 0 !important;
         margin-bottom: 0.5em !important;
-        line-height: 1.5 !important;
+        line-height: 1.45 !important;
         word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        font-feature-settings: "kern" 1 !important;
+        text-rendering: optimizeLegibility !important;
       }
 
       /* Font Preservation & Rich Formatting */
@@ -190,12 +210,14 @@ export class WordConverterService {
         width: 100% !important;
         margin: 12px 0 !important;
         page-break-inside: avoid !important;
+        box-sizing: border-box !important;
       }
       th, td, .docx th, .docx td {
         border: 1px solid #cbd5e1 !important;
         padding: 6px 10px !important;
         vertical-align: top !important;
         word-break: break-word !important;
+        box-sizing: border-box !important;
       }
       th, .docx th {
         background-color: #f8fafc !important;
@@ -208,6 +230,20 @@ export class WordConverterService {
         height: auto !important;
         display: inline-block !important;
         object-fit: contain !important;
+      }
+
+      /* Floating Images & Anchors */
+      .docx-floating-img {
+        position: relative !important;
+        display: flow-root !important;
+        overflow: visible !important;
+      }
+
+      /* Embedded SVG & Chart Preservation */
+      svg, canvas.chart-canvas {
+        max-width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
       }
 
       /* Headers & Footers Preservation */
@@ -246,7 +282,7 @@ export class WordConverterService {
       }
 
       /* Page & Section Breaks */
-      .docx-page-break, .page-break {
+      .docx-page-break, .page-break, [style*="page-break-before"] {
         page-break-before: always !important;
         break-before: page !important;
         height: 0 !important;
@@ -309,13 +345,17 @@ export class WordConverterService {
         );
       }
 
+      // 2. Perform advanced DOM post-processing (Tables, Floating Images, Charts, Multi-Section orientation, Fonts, Headers/Footers)
+      this.postProcessDOM(container, parsedInfo, containerWidthPx, containerHeightPx);
+
       if (onProgress) onProgress(45, `Capturing ${pageElements.length} page(s) into vector PDF...`);
 
       // Determine canvas scale dynamically for optimal memory performance
       const pageCount = pageElements.length;
       let renderScale = options.qualityScale || 2;
-      if (pageCount > 15) renderScale = 1.5;
-      else if (pageCount > 6) renderScale = 1.75;
+      if (pageCount > 25) renderScale = 1.15;
+      else if (pageCount > 12) renderScale = 1.35;
+      else if (pageCount > 5) renderScale = 1.6;
 
       let pdfDoc: jsPDF | null = null;
 
@@ -328,8 +368,8 @@ export class WordConverterService {
 
         // Measure page element dimensions
         const elemRect = elem.getBoundingClientRect();
-        const elemWidthPx = elemRect.width || containerWidthPx;
-        const elemHeightPx = elemRect.height || containerHeightPx;
+        const elemWidthPx = Math.round(elemRect.width) || containerWidthPx;
+        const elemHeightPx = Math.round(elemRect.height) || containerHeightPx;
 
         const canvas = await html2canvas(elem, {
           scale: renderScale,
@@ -337,6 +377,7 @@ export class WordConverterService {
           logging: false,
           backgroundColor: '#ffffff',
           windowWidth: elemWidthPx,
+          windowHeight: elemHeightPx,
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -393,7 +434,7 @@ export class WordConverterService {
             pageIndex++;
           }
         } else {
-          // Standard paginated section output
+          // Standard paginated section output with per-section orientation & dimensions
           if (i === 0) {
             pdfDoc = new jsPDF({
               orientation,
@@ -416,7 +457,7 @@ export class WordConverterService {
           );
         }
 
-        // Release canvas memory
+        // Release canvas memory immediately
         canvas.width = 0;
         canvas.height = 0;
         MemoryManager.getInstance().purgeAll();
@@ -426,7 +467,11 @@ export class WordConverterService {
         throw new Error('Failed to generate PDF document layout.');
       }
 
-      // 13. Preserve Metadata in PDF Output
+      // Validate conversion fidelity
+      const finalPageCount = pdfDoc.getNumberOfPages();
+      this.validateConversion(container, parsedInfo, finalPageCount, options);
+
+      // Preserve Metadata in PDF Output
       const metadata = parsedInfo?.metadata || {};
       const docTitle = metadata.title || file.name.replace(/\.(docx|doc|odt)$/i, '');
       pdfDoc.setProperties({
@@ -434,7 +479,7 @@ export class WordConverterService {
         author: metadata.author || '',
         subject: metadata.subject || '',
         keywords: metadata.keywords ? metadata.keywords.join(', ') : '',
-        creator: 'SmartPDF AI Engine v2.1',
+        creator: 'SmartPDF AI Engine v2.1 (Sprint 2B)',
       });
 
       if (onProgress) onProgress(95, 'Finalizing output PDF stream...');
@@ -446,6 +491,209 @@ export class WordConverterService {
       }
       MemoryManager.getInstance().purgeAll();
     }
+  }
+
+  /**
+   * Perform advanced DOM post-processing: tables, floating images, charts, section orientation, headers/footers
+   */
+  private static postProcessDOM(
+    container: HTMLElement,
+    parsedInfo: DocxXmlInfo | null,
+    containerWidthPx: number,
+    containerHeightPx: number
+  ) {
+    // 1. Table Rendering Enhancements (Requirement 3)
+    const tables = Array.from(container.querySelectorAll('table')) as HTMLTableElement[];
+    tables.forEach((table) => {
+      table.style.borderCollapse = 'collapse';
+      table.style.width = '100%';
+      table.style.margin = '12px 0';
+      table.style.pageBreakInside = 'avoid';
+      table.style.boxSizing = 'border-box';
+
+      const rows = Array.from(table.rows);
+      rows.forEach((row, rowIndex) => {
+        // Header row styling
+        if (rowIndex === 0 || row.closest('thead') || row.classList.contains('docx-tbl-header')) {
+          row.style.pageBreakInside = 'avoid';
+          Array.from(row.cells).forEach((cell) => {
+            if (!cell.style.backgroundColor) cell.style.backgroundColor = '#f8fafc';
+            cell.style.fontWeight = '600';
+          });
+        }
+
+        Array.from(row.cells).forEach((cell) => {
+          cell.style.border = cell.style.border || '1px solid #cbd5e1';
+          cell.style.padding = cell.style.padding || '6px 10px';
+          cell.style.verticalAlign = cell.style.verticalAlign || 'top';
+          cell.style.boxSizing = 'border-box';
+          cell.style.wordBreak = 'break-word';
+
+          // Preserve merged cell rendering & vertical alignment
+          if (cell.colSpan > 1 || cell.rowSpan > 1) {
+            cell.style.verticalAlign = 'middle';
+          }
+        });
+      });
+    });
+
+    // 2. Floating Image Handling & Anchors Preservation (Requirement 2)
+    const images = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
+    images.forEach((img, idx) => {
+      img.style.maxWidth = '100%';
+      img.style.height = 'auto';
+      img.style.objectFit = 'contain';
+
+      const parent = img.parentElement;
+      const spec = parsedInfo?.floatingImages?.[idx];
+
+      if (spec || (parent && (parent.classList.contains('docx-anchor') || parent.style.position === 'absolute'))) {
+        if (parent) {
+          parent.style.position = 'relative';
+          parent.style.display = 'flow-root';
+          parent.style.overflow = 'visible';
+        }
+
+        if (spec?.wrapMode === 'square' || spec?.wrapMode === 'tight') {
+          img.style.float = spec.alignH === 'right' ? 'right' : 'left';
+          img.style.margin = '0 12px 8px 0';
+        } else if (spec?.wrapMode === 'behind') {
+          img.style.position = 'absolute';
+          img.style.zIndex = '-1';
+          img.style.opacity = '0.9';
+        } else if (spec?.wrapMode === 'infront') {
+          img.style.position = 'absolute';
+          img.style.zIndex = '10';
+        }
+      }
+    });
+
+    // 3. Chart Rendering & Aspect Ratio Preservation (Requirement 6)
+    const svgs = Array.from(container.querySelectorAll('svg')) as SVGElement[];
+    svgs.forEach((svg) => {
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      svg.style.overflow = 'visible';
+      svg.setAttribute('shape-rendering', 'geometricPrecision');
+      svg.setAttribute('text-rendering', 'optimizeLegibility');
+
+      if (!svg.getAttribute('viewBox')) {
+        const bBox = svg.getBoundingClientRect();
+        if (bBox.width > 0 && bBox.height > 0) {
+          svg.setAttribute('viewBox', `0 0 ${Math.round(bBox.width)} ${Math.round(bBox.height)}`);
+        }
+      }
+    });
+
+    // 4. Font & Spacing Preservation (Requirement 1 & Requirement 7)
+    const paragraphs = Array.from(container.querySelectorAll('p, .docx p')) as HTMLElement[];
+    paragraphs.forEach((p) => {
+      p.style.lineHeight = '1.45';
+      p.style.wordWrap = 'break-word';
+      p.style.fontFamily =
+        "'Calibri', 'Segoe UI', 'Arial', 'Liberation Sans', 'Times New Roman', 'Cambria', 'Georgia', 'DejaVu Sans', sans-serif";
+    });
+
+    // 5. Multi-Section Layout & Orientation Handling (Requirement 4)
+    const sections = Array.from(container.querySelectorAll('section.docx')) as HTMLElement[];
+    sections.forEach((secElem, secIdx) => {
+      const secConf = parsedInfo?.sections?.[secIdx] || parsedInfo?.sectionConfig;
+      if (secConf) {
+        const secWidthPx = Math.round(secConf.widthPt * (96 / 72));
+        const secHeightPx = Math.round(secConf.heightPt * (96 / 72));
+
+        secElem.style.width = `${secWidthPx}px`;
+        secElem.style.minHeight = `${secHeightPx}px`;
+
+        const m = secConf.marginsPt;
+        secElem.style.padding = `${Math.round(m.top * (96 / 72))}px ${Math.round(m.right * (96 / 72))}px ${Math.round(m.bottom * (96 / 72))}px ${Math.round(m.left * (96 / 72))}px`;
+      }
+    });
+
+    // 6. Repeated Headers, Footers & Page Numbers (Requirement 5)
+    if (parsedInfo?.headerFooterInfo?.hasPageNumbers || parsedInfo?.headerFooterInfo?.headerText) {
+      sections.forEach((secElem, pageIdx) => {
+        const headerElem = secElem.querySelector('.docx-header, header');
+        if (headerElem && parsedInfo.headerFooterInfo.headerText && !headerElem.textContent?.trim()) {
+          headerElem.textContent = parsedInfo.headerFooterInfo.headerText;
+        }
+
+        const footerElem = secElem.querySelector('.docx-footer, footer');
+        if (footerElem) {
+          const pageNumText = `Page ${pageIdx + 1} of ${sections.length}`;
+          if (!footerElem.textContent?.includes('Page')) {
+            const span = document.createElement('span');
+            span.className = 'docx-page-number';
+            span.style.float = 'right';
+            span.textContent = pageNumText;
+            footerElem.appendChild(span);
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Validate conversion fidelity against parsed OpenXML metrics (Requirement 8)
+   */
+  private static validateConversion(
+    container: HTMLElement,
+    parsedInfo: DocxXmlInfo | null,
+    actualPageCount: number,
+    options: WordConversionOptions
+  ): ConversionValidationResult {
+    const warnings: string[] = [];
+
+    const actualImageCount = container.querySelectorAll('img, svg, canvas, [class*="drawing"]').length;
+    const actualTableCount = container.querySelectorAll('table').length;
+
+    const expectedPageCount = parsedInfo?.validationInfo?.estimatedPageCount || actualPageCount;
+    const expectedImageCount = parsedInfo?.validationInfo?.expectedImageCount || 0;
+    const expectedTableCount = parsedInfo?.validationInfo?.expectedTableCount || 0;
+
+    if (Math.abs(actualPageCount - expectedPageCount) > Math.max(1, Math.ceil(expectedPageCount * 0.25))) {
+      warnings.push(
+        `Page count differs from estimate (expected ~${expectedPageCount} pages, generated ${actualPageCount} pages).`
+      );
+    }
+
+    if (expectedImageCount > 0 && actualImageCount < expectedImageCount) {
+      warnings.push(
+        `Possible missing images detected (expected ${expectedImageCount} image resource(s), rendered ${actualImageCount}).`
+      );
+    }
+
+    if (expectedTableCount > 0 && actualTableCount < expectedTableCount) {
+      warnings.push(
+        `Possible missing tables detected (expected ${expectedTableCount} table(s), rendered ${actualTableCount}).`
+      );
+    }
+
+    const isValid = warnings.length === 0;
+    const validationResult: ConversionValidationResult = {
+      isValid,
+      warnings,
+      expected: {
+        pageCount: expectedPageCount,
+        imageCount: expectedImageCount,
+        tableCount: expectedTableCount,
+      },
+      actual: {
+        pageCount: actualPageCount,
+        imageCount: actualImageCount,
+        tableCount: actualTableCount,
+      },
+    };
+
+    if (options.onValidation) {
+      options.onValidation(validationResult);
+    }
+
+    if (warnings.length > 0) {
+      console.warn('Word to PDF Layout Validation Warnings:', warnings);
+    }
+
+    return validationResult;
   }
 
   /**
