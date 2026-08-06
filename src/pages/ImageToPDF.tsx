@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileUploader } from '../components/FileUploader';
 import { ProcessingModal } from '../components/ProcessingModal';
 import { ToolHeader } from '../components/ToolHeader';
 import { usePDFProcessor } from '../hooks/usePDFProcessor';
@@ -22,9 +21,17 @@ import {
   Sparkles,
   Maximize2,
   X,
-  GripVertical,
   Zap,
 } from 'lucide-react';
+import {
+  PremiumSteps,
+  PremiumUploadZone,
+  PremiumFileCard,
+  PremiumProgress,
+  PremiumSuccessCard,
+  PremiumRecentFiles,
+  PremiumSidebarPanel,
+} from '../components/tool-ui';
 
 interface SelectedImageItem {
   id: string;
@@ -39,7 +46,6 @@ export const ImageToPDF: React.FC = () => {
   const [orientation, setOrientation] = useState<'auto' | 'portrait' | 'landscape'>('auto');
   const [margin, setMargin] = useState<number>(20);
   const [quality, setQuality] = useState<number>(0.92);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [zoomImage, setZoomImage] = useState<SelectedImageItem | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
@@ -107,26 +113,6 @@ export const ImageToPDF: React.FC = () => {
     setImages(updated);
   };
 
-  // Drag and drop reordering
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-    const updated = [...images];
-    const [draggedItem] = updated.splice(draggedIndex, 1);
-    updated.splice(index, 0, draggedItem);
-    setDraggedIndex(index);
-    setImages(updated);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-  };
-
   const handleConvert = async () => {
     if (images.length === 0) return;
 
@@ -177,15 +163,29 @@ export const ImageToPDF: React.FC = () => {
     reset();
   };
 
-  const primaryName = images[0]?.file.name.replace(/\.[^/.]+$/, '') || 'images';
+  const handleDownload = () => {
+    if (!resultBlob) return;
+    const url = URL.createObjectURL(resultBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    const docName = images[0]?.file.name.replace(/\.[^/.]+$/, '') || 'images';
+    link.download = `${docName}_converted.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Downloaded converted PDF!');
+  };
+
   const totalSize = images.reduce((acc, cur) => acc + cur.file.size, 0);
+  const currentStep = state.status === 'success' ? 3 : state.status === 'processing' ? 2 : 1;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-[#0A0A0B] py-12"
+      className="min-h-screen bg-[#08090E] py-12"
     >
       <SEO
         toolName="Image to PDF"
@@ -193,306 +193,262 @@ export const ImageToPDF: React.FC = () => {
         path="/image-to-pdf"
       />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <ToolHeader
           icon={ImageIcon}
           title="Image to PDF Converter"
           description="Transform photos, graphics, and document scans into a crisp, compiled PDF. Customize page sizes, margins, rotation, and orientation."
-          badge="Image Tool"
+          badge="Image Suite"
         />
 
-        {images.length === 0 ? (
-          <FileUploader
-            accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, .png, .jpg, .jpeg, .webp, .svg, .bmp, .gif"
-            multiple={true}
-            buttonText="Select Image Files"
-            onFilesSelected={handleFilesSelected}
-            title="Drag & Drop Image Files Here"
-            description="JPG, PNG, WebP, SVG, GIF images supported • Batch conversion ready"
-          />
-        ) : (
-          <motion.div
-            initial={{ scale: 0.99, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#141417]/90 backdrop-blur-sm rounded-3xl border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6"
-          >
-            {/* Header & Quick Action Toolbar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0 font-bold text-sm">
-                  {images.length}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white">
-                    {images.length} Image{images.length > 1 ? 's' : ''} Selected
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    Total Raw Size: {formatBytes(totalSize)}
-                  </p>
-                </div>
-              </div>
+        {/* Step Indicator */}
+        <PremiumSteps currentStep={currentStep} />
 
-              <div className="flex items-center gap-2 flex-wrap">
-                <label className="cursor-pointer px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5">
-                  <Plus className="w-4 h-4" /> Add More
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files) handleFilesSelected(Array.from(e.target.files));
-                    }}
+        {/* Desktop Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-8">
+            {state.status === 'processing' && (
+              <PremiumProgress
+                progress={state.progress}
+                statusMessage={state.message || 'Converting images to PDF...'}
+                stepName="Raster PDF Compiler"
+              />
+            )}
+
+            {state.status === 'success' && resultBlob && (
+              <PremiumSuccessCard
+                title="PDF Generated Successfully!"
+                message={`Compiled ${images.length} image(s) into a high-quality single PDF file.`}
+                outputFileName={`${images[0]?.file.name.replace(/\.[^/.]+$/, '') || 'images'}_converted.pdf`}
+                outputFileSize={resultBlob.size}
+                pageCount={images.length}
+                onDownload={handleDownload}
+                onReset={handleReset}
+                downloadButtonText="Download PDF Document"
+              />
+            )}
+
+            {state.status === 'idle' && (
+              <>
+                {images.length === 0 ? (
+                  <PremiumUploadZone
+                    accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml, .png, .jpg, .jpeg, .webp, .svg, .bmp, .gif"
+                    multiple={true}
+                    onFilesSelected={handleFilesSelected}
+                    title="Drag & Drop Image Files Here"
+                    description="JPG, PNG, WebP, SVG, GIF images supported • Batch conversion ready"
+                    buttonText="Choose Image Files"
                   />
-                </label>
-
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700/80 transition-all cursor-pointer"
-                >
-                  Clear All
-                </button>
-              </div>
-            </div>
-
-            {/* Instruction Banner */}
-            <p className="text-xs text-slate-400 flex items-center gap-2 bg-slate-900/50 p-3 rounded-xl border border-slate-800/80">
-              <GripVertical className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>
-                <strong>Tip:</strong> Drag and drop thumbnails to rearrange page order, or use the rotate button to orient images before compiling into PDF.
-              </span>
-            </p>
-
-            {/* Images Reorderable Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[420px] overflow-y-auto p-1.5 scrollbar-thin">
-              <AnimatePresence>
-                {images.map((item, idx) => (
+                ) : (
                   <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    draggable
-                    onDragStart={(e: any) => handleDragStart(e, idx)}
-                    onDragOver={(e: any) => handleDragOver(e, idx)}
-                    onDragEnd={handleDragEnd}
-                    className={`group relative bg-slate-900/90 border rounded-2xl p-3 flex flex-col items-center shadow-lg transition-all ${
-                      draggedIndex === idx
-                        ? 'border-emerald-500 ring-2 ring-emerald-500/30 opacity-60'
-                        : 'border-slate-800 hover:border-slate-700'
-                    }`}
+                    initial={{ scale: 0.99, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-[#12131F]/90 backdrop-blur-xl rounded-[28px] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6"
                   >
-                    {/* Badge & Zoom Button */}
-                    <div className="relative w-full h-32 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-800/80 mb-2.5">
-                      <img
-                        src={item.previewUrl}
-                        alt={item.file.name}
-                        style={{ transform: `rotate(${item.rotation}deg)` }}
-                        className="w-full h-full object-contain transition-transform duration-200"
-                      />
-                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 text-[10px] font-mono font-bold text-slate-200 backdrop-blur-sm border border-slate-800">
-                        Page {idx + 1}
-                      </span>
+                    {/* Header & Quick Action Toolbar */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white/[0.04] border border-white/10">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0 font-bold text-sm">
+                          {images.length}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">
+                            {images.length} Image{images.length > 1 ? 's' : ''} Selected
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            Total Size: {formatBytes(totalSize)}
+                          </p>
+                        </div>
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setZoomImage(item)}
-                        className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-black text-slate-300 hover:text-white transition-all backdrop-blur-sm"
-                        title="Zoom Preview"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <label className="cursor-pointer px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5">
+                          <Plus className="w-4 h-4" /> Add More
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files) handleFilesSelected(Array.from(e.target.files));
+                            }}
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={handleReset}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 transition-all cursor-pointer"
+                        >
+                          Clear All
+                        </button>
+                      </div>
                     </div>
 
-                    <p className="text-xs font-bold text-white truncate w-full text-center px-1">
-                      {item.file.name}
-                    </p>
-                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">
-                      {formatBytes(item.file.size)} {item.rotation > 0 ? `• ${item.rotation}°` : ''}
-                    </p>
+                    {/* Page Options Control Box */}
+                    <div className="bg-[#181824] border border-white/10 rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Sliders className="w-4 h-4 text-red-400" />
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                          PDF Page & Margins Configuration
+                        </h4>
+                      </div>
 
-                    {/* Controls Row */}
-                    <div className="flex items-center gap-1 mt-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                        {/* Page Size */}
+                        <div>
+                          <label className="block text-slate-400 mb-1 font-medium">Page Size</label>
+                          <select
+                            value={pageSize}
+                            onChange={(e) => setPageSize(e.target.value as any)}
+                            className="w-full bg-slate-950/80 border border-white/15 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500/50 cursor-pointer"
+                          >
+                            <option value="a4">A4 (Standard Document)</option>
+                            <option value="letter">US Letter</option>
+                            <option value="fit">Fit to Image Size</option>
+                          </select>
+                        </div>
+
+                        {/* Orientation */}
+                        <div>
+                          <label className="block text-slate-400 mb-1 font-medium">Orientation</label>
+                          <select
+                            value={orientation}
+                            onChange={(e) => setOrientation(e.target.value as any)}
+                            className="w-full bg-slate-950/80 border border-white/15 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500/50 cursor-pointer"
+                          >
+                            <option value="auto">Auto Detect</option>
+                            <option value="portrait">Portrait</option>
+                            <option value="landscape">Landscape</option>
+                          </select>
+                        </div>
+
+                        {/* Margin */}
+                        <div>
+                          <label className="block text-slate-400 mb-1 font-medium">Margin</label>
+                          <select
+                            value={margin}
+                            onChange={(e) => setMargin(Number(e.target.value))}
+                            className="w-full bg-slate-950/80 border border-white/15 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500/50 cursor-pointer"
+                          >
+                            <option value={0}>No Margin (Full Page)</option>
+                            <option value={10}>Small (10px)</option>
+                            <option value={20}>Medium (20px)</option>
+                            <option value={35}>Large (35px)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Image Cards Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {images.map((img, idx) => (
+                        <div
+                          key={img.id}
+                          className="group relative bg-slate-950/80 border border-white/10 rounded-2xl overflow-hidden shadow-lg p-3 space-y-2 flex flex-col justify-between"
+                        >
+                          {/* Image Thumbnail Frame */}
+                          <div className="relative aspect-square rounded-xl bg-slate-900 overflow-hidden flex items-center justify-center border border-white/5">
+                            <img
+                              src={img.previewUrl}
+                              alt={img.file.name}
+                              className="w-full h-full object-contain transition-transform duration-300"
+                              style={{ transform: `rotate(${img.rotation}deg)` }}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => setZoomImage(img)}
+                              className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Preview Zoom"
+                            >
+                              <Maximize2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Info & Controls */}
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold text-white truncate" title={img.file.name}>
+                              {img.file.name}
+                            </p>
+
+                            <div className="flex items-center justify-between gap-1 pt-1 border-t border-white/10">
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMove(idx, 'left')}
+                                  disabled={idx === 0}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] disabled:opacity-20 cursor-pointer"
+                                  title="Move Left"
+                                >
+                                  <ArrowLeft className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMove(idx, 'right')}
+                                  disabled={idx === images.length - 1}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] disabled:opacity-20 cursor-pointer"
+                                  title="Move Right"
+                                >
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRotateImage(img.id)}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] cursor-pointer"
+                                  title="Rotate 90°"
+                                >
+                                  <RotateCw className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveImage(img.id)}
+                                className="p-1 rounded-lg text-red-400 hover:bg-red-500/10 cursor-pointer"
+                                title="Remove"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Convert Action Button */}
+                    <div className="pt-4 border-t border-white/10 flex justify-end">
                       <button
                         type="button"
-                        onClick={() => handleMove(idx, 'left')}
-                        disabled={idx === 0}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white disabled:opacity-30 transition-all cursor-pointer"
-                        title="Move Left"
+                        onClick={handleConvert}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm shadow-[0_10px_30px_rgba(239,68,68,0.35)] transition-all cursor-pointer"
                       >
-                        <ArrowLeft className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRotateImage(item.id)}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer"
-                        title="Rotate 90 Clockwise"
-                      >
-                        <RotateCw className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleMove(idx, 'right')}
-                        disabled={idx === images.length - 1}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white disabled:opacity-30 transition-all cursor-pointer"
-                        title="Move Right"
-                      >
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(item.id)}
-                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all cursor-pointer"
-                        title="Remove Image"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <ImageIcon className="w-5 h-5" />
+                        <span>Convert {images.length} Image(s) to PDF</span>
                       </button>
                     </div>
                   </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
+                )}
+              </>
+            )}
 
-            {/* Layout & PDF Formatting Options */}
-            <div className="bg-[#18181D] border border-slate-800 rounded-2xl p-5 space-y-4">
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-emerald-400" />
-                <span>PDF Document Formatting Options</span>
-              </h4>
+            <PremiumRecentFiles />
+          </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Page Size</label>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => setPageSize(e.target.value as any)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="a4">A4 (210 x 297 mm)</option>
-                    <option value="letter">US Letter (8.5 x 11 in)</option>
-                    <option value="fit">Original Size (Fit to Image)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Orientation</label>
-                  <select
-                    value={orientation}
-                    onChange={(e) => setOrientation(e.target.value as any)}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="auto">Auto (Match Image Ratio)</option>
-                    <option value="portrait">Portrait</option>
-                    <option value="landscape">Landscape</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">Page Margin</label>
-                  <select
-                    value={margin}
-                    onChange={(e) => setMargin(Number(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value={0}>No Margin (Full Bleed)</option>
-                    <option value={15}>Small Margin (15pt)</option>
-                    <option value={30}>Medium Margin (30pt)</option>
-                    <option value={45}>Large Margin (45pt)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">
-                    Image Quality ({Math.round(quality * 100)}%)
-                  </label>
-                  <select
-                    value={quality}
-                    onChange={(e) => setQuality(Number(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value={0.95}>High Quality (95%)</option>
-                    <option value={0.80}>Balanced (80%)</option>
-                    <option value={0.60}>Compressed (60%)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Convert Action Button */}
-            <div className="pt-2 flex justify-end">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleConvert}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/20 transition-all cursor-pointer"
-              >
-                <FileText className="w-5 h-5" />
-                <span>Convert Images to PDF</span>
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Zoom Image Modal */}
-        <AnimatePresence>
-          {zoomImage && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-              onClick={() => setZoomImage(null)}
-            >
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
-                onClick={(e) => e.stopPropagation()}
-                className="relative max-w-3xl max-h-[85vh] bg-slate-900 border border-slate-800 rounded-3xl p-6 overflow-hidden flex flex-col items-center shadow-2xl"
-              >
-                <button
-                  type="button"
-                  onClick={() => setZoomImage(null)}
-                  className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-emerald-400" />
-                  <span>{zoomImage.file.name}</span>
-                </h3>
-
-                <div className="max-h-[60vh] overflow-auto rounded-2xl bg-black p-2 border border-slate-800">
-                  <img
-                    src={zoomImage.previewUrl}
-                    alt={zoomImage.file.name}
-                    style={{ transform: `rotate(${zoomImage.rotation}deg)` }}
-                    className="max-h-[55vh] object-contain mx-auto"
-                  />
-                </div>
-
-                <div className="mt-4 text-xs font-mono text-slate-400">
-                  Size: {formatBytes(zoomImage.file.size)} | Rotation: {zoomImage.rotation}°
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Processing Modal */}
-        <ProcessingModal
-          state={state}
-          resultBlob={resultBlob}
-          resultFileName={`${primaryName}_converted.pdf`}
-          onReset={handleReset}
-          title="Converting Images to PDF"
-        />
+          {/* Sidebar Panel Column */}
+          <div className="lg:col-span-4 sticky top-6">
+            <PremiumSidebarPanel
+              toolName="Image to PDF"
+              supportedFormats={['JPG (.jpg)', 'PNG (.png)', 'WEBP (.webp)', 'SVG (.svg)']}
+              tips={[
+                'Reorder images easily using the left & right arrow controls.',
+                'Adjust rotation angles per image individually.',
+                'Specify margins, orientation, and standard document page dimensions.',
+              ]}
+            />
+          </div>
+        </div>
       </div>
     </motion.div>
   );

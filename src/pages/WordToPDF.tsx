@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import JSZip from 'jszip';
-import { FileUploader } from '../components/FileUploader';
 import { ToolHeader } from '../components/ToolHeader';
 import { SEO } from '../components/SEO';
+import {
+  PremiumSteps,
+  PremiumUploadZone,
+  PremiumFileCard,
+  PremiumRecentFiles,
+  PremiumSidebarPanel,
+} from '../components/tool-ui';
 import {
   WordConverterService,
   FileQueueItem,
@@ -13,18 +19,11 @@ import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
 import {
   FileType,
-  FilePlus,
-  Trash2,
-  Download,
-  CheckCircle2,
-  AlertCircle,
   Loader2,
-  RefreshCw,
   Settings2,
   Cpu,
   Server,
   Sparkles,
-  ArrowRight,
   Archive,
 } from 'lucide-react';
 
@@ -186,319 +185,249 @@ export const WordToPDF: React.FC = () => {
 
   const completedCount = queue.filter((item) => item.status === 'completed').length;
   const pendingCount = queue.filter((item) => item.status === 'pending').length;
+  const currentStep = completedCount > 0 ? 3 : isProcessingBatch ? 2 : 1;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-[#0A0A0B] py-12"
+      className="min-h-screen bg-[#08090E] py-12"
     >
       <SEO
         toolName="Word to PDF"
         description="Convert Microsoft Word DOC and DOCX files into PDF documents quickly with 100% layout accuracy."
         path="/word-to-pdf"
       />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <ToolHeader
           icon={FileType}
-          title="Production Word & ODT to PDF Converter"
+          title="Word & ODT to PDF Converter"
           description="Convert Microsoft Word (.docx, .doc) and OpenDocument (.odt) files with exact layout, fonts, margins, tables, and images."
           badge="High-Fidelity Engine"
         />
 
-        {/* Engine Settings Bar */}
-        <div className="bg-[#141417]/90 border border-slate-800/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center font-bold">
-              <Cpu className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white flex items-center gap-2">
-                <span>Engine Mode:</span>
-                <span className="text-red-400 capitalize font-mono">
-                  {engineMode === 'auto'
-                    ? 'Auto (Client + Pluggable Server Fallback)'
-                    : engineMode === 'client'
-                    ? 'Client-Side (Fast & Private)'
-                    : 'Server-Side Engine'}
-                </span>
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Preserves original OpenXML pagination, vector images, styles & document tables
-              </p>
-            </div>
-          </div>
+        {/* Step Indicator */}
+        <PremiumSteps currentStep={currentStep} />
 
-          <button
-            type="button"
-            onClick={() => setShowSettings(!showSettings)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
-          >
-            <Settings2 className="w-3.5 h-3.5 text-red-400" />
-            <span>Engine Options</span>
-          </button>
-        </div>
-
-        {/* Settings Drawer */}
-        <AnimatePresence>
-          {showSettings && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden bg-[#18181C] border border-slate-800 rounded-2xl p-5 space-y-4"
-            >
-              <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-red-400" />
-                <span>Conversion Engine Architecture</span>
-              </h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEngineMode('auto')}
-                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                    engineMode === 'auto'
-                      ? 'bg-red-500/10 border-red-500/40 text-white'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-bold text-xs mb-1">
-                    <Sparkles className="w-3.5 h-3.5 text-red-400" />
-                    <span>Auto (Recommended)</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Uses fast client-side rendering with server API fallback for maximum compatibility.
+        {/* Desktop Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Content Column */}
+          <div className="lg:col-span-8 space-y-8">
+            {/* Engine Settings Bar */}
+            <div className="bg-[#12131F]/90 border border-white/10 rounded-[28px] p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center font-bold">
+                  <Cpu className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white flex items-center gap-2">
+                    <span>Engine Mode:</span>
+                    <span className="text-red-400 capitalize font-mono">
+                      {engineMode === 'auto'
+                        ? 'Auto (Client + Server Fallback)'
+                        : engineMode === 'client'
+                        ? 'Client-Side (Fast & Private)'
+                        : 'Server Endpoint API'}
+                    </span>
                   </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setEngineMode('client')}
-                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                    engineMode === 'client'
-                      ? 'bg-red-500/10 border-red-500/40 text-white'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-bold text-xs mb-1">
-                    <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Client-Side Engine</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    100% browser-based conversion. Zero server uploads required.
+                  <p className="text-[11px] text-slate-400">
+                    Preserves original OpenXML pagination, vector images, styles & document tables
                   </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setEngineMode('server')}
-                  className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                    engineMode === 'server'
-                      ? 'bg-red-500/10 border-red-500/40 text-white'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-bold text-xs mb-1">
-                    <Server className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Server Endpoint API</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Routes document directly to pluggable server conversion microservice.
-                  </p>
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* File Uploader Dropzone */}
-        <FileUploader
-          accept={acceptString}
-          multiple={true}
-          onFilesSelected={handleFilesSelected}
-          title="Drop Word or ODT documents here"
-          description="Supports DOCX, DOC, ODT • Single or Multiple File Queue"
-          buttonText="Choose Documents"
-        />
-
-        {/* Queue Management UI */}
-        {queue.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.99 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#141417]/90 backdrop-blur-sm rounded-3xl border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6"
-          >
-            {/* Header & Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <span>Document Conversion Queue</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                    {queue.length} file{queue.length > 1 ? 's' : ''}
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  {completedCount} completed • {pendingCount} pending
-                </p>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleClearQueue}
-                  disabled={isProcessingBatch}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-400 hover:text-white transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  Clear Queue
-                </button>
-
-                {completedCount > 1 && (
-                  <button
-                    type="button"
-                    onClick={downloadAllZip}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 hover:text-blue-300 text-xs font-bold transition-all cursor-pointer"
-                  >
-                    <Archive className="w-3.5 h-3.5" />
-                    <span>Download All (ZIP)</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={convertAllQueue}
-                  disabled={isProcessingBatch || pendingCount === 0}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-xs font-bold shadow-lg shadow-red-600/20 transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  {isProcessingBatch ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Converting Batch...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FileType className="w-3.5 h-3.5" />
-                      <span>Convert All Queue</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowSettings(!showSettings)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
+              >
+                <Settings2 className="w-3.5 h-3.5 text-red-400" />
+                <span>Engine Options</span>
+              </button>
             </div>
 
-            {/* Queue Item Cards */}
-            <div className="space-y-3">
-              {queue.map((item) => {
-                const isConverting = item.status === 'converting';
-                const isCompleted = item.status === 'completed';
-                const isError = item.status === 'error';
+            {/* Settings Drawer */}
+            <AnimatePresence>
+              {showSettings && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden bg-[#181824] border border-white/10 rounded-2xl p-5 space-y-4"
+                >
+                  <p className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-red-400" />
+                    <span>Select Converter Engine</span>
+                  </p>
 
-                return (
-                  <div
-                    key={item.id}
-                    className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all"
-                  >
-                    {/* Left File Info */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className={`w-11 h-11 rounded-xl border flex items-center justify-center font-bold text-xs shrink-0 ${
-                          item.format === 'DOCX'
-                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                            : item.format === 'DOC'
-                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        }`}
-                      >
-                        {item.format}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEngineMode('auto')}
+                      className={`p-3.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
+                        engineMode === 'auto'
+                          ? 'bg-red-500/10 border-red-500/40 text-white'
+                          : 'bg-slate-900 border-white/10 text-slate-400 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="font-bold mb-1 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-red-400" />
+                        <span>Auto Mode</span>
                       </div>
+                      <p className="text-[11px] text-slate-400">
+                        High-speed browser renderer with optional server fallback for complex DOCX features.
+                      </p>
+                    </button>
 
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{item.name}</p>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-0.5">
-                          <span>{formatBytes(item.size)}</span>
-                          <span>•</span>
-                          <span
-                            className={`font-semibold ${
-                              isCompleted
-                                ? 'text-emerald-400'
-                                : isError
-                                ? 'text-red-400'
-                                : isConverting
-                                ? 'text-amber-400'
-                                : 'text-slate-400'
-                            }`}
-                          >
-                            {item.statusMsg}
-                          </span>
-                          {item.conversionTimeMs && (
-                            <>
-                              <span>•</span>
-                              <span className="font-mono text-slate-500">
-                                {(item.conversionTimeMs / 1000).toFixed(1)}s
-                              </span>
-                            </>
-                          )}
-                        </div>
+                    <button
+                      type="button"
+                      onClick={() => setEngineMode('client')}
+                      className={`p-3.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
+                        engineMode === 'client'
+                          ? 'bg-red-500/10 border-red-500/40 text-white'
+                          : 'bg-slate-900 border-white/10 text-slate-400 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="font-bold mb-1 flex items-center gap-1.5">
+                        <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>100% Client-Side</span>
                       </div>
-                    </div>
+                      <p className="text-[11px] text-slate-400">
+                        Processes directly inside your browser memory. Ideal for confidential files.
+                      </p>
+                    </button>
 
-                    {/* Progress Bar during conversion */}
-                    {isConverting && (
-                      <div className="flex-1 max-w-xs space-y-1">
-                        <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                          <span>Converting...</span>
-                          <span>{item.progress}%</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-red-500 to-amber-500 transition-all duration-200 rounded-full"
-                            style={{ width: `${item.progress}%` }}
-                          />
-                        </div>
+                    <button
+                      type="button"
+                      onClick={() => setEngineMode('server')}
+                      className={`p-3.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
+                        engineMode === 'server'
+                          ? 'bg-red-500/10 border-red-500/40 text-white'
+                          : 'bg-slate-900 border-white/10 text-slate-400 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="font-bold mb-1 flex items-center gap-1.5">
+                        <Server className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Server Endpoint API</span>
                       </div>
-                    )}
+                      <p className="text-[11px] text-slate-400">
+                        Routes document to server-side converter endpoint (/api/convert/word).
+                      </p>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      {isCompleted && (
-                        <button
-                          type="button"
-                          onClick={() => downloadPDF(item)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-all cursor-pointer"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download PDF</span>
-                        </button>
-                      )}
+            {/* Drag & Drop Upload Zone */}
+            <PremiumUploadZone
+              accept={acceptString}
+              multiple={true}
+              onFilesSelected={handleFilesSelected}
+              title="Select Word or ODT Documents"
+              description="Supports DOCX, DOC, and ODT file formats • Single or batch upload"
+              buttonText="Choose Word Files"
+            />
 
-                      {(item.status === 'pending' || isError) && (
-                        <button
-                          type="button"
-                          onClick={() => convertSingleItem(item.id)}
-                          disabled={isProcessingBatch}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all cursor-pointer"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{isError ? 'Retry' : 'Convert'}</span>
-                        </button>
-                      )}
+            {/* Queue Management UI */}
+            {queue.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.99 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-[#12131F]/90 backdrop-blur-xl rounded-[28px] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6"
+              >
+                {/* Header & Batch Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+                  <div>
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <span>Document Conversion Queue</span>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-white/[0.06] text-slate-300 border border-white/10">
+                        {queue.length} file{queue.length > 1 ? 's' : ''}
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {completedCount} completed • {pendingCount} pending
+                    </p>
+                  </div>
 
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleClearQueue}
+                      disabled={isProcessingBatch}
+                      className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-slate-400 hover:text-white transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      Clear Queue
+                    </button>
+
+                    {completedCount > 1 && (
                       <button
                         type="button"
-                        onClick={() => handleRemoveItem(item.id)}
-                        disabled={isConverting}
-                        className="p-2 rounded-xl text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors disabled:opacity-30 cursor-pointer"
-                        title="Remove file"
+                        onClick={downloadAllZip}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-400 hover:text-red-300 text-xs font-bold transition-all cursor-pointer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Archive className="w-3.5 h-3.5" />
+                        <span>Download All (ZIP)</span>
                       </button>
-                    </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={convertAllQueue}
+                      disabled={isProcessingBatch || pendingCount === 0}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-[0_10px_30px_rgba(239,68,68,0.35)] transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {isProcessingBatch ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Converting Batch...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileType className="w-3.5 h-3.5" />
+                          <span>Convert All Queue</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
+                </div>
+
+                {/* Queue Item Cards */}
+                <div className="space-y-3">
+                  {queue.map((item, index) => (
+                    <PremiumFileCard
+                      key={item.id}
+                      name={item.name}
+                      size={item.size}
+                      status={item.status}
+                      statusMsg={item.statusMsg}
+                      index={index}
+                      totalFiles={queue.length}
+                      onRemove={() => handleRemoveItem(item.id)}
+                      onDownload={item.status === 'completed' ? () => downloadPDF(item) : undefined}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            <PremiumRecentFiles />
+          </div>
+
+          {/* Sidebar Panel Column */}
+          <div className="lg:col-span-4 sticky top-6">
+            <PremiumSidebarPanel
+              toolName="Word to PDF"
+              supportedFormats={['DOCX (.docx)', 'DOC (.doc)', 'ODT (.odt)']}
+              tips={[
+                'Converts text formatting, fonts, margins, vector shapes, and tables accurately.',
+                'Client-side engine renders documents locally inside browser memory for privacy.',
+                'Download individual PDFs or batch convert all files into a single ZIP archive.',
+              ]}
+            />
+          </div>
+        </div>
       </div>
     </motion.div>
   );

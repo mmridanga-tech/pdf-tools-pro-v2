@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { FileUploader } from '../components/FileUploader';
-import { ProcessingModal } from '../components/ProcessingModal';
 import { PagePreviewGrid } from '../components/PagePreviewGrid';
 import { ToolHeader } from '../components/ToolHeader';
 import { usePDFProcessor } from '../hooks/usePDFProcessor';
 import { PDFService } from '../services/pdfService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
-import { Scissors, FileText } from 'lucide-react';
+import { Scissors, FileText, Check, Sparkles } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { saveRecentFile } from '../utils/storageUtils';
 import { SplitPDFSEOContent } from '../components/seo/SplitPDFSEOContent';
+import {
+  PremiumSteps,
+  PremiumUploadZone,
+  PremiumFileCard,
+  PremiumProgress,
+  PremiumSuccessCard,
+  PremiumErrorCard,
+  PremiumRecentFiles,
+  PremiumSidebarPanel,
+} from '../components/tool-ui';
 
 export const SplitPDF: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -48,7 +56,6 @@ export const SplitPDF: React.FC = () => {
     }
     setSelectedPageIndices(updated);
 
-    // Update text range display
     if (updated.length > 0) {
       setRangeInput(updated.map((i) => i + 1).join(', '));
     } else {
@@ -92,12 +99,27 @@ export const SplitPDF: React.FC = () => {
     reset();
   };
 
+  const handleDownload = () => {
+    if (!resultBlob || !selectedFile) return;
+    const url = URL.createObjectURL(resultBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${selectedFile.name.replace(/\.pdf$/i, '')}_split.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Downloaded split PDF document!');
+  };
+
+  const currentStep = state.status === 'success' ? 3 : state.status === 'processing' ? 2 : 1;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-[#0A0A0B] py-14"
+      className="min-h-screen bg-[#08090E] py-12"
     >
       <SEO
         toolName="Split PDF"
@@ -105,115 +127,151 @@ export const SplitPDF: React.FC = () => {
         path="/split"
       />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <ToolHeader
           icon={Scissors}
           title="Split PDF File"
           description="Extract specific pages or page ranges from your PDF into a new separate PDF file."
-          badge="Fast"
+          badge="Precision Extractor"
         />
 
-        {!selectedFile ? (
-          <FileUploader
-            accept=".pdf"
-            multiple={false}
-            onFilesSelected={handleFileSelected}
-            title="Select PDF file to split"
-            description="or drag and drop single PDF file here"
-          />
-        ) : (
-          <motion.div
-            initial={{ scale: 0.98, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#141417]/90 backdrop-blur-sm rounded-3xl border border-slate-800/80 shadow-2xl p-6 sm:p-8 space-y-8"
-          >
-            {/* File Details */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-              <div className="flex items-center gap-3.5 overflow-hidden">
-                <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white truncate">{selectedFile.name}</p>
-                  <p className="text-xs text-slate-400">
-                    {formatBytes(selectedFile.size)} • Total Pages: {pageCount}
-                  </p>
-                </div>
-              </div>
+        {/* Step Indicator */}
+        <PremiumSteps currentStep={currentStep} />
 
-              <button
-                onClick={handleReset}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 hover:border-slate-600 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
-              >
-                Change PDF
-              </button>
-            </div>
-
-            {/* Range Controls */}
-            <div className="space-y-4">
-              <label htmlFor="range-input" className="block text-sm font-bold text-white">
-                Split Range / Page Numbers
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  id="range-input"
-                  type="text"
-                  value={rangeInput}
-                  onChange={(e) => setRangeInput(e.target.value)}
-                  placeholder="e.g. 1-3, 5, 7-10"
-                  className="flex-1 px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500/80 text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRangeInput(`1-${pageCount}`);
-                    setSelectedPageIndices(Array.from({ length: pageCount }, (_, i) => i));
-                    toast.info('Selected all pages');
-                  }}
-                  className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                >
-                  Select All
-                </button>
-              </div>
-              <p className="text-xs text-slate-400">
-                Type range (e.g. "1-3, 5") or click pages below to select.
-              </p>
-            </div>
-
-            {/* Visual Page Grid */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-bold text-white">Click Pages to Include:</h3>
-              <PagePreviewGrid
-                pageCount={pageCount}
-                selectedPages={selectedPageIndices}
-                onTogglePageSelect={handleTogglePageSelect}
+        {/* Desktop Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-8">
+            {state.status === 'processing' && (
+              <PremiumProgress
+                progress={state.progress}
+                statusMessage={state.message || 'Splitting PDF document...'}
+                stepName="Extracting Pages"
               />
-            </div>
+            )}
 
-            {/* Action Button */}
-            <div className="pt-4 border-t border-slate-800 flex justify-end">
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSplit}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-xl shadow-red-600/25 transition-all"
-              >
-                <Scissors className="w-5 h-5" />
-                <span>Split & Download Pages</span>
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
+            {state.status === 'error' && (
+              <PremiumErrorCard
+                errorMsg={state.message || 'Failed to split PDF.'}
+                onRetry={handleSplit}
+                onReset={handleReset}
+              />
+            )}
 
-        {/* Modal */}
-        <ProcessingModal
-          state={state}
-          resultBlob={resultBlob}
-          resultFileName={`${selectedFile?.name.replace(/\.pdf$/i, '')}_split.pdf`}
-          onReset={handleReset}
-          title="Splitting PDF"
-        />
+            {state.status === 'success' && resultBlob && selectedFile && (
+              <PremiumSuccessCard
+                title="PDF Extracted Successfully!"
+                message="Your custom page selection has been saved into a new standalone PDF file."
+                outputFileName={`${selectedFile.name.replace(/\.pdf$/i, '')}_split.pdf`}
+                outputFileSize={resultBlob.size}
+                pageCount={selectedPageIndices.length}
+                onDownload={handleDownload}
+                onReset={handleReset}
+                downloadButtonText="Download Split PDF"
+              />
+            )}
+
+            {state.status === 'idle' && (
+              <>
+                {!selectedFile ? (
+                  <PremiumUploadZone
+                    accept=".pdf,application/pdf"
+                    multiple={false}
+                    onFilesSelected={handleFileSelected}
+                    title="Select PDF file to split"
+                    description="Drag & drop a PDF document or choose from device"
+                    buttonText="Choose PDF File"
+                  />
+                ) : (
+                  <motion.div
+                    initial={{ scale: 0.98, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-[#12131F]/90 backdrop-blur-xl rounded-[28px] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-8"
+                  >
+                    {/* File Card */}
+                    <PremiumFileCard
+                      name={selectedFile.name}
+                      size={selectedFile.size}
+                      pageCount={pageCount}
+                      onReplace={(newFile) => handleFileSelected([newFile])}
+                      onRemove={handleReset}
+                    />
+
+                    {/* Range Controls */}
+                    <div className="space-y-4 p-5 rounded-2xl bg-white/[0.03] border border-white/10">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="range-input" className="block text-sm font-bold text-white">
+                          Split Range / Page Numbers
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRangeInput(`1-${pageCount}`);
+                            setSelectedPageIndices(Array.from({ length: pageCount }, (_, i) => i));
+                            toast.info('Selected all pages');
+                          }}
+                          className="px-3.5 py-1.5 bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 font-bold text-xs rounded-xl border border-white/10 transition-colors shadow-sm cursor-pointer"
+                        >
+                          Select All ({pageCount} Pages)
+                        </button>
+                      </div>
+
+                      <input
+                        id="range-input"
+                        type="text"
+                        value={rangeInput}
+                        onChange={(e) => setRangeInput(e.target.value)}
+                        placeholder="e.g. 1-3, 5, 7-10"
+                        className="w-full px-4 py-3.5 rounded-xl bg-slate-950/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 font-mono text-sm shadow-inner"
+                      />
+                      <p className="text-xs text-slate-400">
+                        Enter comma-separated page numbers or ranges (e.g. "1-3, 5") or click thumbnails below.
+                      </p>
+                    </div>
+
+                    {/* Visual Page Grid */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-bold text-white">Interactive Page Visualizer:</h3>
+                      <PagePreviewGrid
+                        pageCount={pageCount}
+                        selectedPages={selectedPageIndices}
+                        onTogglePageSelect={handleTogglePageSelect}
+                      />
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="pt-4 border-t border-white/10 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSplit}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm shadow-[0_10px_30px_rgba(239,68,68,0.35)] transition-all cursor-pointer"
+                      >
+                        <Scissors className="w-5 h-5" />
+                        <span>Extract & Download Selected Pages</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </>
+            )}
+
+            <PremiumRecentFiles />
+          </div>
+
+          {/* Sidebar Panel Column */}
+          <div className="lg:col-span-4 sticky top-6">
+            <PremiumSidebarPanel
+              toolName="Split PDF"
+              supportedFormats={['PDF (.pdf)']}
+              tips={[
+                'Click individual page thumbnails to toggle selection on or off.',
+                'Specify custom ranges such as 1-5, 8, 11-15.',
+                'Preserves vector fidelity and embedded text searchability.',
+              ]}
+            />
+          </div>
+        </div>
 
         {/* SEO Content Section */}
         <SplitPDFSEOContent />
@@ -221,4 +279,3 @@ export const SplitPDF: React.FC = () => {
     </motion.div>
   );
 };
-

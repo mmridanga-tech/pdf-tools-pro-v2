@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import JSZip from 'jszip';
-import { FileUploader } from '../components/FileUploader';
 import { ToolHeader } from '../components/ToolHeader';
-import { usePDFProcessor } from '../hooks/usePDFProcessor';
 import { ImageService, ConvertedPdfPageImage } from '../services/imageService';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
@@ -14,19 +12,22 @@ import {
   FileText,
   Download,
   Check,
-  RefreshCw,
-  Sparkles,
   Archive,
-  Layers,
   CheckSquare,
   Square,
-  Zap,
-  ShieldCheck,
-  Eye,
-  X,
-  Maximize2,
   Sliders,
+  Maximize2,
+  X,
 } from 'lucide-react';
+import {
+  PremiumSteps,
+  PremiumUploadZone,
+  PremiumFileCard,
+  PremiumProgress,
+  PremiumSuccessCard,
+  PremiumRecentFiles,
+  PremiumSidebarPanel,
+} from '../components/tool-ui';
 
 interface PdfThumbnail {
   pageNumber: number;
@@ -46,8 +47,9 @@ export const PDFToImage: React.FC = () => {
   const [qualityPreset, setQualityPreset] = useState<'standard' | 'hd' | 'ultrahd'>('hd');
   const [convertedPages, setConvertedPages] = useState<ConvertedPdfPageImage[]>([]);
   const [previewZoomModal, setPreviewZoomModal] = useState<{ title: string; url: string } | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [progressPercent, setProgressPercent] = useState<number>(0);
 
-  const { state, startProcessing, updateProgress, setSuccess, setError, reset } = usePDFProcessor();
   const toast = useToast();
 
   const handleFileSelected = async (files: File[]) => {
@@ -104,7 +106,8 @@ export const PDFToImage: React.FC = () => {
     }
 
     try {
-      startProcessing('Extracting PDF pages into high-resolution images...');
+      setIsProcessing(true);
+      setProgressPercent(10);
       const results = await ImageService.pdfToImage(
         selectedFile,
         {
@@ -113,12 +116,12 @@ export const PDFToImage: React.FC = () => {
           pagesToExtract: selectedPageNumbers,
         },
         (percent, msg) => {
-          updateProgress(percent, msg);
+          setProgressPercent(percent);
         }
       );
 
       setConvertedPages(results);
-      reset();
+      setIsProcessing(false);
       toast.success(`Extracted ${results.length} image page(s)!`);
 
       const totalSize = results.reduce((acc, c) => acc + c.blob.size, 0);
@@ -134,8 +137,8 @@ export const PDFToImage: React.FC = () => {
         'PDF to Image'
       );
     } catch (err: any) {
+      setIsProcessing(false);
       const msg = err.message || 'Failed to convert PDF pages to images.';
-      setError(msg);
       toast.error(msg);
     }
   };
@@ -185,15 +188,17 @@ export const PDFToImage: React.FC = () => {
     setThumbnails([]);
     setSelectedPageNumbers([]);
     setConvertedPages([]);
-    reset();
+    setIsProcessing(false);
   };
+
+  const currentStep = convertedPages.length > 0 ? 3 : isProcessing ? 2 : 1;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-[#0A0A0B] py-12"
+      className="min-h-screen bg-[#08090E] py-12"
     >
       <SEO
         toolName="PDF to Image"
@@ -201,7 +206,7 @@ export const PDFToImage: React.FC = () => {
         path="/pdf-to-image"
       />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <ToolHeader
           icon={FileImage}
           title="PDF to Image Converter"
@@ -209,390 +214,256 @@ export const PDFToImage: React.FC = () => {
           badge="Image Suite"
         />
 
-        {!selectedFile ? (
-          <FileUploader
-            accept=".pdf,application/pdf"
-            multiple={false}
-            onFilesSelected={handleFileSelected}
-            title="Drop PDF file here to extract images"
-            description="Supports high-resolution PNG & JPG rendering • 100% Client-side privacy"
-            buttonText="Select PDF File"
-          />
-        ) : (
-          <motion.div
-            initial={{ scale: 0.99, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#141417]/90 backdrop-blur-sm rounded-3xl border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-8"
-          >
-            {/* Selected File Info Header */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-white truncate">{selectedFile.name}</p>
-                  <p className="text-xs text-slate-400">
-                    Size: {formatBytes(selectedFile.size)}{' '}
-                    {thumbnails.length > 0 ? `• ${thumbnails.length} Page(s)` : ''}
-                  </p>
-                </div>
-              </div>
+        {/* Step Indicator */}
+        <PremiumSteps currentStep={currentStep} />
 
-              <button
-                type="button"
-                onClick={handleReset}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer"
+        {/* Desktop Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-8">
+            {!selectedFile ? (
+              <PremiumUploadZone
+                accept=".pdf,application/pdf"
+                multiple={false}
+                onFilesSelected={handleFileSelected}
+                title="Drop PDF file here to extract images"
+                description="Supports high-resolution PNG & JPG rendering • 100% Client-side privacy"
+                buttonText="Select PDF Document"
+              />
+            ) : (
+              <motion.div
+                initial={{ scale: 0.99, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="space-y-8"
               >
-                Choose Different PDF
-              </button>
-            </div>
+                {/* Selected File Card */}
+                <PremiumFileCard
+                  name={selectedFile.name}
+                  size={selectedFile.size}
+                  pageCount={thumbnails.length}
+                  onReplace={(newFile) => handleFileSelected([newFile])}
+                  onRemove={handleReset}
+                />
 
-            {/* Quality & Format Settings Grid */}
-            <div className="bg-[#18181D] border border-slate-800 rounded-2xl p-5 space-y-4">
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-blue-400" />
-                <span>Output Image Format & Quality Settings</span>
-              </h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Format selection */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-300">Target Image Format</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setFormat('png')}
-                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                        format === 'png'
-                          ? 'border-blue-500 bg-blue-500/10 text-white font-bold ring-1 ring-blue-500/30'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-bold">PNG Format</span>
-                        {format === 'png' && <Check className="w-4 h-4 text-blue-400" />}
-                      </div>
-                      <p className="text-[11px] text-slate-400">Lossless quality & sharp text</p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setFormat('jpeg')}
-                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
-                        format === 'jpeg'
-                          ? 'border-blue-500 bg-blue-500/10 text-white font-bold ring-1 ring-blue-500/30'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-bold">JPG Format</span>
-                        {format === 'jpeg' && <Check className="w-4 h-4 text-blue-400" />}
-                      </div>
-                      <p className="text-[11px] text-slate-400">Smaller file size & fast sharing</p>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Preset resolution */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-300">Resolution Preset</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setQualityPreset('standard')}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                        qualityPreset === 'standard'
-                          ? 'border-blue-500 bg-blue-500/10 text-white font-bold'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <p className="text-xs font-bold">Standard</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">150 DPI (1.0x)</p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setQualityPreset('hd')}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                        qualityPreset === 'hd'
-                          ? 'border-blue-500 bg-blue-500/10 text-white font-bold'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <p className="text-xs font-bold text-blue-400">HD Recommended</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">200 DPI (2.0x)</p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setQualityPreset('ultrahd')}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                        qualityPreset === 'ultrahd'
-                          ? 'border-blue-500 bg-blue-500/10 text-white font-bold'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700'
-                      }`}
-                    >
-                      <p className="text-xs font-bold text-amber-400">Ultra HD</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">300 DPI (3.0x)</p>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Loading Page Thumbnails */}
-            {isLoadingThumbnails && (
-              <div className="p-8 text-center bg-slate-900/60 rounded-2xl border border-slate-800 space-y-3">
-                <div className="w-full bg-slate-800 rounded-full h-2 max-w-md mx-auto overflow-hidden">
-                  <div
-                    className="bg-blue-500 h-full transition-all duration-200"
-                    style={{ width: `${thumbnailProgress}%` }}
+                {isProcessing && (
+                  <PremiumProgress
+                    progress={progressPercent}
+                    statusMessage="Rendering PDF pages to canvas..."
+                    stepName="Raster Graphics Pipeline"
                   />
-                </div>
-                <p className="text-xs font-semibold text-slate-300">
-                  Generating Page Previews ({thumbnailProgress}%)...
-                </p>
-              </div>
-            )}
+                )}
 
-            {/* Page Selection Preview Grid */}
-            {!isLoadingThumbnails && thumbnails.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                  <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-blue-400" />
-                      <span>Select Pages to Convert</span>
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Selected {selectedPageNumbers.length} of {thumbnails.length} pages
-                    </p>
-                  </div>
+                {/* Settings & Page Selector (when not yet converted) */}
+                {convertedPages.length === 0 && !isProcessing && (
+                  <div className="bg-[#12131F]/90 backdrop-blur-xl rounded-[28px] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6">
+                    {/* Resolution & Format Configuration */}
+                    <div className="bg-[#181824] border border-white/10 rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Sliders className="w-4 h-4 text-red-400" />
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                          Output Quality & Format Settings
+                        </h4>
+                      </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleSelectAll}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
-                    >
-                      Select All
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDeselectAll}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
-                    >
-                      Deselect All
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-[380px] overflow-y-auto p-1 scrollbar-thin">
-                  {thumbnails.map((thumb) => {
-                    const isSelected = selectedPageNumbers.includes(thumb.pageNumber);
-
-                    return (
-                      <div
-                        key={thumb.pageNumber}
-                        onClick={() => handleTogglePage(thumb.pageNumber)}
-                        className={`group relative bg-slate-900 border rounded-2xl p-2.5 flex flex-col items-center cursor-pointer transition-all ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30'
-                            : 'border-slate-800 opacity-60 hover:opacity-100 hover:border-slate-700'
-                        }`}
-                      >
-                        {/* Checkbox badge */}
-                        <div className="absolute top-3 left-3 z-10">
-                          {isSelected ? (
-                            <div className="w-5 h-5 rounded-md bg-blue-500 text-white flex items-center justify-center shadow-md">
-                              <Check className="w-3.5 h-3.5 stroke-[3]" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 rounded-md bg-black/60 border border-slate-600 backdrop-blur-sm" />
-                          )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        {/* Format */}
+                        <div>
+                          <label className="block text-slate-400 mb-1 font-medium">Image Format</label>
+                          <select
+                            value={format}
+                            onChange={(e) => setFormat(e.target.value as 'png' | 'jpeg')}
+                            className="w-full bg-slate-950/80 border border-white/15 text-white rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500/50 cursor-pointer font-bold"
+                          >
+                            <option value="png">PNG (Lossless, Transparent Support)</option>
+                            <option value="jpeg">JPEG (Smaller File Size)</option>
+                          </select>
                         </div>
 
-                        {/* Zoom Button */}
+                        {/* Resolution */}
+                        <div>
+                          <label className="block text-slate-400 mb-1 font-medium">Resolution Scaling</label>
+                          <select
+                            value={qualityPreset}
+                            onChange={(e) => setQualityPreset(e.target.value as any)}
+                            className="w-full bg-slate-950/80 border border-white/15 text-white rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-red-500/50 cursor-pointer font-bold"
+                          >
+                            <option value="standard">Standard DPI (150 DPI - Fast)</option>
+                            <option value="hd">High Definition HD (300 DPI - Recommended)</option>
+                            <option value="ultrahd">Ultra HD 4K (600 DPI - Crisp Text)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Page Selection Grid Header */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <span>Select Pages to Extract ({selectedPageNumbers.length} / {thumbnails.length})</span>
+                      </h3>
+
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPreviewZoomModal({
-                              title: `Page ${thumb.pageNumber}`,
-                              url: thumb.thumbnailDataUrl,
-                            });
-                          }}
-                          className="absolute top-3 right-3 z-10 p-1.5 rounded-md bg-black/70 hover:bg-black text-slate-300 hover:text-white backdrop-blur-sm transition-all"
-                          title="Zoom preview"
+                          onClick={handleSelectAll}
+                          className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-bold text-slate-200 border border-white/10 transition-colors cursor-pointer"
                         >
-                          <Maximize2 className="w-3 h-3" />
+                          Select All
                         </button>
-
-                        <div className="w-full h-36 bg-slate-950 rounded-xl overflow-hidden border border-slate-800/80 mb-2 flex items-center justify-center p-1">
-                          <img
-                            src={thumb.thumbnailDataUrl}
-                            alt={`Page ${thumb.pageNumber}`}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-
-                        <span className="text-xs font-bold text-white">
-                          Page {thumb.pageNumber}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={handleDeselectAll}
+                          className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-bold text-slate-400 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                        >
+                          Deselect All
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                    </div>
 
-            {/* Conversion Progress Indicator */}
-            {state.status === 'processing' && (
-              <div className="p-6 text-center bg-slate-900/80 rounded-2xl border border-slate-800 space-y-3">
-                <div className="w-full bg-slate-800 rounded-full h-2.5 max-w-md mx-auto overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full transition-all duration-200"
-                    style={{ width: `${state.progress}%` }}
-                  />
-                </div>
-                <p className="text-xs font-semibold text-slate-300">
-                  {state.message || 'Converting PDF pages...'} ({state.progress}%)
-                </p>
-              </div>
-            )}
-
-            {/* Convert Trigger Button */}
-            {convertedPages.length === 0 && state.status !== 'processing' && (
-              <div className="pt-4 border-t border-slate-800 flex justify-end">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleConvert}
-                  disabled={selectedPageNumbers.length === 0}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-blue-600/20 transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  <FileImage className="w-5 h-5" />
-                  <span>
-                    Convert {selectedPageNumbers.length} Page{selectedPageNumbers.length > 1 ? 's' : ''} to {format.toUpperCase()}
-                  </span>
-                </motion.button>
-              </div>
-            )}
-
-            {/* Extracted Image Results Grid */}
-            {convertedPages.length > 0 && (
-              <div className="space-y-6 pt-6 border-t border-slate-800">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <span>Extracted Images ({convertedPages.length} Pages)</span>
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Ready to download as individual files or a single ZIP package.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleConvert}
-                      className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" /> Re-render
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleDownloadAllZip}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 flex items-center gap-1.5 shadow-lg shadow-blue-600/20 cursor-pointer"
-                    >
-                      <Archive className="w-4 h-4" /> Download All (ZIP)
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {convertedPages.map((pg) => (
-                    <motion.div
-                      key={pg.pageNumber}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-lg hover:border-slate-700 transition-all"
-                    >
-                      <div>
-                        <div className="relative aspect-[3/4] bg-slate-950 rounded-xl overflow-hidden border border-slate-800/80 mb-3 flex items-center justify-center p-2">
-                          <img
-                            src={pg.dataUrl}
-                            alt={`Page ${pg.pageNumber}`}
-                            className="w-full h-full object-contain"
-                          />
-                          <span className="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-black/80 text-[11px] font-bold text-white backdrop-blur-md border border-slate-800">
-                            Page {pg.pageNumber}
-                          </span>
-                        </div>
-                        <p className="text-xs font-semibold text-white truncate">{pg.fileName}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
-                          {pg.width} x {pg.height} px • {formatBytes(pg.blob.size)}
-                        </p>
+                    {/* Thumbnails Grid */}
+                    {isLoadingThumbnails ? (
+                      <div className="p-12 text-center text-slate-400 text-sm space-y-3">
+                        <p className="font-semibold text-white">Generating Page Thumbnails ({thumbnailProgress}%)...</p>
                       </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {thumbnails.map((t) => {
+                          const isSelected = selectedPageNumbers.includes(t.pageNumber);
+                          return (
+                            <div
+                              key={t.pageNumber}
+                              onClick={() => handleTogglePage(t.pageNumber)}
+                              className={`group relative rounded-2xl p-3 border cursor-pointer transition-all flex flex-col justify-between ${
+                                isSelected
+                                  ? 'bg-red-500/10 border-red-500 ring-2 ring-red-500/20'
+                                  : 'bg-slate-950/80 border-white/10 hover:border-white/20'
+                              }`}
+                            >
+                              <div className="relative aspect-[3/4] bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center border border-white/5">
+                                <img
+                                  src={t.thumbnailDataUrl}
+                                  alt={`Page ${t.pageNumber}`}
+                                  className="w-full h-full object-contain"
+                                />
+                                <div className="absolute top-2 left-2">
+                                  {isSelected ? (
+                                    <div className="w-5 h-5 rounded-md bg-red-500 text-white flex items-center justify-center shadow">
+                                      <Check className="w-3.5 h-3.5" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-5 h-5 rounded-md bg-black/60 text-slate-400 border border-white/20 flex items-center justify-center">
+                                      <Square className="w-3.5 h-3.5" />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <p className="text-xs font-bold text-white text-center mt-2">
+                                Page {t.pageNumber}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
+                    {/* Convert Button */}
+                    <div className="pt-4 border-t border-white/10 flex justify-end">
                       <button
                         type="button"
-                        onClick={() => handleDownloadSingle(pg)}
-                        className="mt-4 w-full py-2.5 bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-200 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        onClick={handleConvert}
+                        disabled={selectedPageNumbers.length === 0}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm shadow-[0_10px_30px_rgba(239,68,68,0.35)] disabled:opacity-40 transition-all cursor-pointer"
                       >
-                        <Download className="w-3.5 h-3.5" /> Download Image
+                        <FileImage className="w-5 h-5" />
+                        <span>Extract {selectedPageNumbers.length} Page(s) to Image</span>
                       </button>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
+                    </div>
+                  </div>
+                )}
 
-        {/* Modal for Zoom Preview */}
-        <AnimatePresence>
-          {previewZoomModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-              onClick={() => setPreviewZoomModal(null)}
-            >
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
-                onClick={(e) => e.stopPropagation()}
-                className="relative max-w-3xl max-h-[85vh] bg-slate-900 border border-slate-800 rounded-3xl p-6 overflow-hidden flex flex-col items-center shadow-2xl"
-              >
-                <button
-                  type="button"
-                  onClick={() => setPreviewZoomModal(null)}
-                  className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                {/* Output Converted Images Grid */}
+                {convertedPages.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-[#12131F]/90 backdrop-blur-xl rounded-[28px] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6"
+                  >
+                    <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                      <div>
+                        <h3 className="text-base font-bold text-white">Extracted Images ({convertedPages.length})</h3>
+                        <p className="text-xs text-slate-400">All pages converted successfully</p>
+                      </div>
 
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-blue-400" />
-                  <span>{previewZoomModal.title}</span>
-                </h3>
+                      <div className="flex items-center gap-2">
+                        {convertedPages.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={handleDownloadAllZip}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-lg transition-all cursor-pointer"
+                          >
+                            <Archive className="w-4 h-4" />
+                            <span>Download All (ZIP)</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleReset}
+                          className="px-3.5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-bold text-slate-300 border border-white/10 transition-colors cursor-pointer"
+                        >
+                          Convert Another
+                        </button>
+                      </div>
+                    </div>
 
-                <div className="max-h-[65vh] overflow-auto rounded-2xl bg-black p-2 border border-slate-800">
-                  <img
-                    src={previewZoomModal.url}
-                    alt={previewZoomModal.title}
-                    className="max-h-[60vh] object-contain mx-auto"
-                  />
-                </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {convertedPages.map((page) => {
+                        const imgUrl = URL.createObjectURL(page.blob);
+                        return (
+                          <div
+                            key={page.pageNumber}
+                            className="bg-slate-950/80 border border-white/10 rounded-2xl p-3 space-y-3 flex flex-col justify-between"
+                          >
+                            <div className="aspect-[3/4] rounded-xl bg-slate-900 overflow-hidden flex items-center justify-center border border-white/5">
+                              <img src={imgUrl} alt={page.fileName} className="w-full h-full object-contain" />
+                            </div>
+
+                            <div className="space-y-2">
+                              <p className="text-xs font-bold text-white truncate" title={page.fileName}>
+                                Page {page.pageNumber} ({formatBytes(page.blob.size)})
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadSingle(page)}
+                                className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold transition-colors cursor-pointer"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Download</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+
+            <PremiumRecentFiles />
+          </div>
+
+          {/* Sidebar Panel Column */}
+          <div className="lg:col-span-4 sticky top-6">
+            <PremiumSidebarPanel
+              toolName="PDF to Image"
+              supportedFormats={['PDF (.pdf)']}
+              tips={[
+                'Extract all pages or choose specific page numbers to convert.',
+                'Select between PNG for maximum image clarity or JPEG for smaller file size.',
+                'High Definition 300 DPI and Ultra HD 600 DPI rendering supported.',
+              ]}
+            />
+          </div>
+        </div>
       </div>
     </motion.div>
   );

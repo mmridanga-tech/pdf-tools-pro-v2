@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { FileUploader } from '../components/FileUploader';
-import { ProcessingModal } from '../components/ProcessingModal';
 import { ToolHeader } from '../components/ToolHeader';
 import { usePDFProcessor } from '../hooks/usePDFProcessor';
 import { PDFService } from '../services/pdfService';
 import { PDFFileItem } from '../types/toolTypes';
 import { formatBytes } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
-import { Layers, ArrowUp, ArrowDown, Trash2, Plus, FileText } from 'lucide-react';
+import { Layers, Plus, FileText, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { saveRecentFile } from '../utils/storageUtils';
 import { MergePDFSEOContent } from '../components/seo/MergePDFSEOContent';
+import {
+  PremiumSteps,
+  PremiumUploadZone,
+  PremiumFileCard,
+  PremiumProgress,
+  PremiumSuccessCard,
+  PremiumErrorCard,
+  PremiumRecentFiles,
+  PremiumSidebarPanel,
+} from '../components/tool-ui';
 
 export const MergePDF: React.FC = () => {
   const [fileItems, setFileItems] = useState<PDFFileItem[]>([]);
@@ -85,12 +93,27 @@ export const MergePDF: React.FC = () => {
     reset();
   };
 
+  const handleDownload = () => {
+    if (!resultBlob) return;
+    const url = URL.createObjectURL(resultBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'merged_document.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Downloaded merged PDF document!');
+  };
+
+  const currentStep = state.status === 'success' ? 3 : state.status === 'processing' ? 2 : 1;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-[#0A0A0B] py-14"
+      className="min-h-screen bg-[#08090E] py-12"
     >
       <SEO
         toolName="Merge PDF"
@@ -98,145 +121,147 @@ export const MergePDF: React.FC = () => {
         path="/merge"
       />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <ToolHeader
           icon={Layers}
           title="Merge PDF Files"
           description="Combine multiple PDF files into one single organized PDF document in your browser."
-          badge="Essential"
+          badge="Essential Suite"
         />
 
-        {/* Upload Zone or File List */}
-        {fileItems.length === 0 ? (
-          <FileUploader
-            accept=".pdf"
-            multiple={true}
-            onFilesSelected={handleFilesSelected}
-            title="Select PDF files to merge"
-            description="or drag & drop multiple PDF files here"
-          />
-        ) : (
-          <motion.div
-            initial={{ scale: 0.98, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#141417]/90 backdrop-blur-sm rounded-3xl border border-slate-800/80 shadow-2xl p-6 sm:p-8 space-y-6"
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <span>Selected PDFs ({fileItems.length})</span>
-              </h2>
+        {/* Step Indicator */}
+        <PremiumSteps currentStep={currentStep} />
 
-              <label className="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors shadow-sm focus-within:ring-2 focus-within:ring-red-500/50">
-                <Plus className="w-4 h-4" aria-hidden="true" />
-                <span>Add More Files</span>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files) handleFilesSelected(Array.from(e.target.files));
-                  }}
-                />
-              </label>
-            </div>
+        {/* Desktop Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-8">
+            {state.status === 'processing' && (
+              <PremiumProgress
+                progress={state.progress}
+                statusMessage={state.message || 'Merging PDF files...'}
+                stepName="Merging Engine"
+              />
+            )}
 
-            {/* List of files with reorder buttons */}
-            <div className="space-y-3" role="list" aria-label="PDF files to merge">
-              {fileItems.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  role="listitem"
-                  className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all shadow-sm"
-                >
-                  <div className="flex items-center gap-3.5 overflow-hidden">
-                    <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-xs font-bold shrink-0">
-                      {index + 1}
-                    </span>
-                    <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5" />
+            {state.status === 'error' && (
+              <PremiumErrorCard
+                errorMsg={state.message || 'Failed to merge PDFs.'}
+                onRetry={handleMerge}
+                onReset={handleReset}
+              />
+            )}
+
+            {state.status === 'success' && resultBlob && (
+              <PremiumSuccessCard
+                title="PDFs Merged Successfully!"
+                message="All selected documents have been merged into a single high-quality PDF file."
+                outputFileName="merged_document.pdf"
+                outputFileSize={resultBlob.size}
+                pageCount={fileItems.length}
+                onDownload={handleDownload}
+                onReset={handleReset}
+                downloadButtonText="Download Merged PDF"
+              />
+            )}
+
+            {state.status === 'idle' && (
+              <>
+                {fileItems.length === 0 ? (
+                  <PremiumUploadZone
+                    accept=".pdf,application/pdf"
+                    multiple={true}
+                    onFilesSelected={handleFilesSelected}
+                    title="Select PDF files to merge"
+                    description="Drag & drop multiple PDF files or select from device"
+                    buttonText="Choose PDF Files"
+                  />
+                ) : (
+                  <motion.div
+                    initial={{ scale: 0.98, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-[#12131F]/90 backdrop-blur-xl rounded-[28px] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6"
+                  >
+                    <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                      <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                        <span>Selected PDFs ({fileItems.length})</span>
+                      </h2>
+
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white text-xs font-bold border border-white/10 transition-all shadow-sm">
+                        <Plus className="w-4 h-4 text-red-400" aria-hidden="true" />
+                        <span>Add More Files</span>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files) handleFilesSelected(Array.from(e.target.files));
+                          }}
+                        />
+                      </label>
                     </div>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-bold text-white truncate">{item.name}</p>
-                      <p className="text-xs text-slate-400">{formatBytes(item.size)}</p>
+
+                    {/* List of files with reorder buttons */}
+                    <div className="space-y-3" role="list" aria-label="PDF files to merge">
+                      {fileItems.map((item, index) => (
+                        <PremiumFileCard
+                          key={item.id}
+                          name={item.name}
+                          size={item.size}
+                          index={index}
+                          totalFiles={fileItems.length}
+                          onMoveUp={() => moveFile(index, 'up')}
+                          onMoveDown={() => moveFile(index, 'down')}
+                          onRemove={() => removeFile(item.id, item.name)}
+                        />
+                      ))}
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => moveFile(index, 'up')}
-                      disabled={index === 0}
-                      className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 rounded-lg hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                      aria-label={`Move ${item.name} up`}
-                      title="Move Up"
-                    >
-                      <ArrowUp className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveFile(index, 'down')}
-                      disabled={index === fileItems.length - 1}
-                      className="p-1.5 text-slate-400 hover:text-white disabled:opacity-30 rounded-lg hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                      aria-label={`Move ${item.name} down`}
-                      title="Move Down"
-                    >
-                      <ArrowDown className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(item.id, item.name)}
-                      className="p-1.5 text-red-400 hover:text-red-300 rounded-lg hover:bg-red-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                      aria-label={`Remove ${item.name}`}
-                      title="Remove"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                    {/* Merge Action Button */}
+                    <div className="pt-5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFileItems([]);
+                          toast.info('Cleared file list');
+                        }}
+                        className="text-xs font-semibold text-slate-400 hover:text-slate-200 underline cursor-pointer"
+                      >
+                        Clear all files
+                      </button>
 
-            {/* Merge Action Button */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setFileItems([]);
-                  toast.info('Cleared file list');
-                }}
-                className="text-xs font-semibold text-slate-400 hover:text-slate-200 underline focus:outline-none focus:ring-2 focus:ring-red-500/50"
-              >
-                Clear all files
-              </button>
+                      <button
+                        type="button"
+                        onClick={handleMerge}
+                        disabled={fileItems.length < 2}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm shadow-[0_10px_30px_rgba(239,68,68,0.35)] disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <Layers className="w-5 h-5" />
+                        <span>Merge {fileItems.length} PDF Files</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </>
+            )}
 
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleMerge}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-xl shadow-red-600/25 transition-all"
-              >
-                <Layers className="w-5 h-5" />
-                <span>Merge PDF Files</span>
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
+            <PremiumRecentFiles />
+          </div>
 
-        {/* Processing Modal */}
-        <ProcessingModal
-          state={state}
-          resultBlob={resultBlob}
-          resultFileName="merged_document.pdf"
-          onReset={handleReset}
-          title="Merging PDFs"
-        />
+          {/* Sidebar Panel Column */}
+          <div className="lg:col-span-4 sticky top-6">
+            <PremiumSidebarPanel
+              toolName="Merge PDF"
+              supportedFormats={['PDF (.pdf)']}
+              tips={[
+                'Reorder PDF files using up and down arrows before merging.',
+                'Supports merging large multi-page PDF files lightning fast.',
+                'Combines bookmarks, vector graphics, and text layers cleanly.',
+              ]}
+            />
+          </div>
+        </div>
 
         {/* SEO Content Section */}
         <MergePDFSEOContent />
@@ -244,4 +269,3 @@ export const MergePDF: React.FC = () => {
     </motion.div>
   );
 };
-

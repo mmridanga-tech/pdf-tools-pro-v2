@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileUploader } from '../components/FileUploader';
-import { ProcessingModal } from '../components/ProcessingModal';
 import { ToolHeader } from '../components/ToolHeader';
-import { usePDFProcessor } from '../hooks/usePDFProcessor';
+import { PagePreviewGrid } from '../components/PagePreviewGrid';
 import { PDFService } from '../services/pdfService';
 import { formatBytes, parsePageRange } from '../utils/fileUtils';
 import { useToast } from '../context/ToastContext';
@@ -24,6 +22,15 @@ import {
   ArrowRight,
   Info,
 } from 'lucide-react';
+import {
+  PremiumSteps,
+  PremiumUploadZone,
+  PremiumFileCard,
+  PremiumProgress,
+  PremiumSuccessCard,
+  PremiumRecentFiles,
+  PremiumSidebarPanel,
+} from '../components/tool-ui';
 
 export const DeletePDFPages: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -38,11 +45,11 @@ export const DeletePDFPages: React.FC = () => {
   const [viewMode, setViewMode] = useState<'all' | 'remaining'>('all');
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [progressPercent, setProgressPercent] = useState<number>(0);
 
-  const { state, startProcessing, updateProgress, setSuccess, setError, reset } = usePDFProcessor();
   const toast = useToast();
 
-  // Helper to update delete indices with history recording for Undo
   const updateDeleteIndicesWithHistory = useCallback((newIndices: number[]) => {
     setDeleteIndices((prev) => {
       setHistory((h) => [...h, prev]);
@@ -56,7 +63,6 @@ export const DeletePDFPages: React.FC = () => {
     setHistory((h) => h.slice(0, h.length - 1));
     setDeleteIndices(lastState);
 
-    // Update range input text to match restored indices (1-indexed)
     if (lastState.length > 0) {
       const pageNums = lastState.map((i) => i + 1).sort((a, b) => a - b);
       setRangeInput(pageNums.join(', '));
@@ -66,7 +72,6 @@ export const DeletePDFPages: React.FC = () => {
     toast.info('Undid last selection change');
   }, [history, toast]);
 
-  // Global Ctrl+Z / Cmd+Z handler for undoing page selection
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && selectedFile) {
@@ -85,6 +90,7 @@ export const DeletePDFPages: React.FC = () => {
     setHistory([]);
     setDeleteIndices([]);
     setRangeInput('');
+    setResultBlob(null);
 
     try {
       const count = await PDFService.getPageCount(file);
@@ -125,7 +131,6 @@ export const DeletePDFPages: React.FC = () => {
   };
 
   const handleSelectAllForDelete = () => {
-    // Leave at least 1 page unselected if possible, but let user see
     const allIndices = Array.from({ length: pageCount }, (_, i) => i);
     updateDeleteIndicesWithHistory(allIndices);
     setRangeInput(`1-${pageCount}`);
@@ -164,23 +169,23 @@ export const DeletePDFPages: React.FC = () => {
       return;
     }
 
-    setShowConfirmModal(true);
+    executeDelete();
   };
 
   const executeDelete = async () => {
     if (!selectedFile) return;
-    setShowConfirmModal(false);
 
     try {
-      startProcessing('Deleting selected pages...');
+      setIsProcessing(true);
+      setProgressPercent(10);
       const blob = await PDFService.deletePages(
         selectedFile,
         deleteIndices,
-        (percent, statusMsg) => updateProgress(percent, statusMsg)
+        (percent, statusMsg) => setProgressPercent(percent)
       );
 
       setResultBlob(blob);
-      setSuccess(`Successfully deleted ${deleteIndices.length} page(s)!`);
+      setIsProcessing(false);
       toast.success('PDF pages deleted successfully!');
 
       saveRecentFile({
@@ -191,10 +196,24 @@ export const DeletePDFPages: React.FC = () => {
         status: 'completed',
       });
     } catch (err: any) {
+      setIsProcessing(false);
       const msg = err.message || 'Failed to delete PDF pages.';
-      setError(msg);
       toast.error(msg);
     }
+  };
+
+  const handleDownload = () => {
+    if (!resultBlob || !selectedFile) return;
+    const url = URL.createObjectURL(resultBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    const editedName = `${selectedFile.name.replace(/\.pdf$/i, '')}_edited.pdf`;
+    link.download = editedName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${editedName}`);
   };
 
   const handleReset = () => {
@@ -204,22 +223,17 @@ export const DeletePDFPages: React.FC = () => {
     setRangeInput('');
     setHistory([]);
     setResultBlob(null);
-    setShowConfirmModal(false);
-    reset();
+    setIsProcessing(false);
   };
 
-  const remainingPageIndices = useMemo(() => {
-    return Array.from({ length: pageCount }, (_, i) => i).filter(
-      (i) => !deleteIndices.includes(i)
-    );
-  }, [pageCount, deleteIndices]);
+  const currentStep = resultBlob ? 3 : isProcessing ? 2 : 1;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-[#0A0A0B] py-14"
+      className="min-h-screen bg-[#08090E] py-12"
     >
       <SEO
         toolName="Delete PDF Pages"
@@ -227,7 +241,7 @@ export const DeletePDFPages: React.FC = () => {
         path="/delete-pages"
       />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <ToolHeader
           icon={Trash2}
           title="Delete PDF Pages"
@@ -235,428 +249,158 @@ export const DeletePDFPages: React.FC = () => {
           badge="Essential"
         />
 
-        {!selectedFile ? (
-          <FileUploader
-            accept=".pdf"
-            multiple={false}
-            onFilesSelected={handleFileSelected}
-            title="Select PDF file to remove pages from"
-            description="or drag and drop single PDF file here"
-          />
-        ) : (
-          <motion.div
-            initial={{ scale: 0.98, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#141417]/90 backdrop-blur-sm rounded-3xl border border-slate-800/80 shadow-2xl p-6 sm:p-8 space-y-8"
-          >
-            {/* Header File Details & Page Counts */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-inner">
-              <div className="flex items-center gap-3.5 overflow-hidden">
-                <div className="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center shrink-0 shadow-sm">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white truncate max-w-xs sm:max-w-sm">{selectedFile.name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {formatBytes(selectedFile.size)}
-                  </p>
-                </div>
-              </div>
+        {/* Step Indicator */}
+        <PremiumSteps currentStep={currentStep} />
 
-              {/* Status Counters */}
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                <span className="px-3 py-1.5 rounded-xl bg-slate-800/90 text-slate-300 border border-slate-700">
-                  Total: <strong className="text-white">{pageCount}</strong>
-                </span>
-
-                <span
-                  className={`px-3 py-1.5 rounded-xl border transition-colors ${
-                    deleteIndices.length > 0
-                      ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-                      : 'bg-slate-800/90 text-slate-400 border-slate-700'
-                  }`}
-                >
-                  Deleting: <strong className="text-rose-400">{deleteIndices.length}</strong>
-                </span>
-
-                <span
-                  className={`px-3 py-1.5 rounded-xl border transition-colors ${
-                    remainingCount > 0
-                      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                      : 'bg-red-500/20 text-red-400 border-red-500/30'
-                  }`}
-                >
-                  Remaining: <strong className="text-emerald-400">{remainingCount}</strong>
-                </span>
-
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="ml-auto px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer"
-                >
-                  Change PDF
-                </button>
-              </div>
-            </div>
-
-            {/* Selection Controls Bar */}
-            <div className="space-y-4 bg-[#111114] p-5 rounded-2xl border border-slate-800/80">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <label htmlFor="delete-range-input" className="block text-sm font-bold text-white flex items-center gap-2">
-                  <Trash2 className="w-4 h-4 text-rose-400" />
-                  <span>Pages to Delete (1-indexed range or comma separated):</span>
-                </label>
-
-                {/* Quick Selection Buttons */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleUndo}
-                    disabled={history.length === 0}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 text-slate-300 text-xs font-semibold flex items-center gap-1.5 border border-slate-700/80 transition-colors cursor-pointer"
-                    title="Undo last selection change (Ctrl+Z)"
-                  >
-                    <Undo2 className="w-3.5 h-3.5" />
-                    <span>Undo</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleSelectAllForDelete}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 border border-slate-700/80 transition-colors cursor-pointer"
-                  >
-                    <CheckSquare className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Select All</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleDeselectAll}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 border border-slate-700/80 transition-colors cursor-pointer"
-                  >
-                    <Square className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Clear</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleInvertSelection}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 border border-slate-700/80 transition-colors cursor-pointer"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Invert</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Range text input */}
-              <input
-                id="delete-range-input"
-                type="text"
-                value={rangeInput}
-                onChange={handleRangeInputChange}
-                placeholder="e.g. 1, 3-5, 8"
-                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500/80 text-sm font-mono"
+        {/* Desktop Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-8">
+            {!selectedFile ? (
+              <PremiumUploadZone
+                accept=".pdf,application/pdf"
+                multiple={false}
+                onFilesSelected={handleFileSelected}
+                title="Select PDF file to remove pages from"
+                description="Supports all PDF types • Drag and drop or browse"
+                buttonText="Choose PDF File"
               />
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-400 gap-2">
-                <p>Click page thumbnails below or enter page numbers to mark pages for deletion.</p>
-
-                {/* View Mode Switcher */}
-                <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('all')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      viewMode === 'all'
-                        ? 'bg-rose-600 text-white shadow-md'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Layers className="w-3.5 h-3.5" />
-                    <span>All Pages ({pageCount})</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('remaining')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      viewMode === 'remaining'
-                        ? 'bg-emerald-600 text-white shadow-md'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Remaining Preview ({remainingCount})</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Interactive Visual Page Grid */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>
-                    {viewMode === 'all'
-                      ? 'Select Pages to Remove:'
-                      : `Live Preview of Final Output PDF (${remainingCount} pages remaining):`}
-                  </span>
-                </h3>
-                {deleteIndices.length > 0 && (
-                  <span className="text-xs font-semibold text-rose-400 flex items-center gap-1">
-                    <Info className="w-3.5 h-3.5" />
-                    {deleteIndices.length} page(s) marked for removal
-                  </span>
-                )}
-              </div>
-
-              {viewMode === 'all' ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {Array.from({ length: pageCount }).map((_, idx) => {
-                    const isMarkedForDelete = deleteIndices.includes(idx);
-
-                    return (
-                      <motion.div
-                        key={`page-${idx}`}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.2, delay: Math.min(idx * 0.02, 0.4) }}
-                        onClick={() => handleTogglePageDelete(idx)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleTogglePageDelete(idx);
-                          }
-                        }}
-                        tabIndex={0}
-                        role="checkbox"
-                        aria-checked={isMarkedForDelete}
-                        aria-label={`Page ${idx + 1}, ${
-                          isMarkedForDelete ? 'marked for deletion' : 'kept'
-                        }`}
-                        className={`group relative bg-[#141417] rounded-2xl border p-3 flex flex-col items-center justify-between transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-500/60 select-none ${
-                          isMarkedForDelete
-                            ? 'border-rose-500/90 bg-rose-950/20 shadow-lg shadow-rose-950/40 ring-2 ring-rose-500/40'
-                            : 'border-slate-800 hover:border-slate-700 hover:bg-slate-900/60'
-                        }`}
-                      >
-                        {/* Status Checkbox / Delete Indicator */}
-                        <div
-                          className={`absolute top-2.5 right-2.5 w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all z-10 ${
-                            isMarkedForDelete
-                              ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
-                              : 'border border-slate-700 bg-slate-900/90 text-slate-500 group-hover:border-slate-500'
-                          }`}
-                        >
-                          {isMarkedForDelete ? <Trash2 className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100" />}
-                        </div>
-
-                        {/* Visual Page Box */}
-                        <div
-                          className={`w-full h-32 my-2 rounded-xl border flex flex-col items-center justify-center relative overflow-hidden transition-all ${
-                            isMarkedForDelete
-                              ? 'bg-rose-950/30 border-rose-500/40 text-rose-300'
-                              : 'bg-slate-900/90 border-slate-800 text-slate-400 group-hover:bg-slate-850'
-                          }`}
-                        >
-                          <FileText
-                            className={`w-10 h-10 transition-transform group-hover:scale-105 ${
-                              isMarkedForDelete ? 'text-rose-400' : 'text-slate-500'
-                            }`}
-                          />
-                          <span
-                            className={`text-[10px] font-bold uppercase mt-1 tracking-wider ${
-                              isMarkedForDelete ? 'text-rose-300' : 'text-slate-400'
-                            }`}
-                          >
-                            Page {idx + 1}
-                          </span>
-
-                          {/* Delete overlay tag */}
-                          {isMarkedForDelete && (
-                            <div className="absolute inset-x-0 bottom-0 bg-rose-600 text-white text-[10px] font-extrabold py-0.5 text-center uppercase tracking-wider">
-                              Delete Page
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Page Footer */}
-                        <div className="w-full flex items-center justify-between mt-1 text-xs font-medium">
-                          <span
-                            className={
-                              isMarkedForDelete ? 'text-rose-400 font-bold' : 'text-slate-300'
-                            }
-                          >
-                            Page {idx + 1}
-                          </span>
-
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded ${
-                              isMarkedForDelete
-                                ? 'bg-rose-500/20 text-rose-300 font-bold'
-                                : 'text-slate-500'
-                            }`}
-                          >
-                            {isMarkedForDelete ? 'Will Remove' : 'Keep'}
-                          </span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              ) : (
-                /* Remaining Preview View Mode */
-                <div className="space-y-4">
-                  {remainingPageIndices.length === 0 ? (
-                    <div className="p-8 text-center bg-rose-950/20 border border-rose-500/30 rounded-2xl">
-                      <AlertTriangle className="w-8 h-8 text-rose-400 mx-auto mb-2" />
-                      <p className="text-sm font-bold text-rose-300">All pages marked for deletion!</p>
-                      <p className="text-xs text-slate-400 mt-1">
-                        At least one page must remain in the final PDF document.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {remainingPageIndices.map((origIdx, newSeqIdx) => (
-                        <div
-                          key={`rem-page-${origIdx}`}
-                          className="bg-[#141417] rounded-2xl border border-emerald-500/40 p-3 flex flex-col items-center justify-between shadow-md"
-                        >
-                          <div className="w-full h-32 my-2 bg-emerald-950/20 rounded-xl border border-emerald-500/30 flex flex-col items-center justify-center">
-                            <FileText className="w-10 h-10 text-emerald-400" />
-                            <span className="text-[10px] font-bold text-emerald-300 uppercase mt-1 tracking-wider">
-                              New Page {newSeqIdx + 1}
-                            </span>
-                          </div>
-                          <div className="w-full flex items-center justify-between text-xs font-semibold text-slate-300">
-                            <span>New #{newSeqIdx + 1}</span>
-                            <span className="text-[10px] text-slate-500">Orig #{origIdx + 1}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Action Footer */}
-            <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs text-slate-400">
-                {deleteIndices.length === 0 ? (
-                  <span>Select one or more pages above to delete.</span>
-                ) : remainingCount === 0 ? (
-                  <span className="text-rose-400 font-semibold">
-                    Warning: Cannot delete all pages from the PDF.
-                  </span>
-                ) : (
-                  <span>
-                    Ready to output PDF with <strong className="text-emerald-400">{remainingCount}</strong> remaining page(s).
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={handleDeselectAll}
-                  disabled={deleteIndices.length === 0}
-                  className="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 font-semibold text-xs transition-colors cursor-pointer"
-                >
-                  Clear Selection
-                </button>
-
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleConfirmDeleteClick}
-                  disabled={deleteIndices.length === 0 || remainingCount === 0}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 disabled:opacity-50 text-white font-bold text-sm shadow-xl shadow-rose-600/20 transition-all cursor-pointer"
-                >
-                  <Trash2 className="w-5 h-5" />
-                  <span>
-                    Delete {deleteIndices.length > 0 ? `${deleteIndices.length} Page(s)` : 'Pages'}
-                  </span>
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        <AnimatePresence>
-          {showConfirmModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            ) : (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#141417] border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6"
+                initial={{ scale: 0.98, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="space-y-8"
               >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center shrink-0">
-                    <AlertTriangle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">Confirm Page Deletion</h3>
-                    <p className="text-xs text-slate-400">This operation will modify your PDF document.</p>
-                  </div>
-                </div>
+                <PremiumFileCard
+                  name={selectedFile.name}
+                  size={selectedFile.size}
+                  pageCount={pageCount}
+                  onReplace={(newFile) => handleFileSelected([newFile])}
+                  onRemove={handleReset}
+                />
 
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-300">
-                    <span>Original Pages:</span>
-                    <strong className="text-white">{pageCount}</strong>
-                  </div>
-                  <div className="flex justify-between text-rose-400">
-                    <span>Pages to Remove:</span>
-                    <strong>
-                      {deleteIndices.length} ({deleteIndices.map((i) => i + 1).join(', ')})
-                    </strong>
-                  </div>
-                  <div className="flex justify-between text-emerald-400 border-t border-slate-800 pt-2">
-                    <span>Final Remaining Pages:</span>
-                    <strong>{remainingCount}</strong>
-                  </div>
-                </div>
+                {isProcessing && (
+                  <PremiumProgress
+                    progress={progressPercent}
+                    statusMessage="Rebuilding PDF structure without deleted pages..."
+                    stepName="PDF Page Deletion Pipeline"
+                  />
+                )}
 
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  The remaining pages will keep all original formatting, bookmarks, forms, and metadata.
-                </p>
+                {resultBlob && (
+                  <PremiumSuccessCard
+                    title="Pages Deleted Successfully!"
+                    message={`Removed ${deleteIndices.length} page(s). Document updated with ${remainingCount} remaining page(s).`}
+                    outputFileName={`${selectedFile.name.replace(/\.pdf$/i, '')}_edited.pdf`}
+                    outputFileSize={resultBlob.size}
+                    pageCount={remainingCount}
+                    onDownload={handleDownload}
+                    onReset={handleReset}
+                    downloadButtonText="Download Updated PDF"
+                  />
+                )}
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmModal(false)}
-                    className="flex-1 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
+                {!resultBlob && !isProcessing && (
+                  <div className="bg-[#12131F]/90 backdrop-blur-xl rounded-[28px] border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6">
+                    {/* Controls Bar */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white/[0.04] border border-white/10">
+                      <div>
+                        <p className="text-sm font-bold text-white">
+                          Pages Marked to Delete: <span className="text-red-400 font-mono">{deleteIndices.length}</span> / {pageCount}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {remainingCount} page(s) will remain in the output document.
+                        </p>
+                      </div>
 
-                  <button
-                    type="button"
-                    onClick={executeDelete}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Confirm Delete</span>
-                  </button>
-                </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={handleUndo}
+                          disabled={history.length === 0}
+                          className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-bold text-slate-300 border border-white/10 disabled:opacity-30 transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Undo2 className="w-3.5 h-3.5" /> Undo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSelectAllForDelete}
+                          className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-bold text-slate-300 border border-white/10 transition-colors cursor-pointer"
+                        >
+                          Select All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeselectAll}
+                          className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-xs font-bold text-slate-400 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Range Input Box */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                        Specify Page Range to Delete (e.g. 1, 3-5, 8)
+                      </label>
+                      <input
+                        type="text"
+                        value={rangeInput}
+                        onChange={handleRangeInputChange}
+                        placeholder="e.g. 1, 3-5, 8"
+                        className="w-full bg-slate-950/80 border border-white/15 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                      />
+                    </div>
+
+                    {/* Interactive Grid */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                          Click pages to mark or unmark for deletion:
+                        </h4>
+                      </div>
+
+                      <PagePreviewGrid
+                        pageCount={pageCount}
+                        selectedPages={deleteIndices}
+                        onTogglePageSelect={handleTogglePageDelete}
+                      />
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="pt-4 border-t border-white/10 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleConfirmDeleteClick}
+                        disabled={deleteIndices.length === 0 || deleteIndices.length >= pageCount}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm shadow-[0_10px_30px_rgba(239,68,68,0.35)] disabled:opacity-40 transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                        <span>Delete {deleteIndices.length} Selected Page(s)</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+            )}
 
-        {/* Processing Modal for status & downloading */}
-        <ProcessingModal
-          state={state}
-          resultBlob={resultBlob}
-          resultFileName={`${selectedFile?.name.replace(/\.pdf$/i, '')}_edited.pdf`}
-          onReset={handleReset}
-          title="Deleting PDF Pages"
-        />
+            <PremiumRecentFiles />
+          </div>
+
+          {/* Sidebar Panel Column */}
+          <div className="lg:col-span-4 sticky top-6">
+            <PremiumSidebarPanel
+              toolName="Delete PDF Pages"
+              supportedFormats={['PDF (.pdf)']}
+              tips={[
+                'Click individual page thumbnails to mark them for deletion.',
+                'Use page range expressions (e.g. "2-5, 8") for quick bulk selection.',
+                'Supports unlimited Undo (Ctrl+Z) to safely revert accidental selections.',
+              ]}
+            />
+          </div>
+        </div>
       </div>
     </motion.div>
   );
