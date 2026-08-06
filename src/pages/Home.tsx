@@ -24,9 +24,15 @@ import {
   ScanText,
   Flame,
   ArrowRight,
+  BookOpen,
+  Clock,
+  Calendar,
+  User,
+  Tag,
 } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { getFavoriteTools } from '../utils/storageUtils';
+import { getAllBlogPosts, BlogPostItem } from '../data/blogData';
 
 // Featured Popular PDF Tools Data (Highlighting 6 core tools)
 const POPULAR_TOOLS = [
@@ -98,6 +104,10 @@ export const Home: React.FC = () => {
   const favoriteTools = useMemo(() => {
     return PDF_TOOLS.filter((t) => favoriteIds.includes(t.id));
   }, [favoriteIds]);
+
+  const latestArticles = useMemo(() => {
+    return getAllBlogPosts().slice(0, 6);
+  }, []);
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -449,6 +459,150 @@ export const Home: React.FC = () => {
                 Client-side sandboxed execution prevents unauthorized data access, file retention, or telemetry logging. Your files remain 100% under your control.
               </p>
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Latest Articles Section */}
+      <section className="py-20 sm:py-28 bg-[#090A0F] border-b border-slate-800/80 relative overflow-hidden">
+        {/* Subtle background ambient light */}
+        <div className="absolute top-1/3 right-1/4 w-[500px] h-[300px] bg-rose-600/5 blur-3xl rounded-full pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 gap-6">
+            <div>
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4 }}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-950/40 border border-red-800/40 text-xs font-semibold text-red-400 mb-4 shadow-sm"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-red-400" />
+                <span>Knowledge & Engineering Guides</span>
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.08 }}
+                className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight"
+              >
+                Latest Articles
+              </motion.h2>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.16 }}
+            >
+              <Link
+                to="/blog"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white text-sm font-semibold border border-slate-800 hover:border-slate-700 transition-all shadow-md group"
+              >
+                <span>Browse All Articles</span>
+                <ArrowRight className="w-4 h-4 text-red-400 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Articles Grid (Top 6 Articles) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {latestArticles.map((article, idx) => (
+              <motion.div
+                key={article.id || article.slug}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: idx * 0.06 }}
+                whileHover={{ y: -6, scale: 1.015 }}
+                className="h-full"
+              >
+                <Link
+                  to={`/blog/${article.slug}`}
+                  className="group relative h-full bg-[#111218]/90 hover:bg-[#151722] rounded-2xl border border-slate-800/80 hover:border-red-500/40 shadow-xl hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                >
+                  <div>
+                    {/* Featured Image with Overlay Badge */}
+                    <div className="relative aspect-[16/9] overflow-hidden bg-slate-900">
+                      <img
+                        src={article.featuredImage}
+                        alt={article.imageAlt || article.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#111218] via-transparent to-transparent opacity-80" />
+
+                      {/* Category Badge */}
+                      <div className="absolute top-3.5 left-3.5">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full bg-slate-950/85 text-red-400 border border-red-500/30 backdrop-blur-md shadow-md">
+                          <Tag className="w-3 h-3 text-red-400" />
+                          {article.category}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Content Body */}
+                    <div className="p-6">
+                      {/* Title */}
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-100 group-hover:text-red-400 mb-3 tracking-tight leading-snug transition-colors line-clamp-2">
+                        {article.title}
+                      </h3>
+
+                      {/* Excerpt */}
+                      <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-2">
+                        {article.excerpt}
+                      </p>
+
+                      {/* Author & Meta Row */}
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-800/80 text-xs text-slate-400 font-medium">
+                        {/* Author */}
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                            {article.author?.avatar ? (
+                              <img
+                                src={article.author.avatar}
+                                alt={article.author.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <User className="w-3.5 h-3.5 text-slate-300" />
+                            )}
+                          </div>
+                          <span className="text-slate-300 font-semibold truncate max-w-[110px]">
+                            {article.author?.name || 'Mridanga Mondal'}
+                          </span>
+                        </div>
+
+                        {/* Date & Reading Time */}
+                        <div className="flex items-center gap-3 text-slate-400 shrink-0">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                            {article.publishDate}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-slate-500" />
+                            {article.readTime}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Read Article Button */}
+                  <div className="px-6 pb-6 pt-2 mt-auto">
+                    <div className="inline-flex items-center justify-between w-full px-4 py-3 rounded-xl bg-slate-800/70 group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-rose-600 text-slate-300 group-hover:text-white font-semibold text-xs sm:text-sm transition-all duration-300 border border-slate-700/60 group-hover:border-red-500/50 shadow-sm">
+                      <span>Read Article</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
