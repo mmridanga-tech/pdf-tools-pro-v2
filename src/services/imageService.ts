@@ -1,4 +1,5 @@
 import { formatBytes } from '../utils/fileUtils';
+import { ConversionManager } from '../core/ConversionManager';
 
 export interface ImageToPDFItem {
   file: File;
@@ -66,123 +67,136 @@ export class ImageService {
       throw new Error('Please select at least one image file.');
     }
 
-    if (onProgress) onProgress(5, 'Initializing PDF compiler engine...');
+    const files = itemsInput.map((item) => (item instanceof File ? item : item.file));
+    const conversionManager = ConversionManager.getInstance();
 
-    const jsPDFMod = await import('jspdf');
-    const jsPDF = jsPDFMod.default;
+    return conversionManager.executeConversion(
+      files,
+      'pdf',
+      async (_, tracker) => {
+        const progressBridge = (percent: number, msg: string) => {
+          if (onProgress) onProgress(percent, msg);
+          tracker.update('processing', percent, msg);
+        };
 
-    let doc: InstanceType<typeof jsPDF> | null = null;
-    const quality = typeof options.quality === 'number' ? Math.min(1.0, Math.max(0.1, options.quality)) : 0.92;
+        progressBridge(5, 'Initializing PDF compiler engine...');
 
-    for (let i = 0; i < itemsInput.length; i++) {
-      const rawItem = itemsInput[i];
-      const file = rawItem instanceof File ? rawItem : rawItem.file;
-      const rotation = rawItem instanceof File ? 0 : rawItem.rotation || 0;
+        const jsPDFMod = await import('jspdf');
+        const jsPDF = jsPDFMod.default;
 
-      if (onProgress) {
-        const pct = Math.round(10 + (i / itemsInput.length) * 85);
-        onProgress(pct, `Processing image ${i + 1} of ${itemsInput.length}...`);
-      }
+        let doc: InstanceType<typeof jsPDF> | null = null;
+        const quality = typeof options.quality === 'number' ? Math.min(1.0, Math.max(0.1, options.quality)) : 0.92;
 
-      const img = await ImageService.loadImageFromFile(file);
-      const naturalW = img.naturalWidth || img.width;
-      const naturalH = img.naturalHeight || img.height;
+        for (let i = 0; i < itemsInput.length; i++) {
+          const rawItem = itemsInput[i];
+          const file = rawItem instanceof File ? rawItem : rawItem.file;
+          const rotation = rawItem instanceof File ? 0 : rawItem.rotation || 0;
 
-      const isRotated90 = rotation === 90 || rotation === 270;
-      const canvasW = isRotated90 ? naturalH : naturalW;
-      const canvasH = isRotated90 ? naturalW : naturalH;
+          const pct = Math.round(10 + (i / itemsInput.length) * 85);
+          progressBridge(pct, `Processing image ${i + 1} of ${itemsInput.length}...`);
 
-      // Create canvas to render clean rotated data URL
-      const canvas = document.createElement('canvas');
-      canvas.width = canvasW;
-      canvas.height = canvasH;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Could not initialize canvas 2d context.');
+          const img = await ImageService.loadImageFromFile(file);
+          const naturalW = img.naturalWidth || img.width;
+          const naturalH = img.naturalHeight || img.height;
 
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvasW, canvasH);
+          const isRotated90 = rotation === 90 || rotation === 270;
+          const canvasW = isRotated90 ? naturalH : naturalW;
+          const canvasH = isRotated90 ? naturalW : naturalH;
 
-      ctx.save();
-      ctx.translate(canvasW / 2, canvasH / 2);
-      ctx.rotate((rotation * Math.PI) / 180);
-      ctx.drawImage(img, -naturalW / 2, -naturalH / 2);
-      ctx.restore();
+          // Create canvas to render clean rotated data URL
+          const canvas = document.createElement('canvas');
+          canvas.width = canvasW;
+          canvas.height = canvasH;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('Could not initialize canvas 2d context.');
 
-      const imgDataUrl = canvas.toDataURL('image/jpeg', quality);
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvasW, canvasH);
 
-      let pageW = 595.28; // A4 pt width
-      let pageH = 841.89; // A4 pt height
+          ctx.save();
+          ctx.translate(canvasW / 2, canvasH / 2);
+          ctx.rotate((rotation * Math.PI) / 180);
+          ctx.drawImage(img, -naturalW / 2, -naturalH / 2);
+          ctx.restore();
 
-      if (options.pageSize === 'letter') {
-        pageW = 612;
-        pageH = 792;
-      } else if (options.pageSize === 'fit') {
-        pageW = imgWidth + options.margin * 2;
-        pageH = imgHeight + options.margin * 2;
-      }
+          const imgDataUrl = canvas.toDataURL('image/jpeg', quality);
+          const imgWidth = canvas.width;
+          const imgHeight = canvas.height;
 
-      let orientation: 'p' | 'l' = 'p';
-      if (options.orientation === 'auto') {
-        orientation = imgWidth > imgHeight ? 'l' : 'p';
-        if (orientation === 'l' && options.pageSize !== 'fit' && pageW < pageH) {
-          const tmp = pageW;
-          pageW = pageH;
-          pageH = tmp;
+          let pageW = 595.28; // A4 pt width
+          let pageH = 841.89; // A4 pt height
+
+          if (options.pageSize === 'letter') {
+            pageW = 612;
+            pageH = 792;
+          } else if (options.pageSize === 'fit') {
+            pageW = imgWidth + options.margin * 2;
+            pageH = imgHeight + options.margin * 2;
+          }
+
+          let orientation: 'p' | 'l' = 'p';
+          if (options.orientation === 'auto') {
+            orientation = imgWidth > imgHeight ? 'l' : 'p';
+            if (orientation === 'l' && options.pageSize !== 'fit' && pageW < pageH) {
+              const tmp = pageW;
+              pageW = pageH;
+              pageH = tmp;
+            }
+          } else if (options.orientation === 'landscape') {
+            orientation = 'l';
+            if (options.pageSize !== 'fit' && pageW < pageH) {
+              const tmp = pageW;
+              pageW = pageH;
+              pageH = tmp;
+            }
+          } else {
+            orientation = 'p';
+            if (options.pageSize !== 'fit' && pageW > pageH) {
+              const tmp = pageW;
+              pageW = pageH;
+              pageH = tmp;
+            }
+          }
+
+          if (i === 0) {
+            doc = new jsPDF({
+              orientation: orientation,
+              unit: 'pt',
+              format: options.pageSize === 'fit' ? [pageW, pageH] : options.pageSize,
+            });
+          } else {
+            doc?.addPage(
+              options.pageSize === 'fit' ? [pageW, pageH] : options.pageSize,
+              orientation
+            );
+          }
+
+          // Calculate placement inside margin
+          const margin = options.margin;
+          const availW = pageW - margin * 2;
+          const availH = pageH - margin * 2;
+
+          let drawW = availW;
+          let drawH = (imgHeight * drawW) / imgWidth;
+
+          if (drawH > availH) {
+            drawH = availH;
+            drawW = (imgWidth * drawH) / imgHeight;
+          }
+
+          const x = (pageW - drawW) / 2;
+          const y = (pageH - drawH) / 2;
+
+          doc?.addImage(imgDataUrl, 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
         }
-      } else if (options.orientation === 'landscape') {
-        orientation = 'l';
-        if (options.pageSize !== 'fit' && pageW < pageH) {
-          const tmp = pageW;
-          pageW = pageH;
-          pageH = tmp;
-        }
-      } else {
-        orientation = 'p';
-        if (options.pageSize !== 'fit' && pageW > pageH) {
-          const tmp = pageW;
-          pageW = pageH;
-          pageH = tmp;
-        }
-      }
 
-      if (i === 0) {
-        doc = new jsPDF({
-          orientation: orientation,
-          unit: 'pt',
-          format: options.pageSize === 'fit' ? [pageW, pageH] : options.pageSize,
-        });
-      } else {
-        doc?.addPage(
-          options.pageSize === 'fit' ? [pageW, pageH] : options.pageSize,
-          orientation
-        );
-      }
+        progressBridge(100, 'Compilation finished!');
 
-      // Calculate placement inside margin
-      const margin = options.margin;
-      const availW = pageW - margin * 2;
-      const availH = pageH - margin * 2;
-
-      let drawW = availW;
-      let drawH = (imgHeight * drawW) / imgWidth;
-
-      if (drawH > availH) {
-        drawH = availH;
-        drawW = (imgWidth * drawH) / imgHeight;
-      }
-
-      const x = (pageW - drawW) / 2;
-      const y = (pageH - drawH) / 2;
-
-      doc?.addImage(imgDataUrl, 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
-    }
-
-    if (onProgress) onProgress(100, 'Compilation finished!');
-
-    if (!doc) throw new Error('Failed to create PDF document.');
-    return doc.output('blob');
+        if (!doc) throw new Error('Failed to create PDF document.');
+        return doc.output('blob');
+      },
+      { onProgress }
+    );
   }
 
   /**
@@ -245,80 +259,101 @@ export class ImageService {
     } = { format: 'png', qualityPreset: 'hd' },
     onProgress?: (percent: number, msg?: string) => void
   ): Promise<ConvertedPdfPageImage[]> {
-    if (onProgress) onProgress(5, 'Loading PDF document renderer...');
+    const conversionManager = ConversionManager.getInstance();
+    const targetFormat = options.format === 'jpeg' ? 'jpg' : 'png';
+    let extractedPagesResult: ConvertedPdfPageImage[] = [];
 
-    const { pdfjsLib, ensurePdfWorkerConfigured } = await import('../utils/pdfWorker');
-    ensurePdfWorkerConfigured();
+    await conversionManager.executeConversion(
+      file,
+      targetFormat,
+      async (inputFile, tracker) => {
+        const progressBridge = (pct: number, msg?: string) => {
+          if (onProgress) onProgress(pct, msg);
+          tracker.update('processing', pct, msg || 'Converting PDF to images...');
+        };
 
-    // Resolution scale and compression quality per preset
-    let scale = options.scale || 2.0;
-    let quality = options.quality || 0.92;
+        progressBridge(5, 'Loading PDF document renderer...');
 
-    if (options.qualityPreset === 'standard') {
-      scale = 1.0;
-      quality = 0.82;
-    } else if (options.qualityPreset === 'hd') {
-      scale = 2.0;
-      quality = 0.92;
-    } else if (options.qualityPreset === 'ultrahd') {
-      scale = 3.0;
-      quality = 0.98;
-    }
+        const { pdfjsLib, ensurePdfWorkerConfigured } = await import('../utils/pdfWorker');
+        ensurePdfWorkerConfigured();
 
-    const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
-    const pdfDoc = await loadingTask.promise;
-    const pageCount = pdfDoc.numPages;
+        // Resolution scale and compression quality per preset
+        let scale = options.scale || 2.0;
+        let quality = options.quality || 0.92;
 
-    const pagesToProcess = options.pagesToExtract && options.pagesToExtract.length > 0
-      ? options.pagesToExtract.filter((p) => p >= 1 && p <= pageCount)
-      : Array.from({ length: pageCount }, (_, idx) => idx + 1);
+        if (options.qualityPreset === 'standard') {
+          scale = 1.0;
+          quality = 0.82;
+        } else if (options.qualityPreset === 'hd') {
+          scale = 2.0;
+          quality = 0.92;
+        } else if (options.qualityPreset === 'ultrahd') {
+          scale = 3.0;
+          quality = 0.98;
+        }
 
-    const results: ConvertedPdfPageImage[] = [];
-    const baseName = file.name.replace(/\.pdf$/i, '');
+        const arrayBuffer = await inputFile.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+        const pdfDoc = await loadingTask.promise;
+        const pageCount = pdfDoc.numPages;
 
-    for (let index = 0; index < pagesToProcess.length; index++) {
-      const i = pagesToProcess[index];
-      if (onProgress) {
-        const pct = Math.round(10 + ((index + 1) / pagesToProcess.length) * 85);
-        onProgress(pct, `Extracting page ${i} of ${pageCount} (${index + 1}/${pagesToProcess.length})...`);
-      }
+        const pagesToProcess = options.pagesToExtract && options.pagesToExtract.length > 0
+          ? options.pagesToExtract.filter((p) => p >= 1 && p <= pageCount)
+          : Array.from({ length: pageCount }, (_, idx) => idx + 1);
 
-      const page = await pdfDoc.getPage(i);
-      const viewport = page.getViewport({ scale });
+        const results: ConvertedPdfPageImage[] = [];
+        const baseName = inputFile.name.replace(/\.pdf$/i, '');
 
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext('2d');
+        for (let index = 0; index < pagesToProcess.length; index++) {
+          const i = pagesToProcess[index];
+          const pct = Math.round(10 + ((index + 1) / pagesToProcess.length) * 85);
+          progressBridge(pct, `Extracting page ${i} of ${pageCount} (${index + 1}/${pagesToProcess.length})...`);
 
-      if (!ctx) continue;
+          const page = await pdfDoc.getPage(i);
+          const viewport = page.getViewport({ scale });
 
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
 
-      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+          if (!ctx) continue;
 
-      const mimeType = options.format === 'jpeg' ? 'image/jpeg' : 'image/png';
-      const dataUrl = canvas.toDataURL(mimeType, quality);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((b) => resolve(b || new Blob()), mimeType, quality);
-      });
+          await page.render({ canvasContext: ctx, viewport, canvas }).promise;
 
-      const ext = options.format === 'jpeg' ? 'jpg' : 'png';
-      results.push({
-        pageNumber: i,
-        dataUrl,
-        blob,
-        width: viewport.width,
-        height: viewport.height,
-        fileName: `${baseName}_page_${i}.${ext}`,
-      });
-    }
+          const mimeType = options.format === 'jpeg' ? 'image/jpeg' : 'image/png';
+          const dataUrl = canvas.toDataURL(mimeType, quality);
 
-    if (onProgress) onProgress(100, 'All requested pages extracted successfully!');
-    return results;
+          const blob = await new Promise<Blob>((resolve) => {
+            canvas.toBlob((b) => resolve(b || new Blob()), mimeType, quality);
+          });
+
+          const ext = options.format === 'jpeg' ? 'jpg' : 'png';
+          results.push({
+            pageNumber: i,
+            dataUrl,
+            blob,
+            width: viewport.width,
+            height: viewport.height,
+            fileName: `${baseName}_page_${i}.${ext}`,
+          });
+        }
+
+        progressBridge(100, 'All requested pages extracted successfully!');
+        extractedPagesResult = results;
+
+        if (results.length > 0) {
+          return results[0].blob;
+        }
+        return new Blob([], { type: options.format === 'jpeg' ? 'image/jpeg' : 'image/png' });
+      },
+      { onProgress }
+    );
+
+    return extractedPagesResult;
   }
 
   /**
@@ -328,40 +363,68 @@ export class ImageService {
     file: File,
     options: CompressImageOptions = { quality: 0.7, format: 'image/jpeg' }
   ): Promise<{ blob: Blob; originalSize: number; newSize: number; dataUrl: string; width: number; height: number }> {
-    const originalSize = file.size;
-    const img = await ImageService.loadImageFromFile(file);
+    const conversionManager = ConversionManager.getInstance();
+    const targetFormat = options.format === 'image/png' ? 'png' : 'jpg';
 
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth || img.width;
-    canvas.height = img.naturalHeight || img.height;
+    let compressResultContainer: {
+      blob: Blob;
+      originalSize: number;
+      newSize: number;
+      dataUrl: string;
+      width: number;
+      height: number;
+    } | null = null;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Could not get 2d context for image compression.');
+    await conversionManager.executeConversion(
+      file,
+      targetFormat,
+      async (inputFile, tracker) => {
+        tracker.update('processing', 30, 'Compressing image data...');
+        const originalSize = inputFile.size;
+        const img = await ImageService.loadImageFromFile(inputFile);
 
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
 
-    const dataUrl = canvas.toDataURL(options.format, options.quality);
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (b) => {
-          if (b) resolve(b);
-          else reject(new Error('Failed to compress image.'));
-        },
-        options.format,
-        options.quality
-      );
-    });
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Could not get 2d context for image compression.');
 
-    return {
-      blob,
-      originalSize,
-      newSize: blob.size,
-      dataUrl,
-      width: canvas.width,
-      height: canvas.height,
-    };
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        tracker.update('rendering', 70, 'Re-encoding compressed image buffer...');
+        const dataUrl = canvas.toDataURL(options.format, options.quality);
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob(
+            (b) => {
+              if (b) resolve(b);
+              else reject(new Error('Failed to compress image.'));
+            },
+            options.format,
+            options.quality
+          );
+        });
+
+        compressResultContainer = {
+          blob,
+          originalSize,
+          newSize: blob.size,
+          dataUrl,
+          width: canvas.width,
+          height: canvas.height,
+        };
+
+        return blob;
+      }
+    );
+
+    if (!compressResultContainer) {
+      throw new Error('Image compression failed to produce a valid output.');
+    }
+
+    return compressResultContainer;
   }
 
   /**
@@ -371,60 +434,89 @@ export class ImageService {
     file: File,
     options: ResizeImageOptions
   ): Promise<{ blob: Blob; width: number; height: number; dataUrl: string; originalWidth: number; originalHeight: number }> {
-    const img = await ImageService.loadImageFromFile(file);
-    const origW = img.naturalWidth || img.width;
-    const origH = img.naturalHeight || img.height;
+    const conversionManager = ConversionManager.getInstance();
+    const targetFormat = options.format === 'image/png' ? 'png' : 'jpg';
 
-    let targetW = options.width;
-    let targetH = options.height;
+    let resizeResultContainer: {
+      blob: Blob;
+      width: number;
+      height: number;
+      dataUrl: string;
+      originalWidth: number;
+      originalHeight: number;
+    } | null = null;
 
-    if (options.maintainAspectRatio) {
-      if (targetW && !targetH) {
-        targetH = Math.round((origH * targetW) / origW);
-      } else if (targetH && !targetW) {
-        targetW = Math.round((origW * targetH) / origH);
+    await conversionManager.executeConversion(
+      file,
+      targetFormat,
+      async (inputFile, tracker) => {
+        tracker.update('loading', 20, 'Decoding image raster dimensions...');
+        const img = await ImageService.loadImageFromFile(inputFile);
+        const origW = img.naturalWidth || img.width;
+        const origH = img.naturalHeight || img.height;
+
+        let targetW = options.width;
+        let targetH = options.height;
+
+        if (options.maintainAspectRatio) {
+          if (targetW && !targetH) {
+            targetH = Math.round((origH * targetW) / origW);
+          } else if (targetH && !targetW) {
+            targetW = Math.round((origW * targetH) / origH);
+          }
+        }
+
+        targetW = Math.max(1, Math.round(targetW || origW));
+        targetH = Math.max(1, Math.round(targetH || origH));
+
+        tracker.update('processing', 50, `Resizing image to ${targetW}x${targetH}...`);
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Could not get 2d context for image resizing.');
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        if (options.format === 'image/jpeg') {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, targetW, targetH);
+        }
+
+        ctx.drawImage(img, 0, 0, origW, origH, 0, 0, targetW, targetH);
+
+        tracker.update('rendering', 85, 'Encoding resized image output...');
+        const dataUrl = canvas.toDataURL(options.format, options.quality || 0.92);
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob(
+            (b) => {
+              if (b) resolve(b);
+              else reject(new Error('Failed to generate resized image blob.'));
+            },
+            options.format,
+            options.quality || 0.92
+          );
+        });
+
+        resizeResultContainer = {
+          blob,
+          width: targetW,
+          height: targetH,
+          dataUrl,
+          originalWidth: origW,
+          originalHeight: origH,
+        };
+
+        return blob;
       }
+    );
+
+    if (!resizeResultContainer) {
+      throw new Error('Image resizing failed to produce a valid output.');
     }
 
-    targetW = Math.max(1, Math.round(targetW || origW));
-    targetH = Math.max(1, Math.round(targetH || origH));
-
-    const canvas = document.createElement('canvas');
-    canvas.width = targetW;
-    canvas.height = targetH;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Could not get 2d context for image resizing.');
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    if (options.format === 'image/jpeg') {
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, targetW, targetH);
-    }
-
-    ctx.drawImage(img, 0, 0, origW, origH, 0, 0, targetW, targetH);
-
-    const dataUrl = canvas.toDataURL(options.format, options.quality || 0.92);
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (b) => {
-          if (b) resolve(b);
-          else reject(new Error('Failed to generate resized image blob.'));
-        },
-        options.format,
-        options.quality || 0.92
-      );
-    });
-
-    return {
-      blob,
-      width: targetW,
-      height: targetH,
-      dataUrl,
-      originalWidth: origW,
-      originalHeight: origH,
-    };
+    return resizeResultContainer;
   }
 }

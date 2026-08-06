@@ -22,6 +22,7 @@ import {
   MemoryManager,
   FileValidator,
   OutputValidator,
+  ConversionManager,
   PositionedTextItem,
   StructuredLine,
   SemanticParagraph,
@@ -77,26 +78,44 @@ export class PDFToWordService {
     file: File,
     options: PDFToWordOptions = {}
   ): Promise<Blob> {
-    const engine = options.engine || 'client';
-    const serverEndpoint = options.serverEndpoint || '/api/convert/pdfToWord';
+    const conversionManager = ConversionManager.getInstance();
 
-    if (engine === 'server') {
-      return this.convertOnServer(file, serverEndpoint, options.onProgress);
-    }
+    return conversionManager.executeConversion(
+      file,
+      'docx',
+      async (inputFile, tracker, logger) => {
+        const engine = options.engine || 'client';
+        const serverEndpoint = options.serverEndpoint || '/api/convert/pdfToWord';
 
-    if (engine === 'auto') {
-      try {
-        return await this.convertOnServer(file, serverEndpoint, options.onProgress);
-      } catch (err) {
-        console.warn(
-          'Server-side PDF to Word service unavailable. Falling back to high-fidelity client-side engine:',
-          err
-        );
-        return this.convertOnClient(file, options);
-      }
-    }
+        const progressBridge = (percent: number, msg?: string) => {
+          if (options.onProgress) {
+            options.onProgress(percent, msg);
+          }
+          tracker.update('processing', percent, msg || 'Converting PDF to Word...');
+        };
 
-    return this.convertOnClient(file, options);
+        const optsWithBridge = { ...options, onProgress: progressBridge };
+
+        if (engine === 'server') {
+          return this.convertOnServer(inputFile, serverEndpoint, progressBridge);
+        }
+
+        if (engine === 'auto') {
+          try {
+            return await this.convertOnServer(inputFile, serverEndpoint, progressBridge);
+          } catch (err) {
+            logger.warn(
+              'Server-side PDF to Word service unavailable. Falling back to high-fidelity client-side engine:',
+              err
+            );
+            return this.convertOnClient(inputFile, optsWithBridge);
+          }
+        }
+
+        return this.convertOnClient(inputFile, optsWithBridge);
+      },
+      options
+    );
   }
 
   /**

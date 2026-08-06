@@ -19,7 +19,7 @@ export class OutputValidator {
    */
   static async validateOutputBlob(
     blob: Blob,
-    expectedType: 'docx' | 'pdf' | 'png' | 'zip'
+    expectedType: 'docx' | 'pdf' | 'png' | 'jpg' | 'xlsx' | 'pptx' | 'zip' | 'json' | 'txt'
   ): Promise<OutputValidationResult> {
     const errors: string[] = [];
 
@@ -98,8 +98,8 @@ export class OutputValidator {
   /**
    * Verify expected magic header bytes
    */
-  private static checkMagicBytes(header: Uint8Array, type: 'docx' | 'pdf' | 'png' | 'zip'): boolean {
-    if (type === 'docx' || type === 'zip') {
+  private static checkMagicBytes(header: Uint8Array, type: string): boolean {
+    if (type === 'docx' || type === 'zip' || type === 'xlsx' || type === 'pptx') {
       // PK.. ZIP magic header [0x50, 0x4B, 0x03, 0x04]
       return header.length >= 4 && header[0] === 0x50 && header[1] === 0x4b && header[2] === 0x03 && header[3] === 0x04;
     }
@@ -110,6 +110,10 @@ export class OutputValidator {
     if (type === 'png') {
       // PNG header [0x89, 0x50, 0x4E, 0x47]
       return header.length >= 4 && header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47;
+    }
+    if (type === 'jpg' || type === 'jpeg') {
+      // JPEG header [0xFF, 0xD8, 0xFF]
+      return header.length >= 3 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
     }
     return true;
   }

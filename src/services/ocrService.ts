@@ -6,6 +6,7 @@ import {
   OCRWord,
   ProcessedResult,
 } from '../types/pdfTypes';
+import { ConversionManager } from '../core/ConversionManager';
 
 export class OCRService {
   /**
@@ -17,12 +18,41 @@ export class OCRService {
     onProgress?: (percent: number, statusMessage?: string, activePage?: number, totalPages?: number) => void
   ): Promise<ProcessedResult> {
     const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const targetFormat = options.outputFormat || (isPDF ? 'pdf' : 'txt');
+    const conversionManager = ConversionManager.getInstance();
 
-    if (isPDF) {
-      return this.processPDFFile(file, options, onProgress);
-    } else {
-      return this.processImageFile(file, options, onProgress);
+    let resultContainer: ProcessedResult | null = null;
+
+    await conversionManager.executeConversion(
+      file,
+      targetFormat,
+      async (inputFile, tracker) => {
+        const progressBridge = (
+          percent: number,
+          statusMessage?: string,
+          activePage?: number,
+          totalPages?: number
+        ) => {
+          if (onProgress) onProgress(percent, statusMessage, activePage, totalPages);
+          tracker.update('processing', percent, statusMessage || 'Performing OCR...');
+        };
+
+        if (isPDF) {
+          resultContainer = await this.processPDFFile(inputFile, options, progressBridge);
+        } else {
+          resultContainer = await this.processImageFile(inputFile, options, progressBridge);
+        }
+
+        return resultContainer.blob;
+      },
+      { onProgress }
+    );
+
+    if (!resultContainer) {
+      throw new Error('OCR process did not return a valid result.');
     }
+
+    return resultContainer;
   }
 
   /**

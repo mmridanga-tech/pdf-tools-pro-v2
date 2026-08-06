@@ -1,4 +1,5 @@
 import { pdfjsLib, ensurePdfWorkerConfigured } from '../utils/pdfWorker';
+import { ConversionManager } from '../core/ConversionManager';
 
 ensurePdfWorkerConfigured();
 
@@ -66,55 +67,86 @@ export class PDFCompressionService {
   ): Promise<CompressResult> {
     const startTime = Date.now();
     const { level, engine = 'auto', onProgress, signal } = options;
+    const conversionManager = ConversionManager.getInstance();
 
-    if (signal?.aborted) {
-      throw new Error('Compression cancelled by user.');
-    }
+    let compressResultContainer: CompressResult | null = null;
 
-    if (onProgress) onProgress(5, 'Reading PDF structure...');
+    await conversionManager.executeConversion(
+      file,
+      'pdf',
+      async (inputFile, tracker) => {
+        const progressBridge = (percent: number, statusMsg: string) => {
+          if (onProgress) onProgress(percent, statusMsg);
+          tracker.update('processing', percent, statusMsg);
+        };
 
-    // Try server API first if engine mode is 'server' or 'auto'
-    if (engine === 'server') {
-      try {
-        if (onProgress) onProgress(10, 'Sending PDF to server compression microservice...');
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('level', level);
-
-        const response = await fetch('/api/convert/compress', {
-          method: 'POST',
-          body: formData,
-          signal,
-        });
-
-        if (response.ok && response.headers.get('content-type')?.includes('application/pdf')) {
-          const blob = await response.blob();
-          const durationMs = Date.now() - startTime;
-          const savingsBytes = Math.max(0, file.size - blob.size);
-          const savingsPercentage = Math.round((savingsBytes / file.size) * 100);
-
-          if (onProgress) onProgress(100, 'Server compression finished!');
-
-          return {
-            blob,
-            originalSize: file.size,
-            newSize: blob.size,
-            savingsBytes,
-            savingsPercentage,
-            pageCount: 1,
-            durationMs,
-          };
-        }
-      } catch (err: any) {
-        if (err?.name === 'AbortError') {
+        if (signal?.aborted) {
           throw new Error('Compression cancelled by user.');
         }
-        console.warn('Server compression endpoint returned fallback, switching to client-side engine.');
-      }
+
+        progressBridge(5, 'Reading PDF structure...');
+
+        // Try server API first if engine mode is 'server' or 'auto'
+        if (engine === 'server') {
+          try {
+            progressBridge(10, 'Sending PDF to server compression microservice...');
+            const formData = new FormData();
+            formData.append('file', inputFile);
+            formData.append('level', level);
+
+            const response = await fetch('/api/convert/compress', {
+              method: 'POST',
+              body: formData,
+              signal,
+            });
+
+            if (response.ok && response.headers.get('content-type')?.includes('application/pdf')) {
+              const blob = await response.blob();
+              const durationMs = Date.now() - startTime;
+              const savingsBytes = Math.max(0, inputFile.size - blob.size);
+              const savingsPercentage = Math.round((savingsBytes / inputFile.size) * 100);
+
+              progressBridge(100, 'Server compression finished!');
+
+              compressResultContainer = {
+                blob,
+                originalSize: inputFile.size,
+                newSize: blob.size,
+                savingsBytes,
+                savingsPercentage,
+                pageCount: 1,
+                durationMs,
+              };
+
+              return blob;
+            }
+          } catch (err: any) {
+            if (err?.name === 'AbortError') {
+              throw new Error('Compression cancelled by user.');
+            }
+            console.warn('Server compression endpoint returned fallback, switching to client-side engine.');
+          }
+        }
+
+        // High-Fidelity Client-Side Compression Engine
+        compressResultContainer = await this.compressClientSide(
+          inputFile,
+          level,
+          progressBridge,
+          signal,
+          startTime
+        );
+
+        return compressResultContainer.blob;
+      },
+      { onProgress, signal }
+    );
+
+    if (!compressResultContainer) {
+      throw new Error('PDF compression failed to produce a valid output result.');
     }
 
-    // High-Fidelity Client-Side Compression Engine
-    return this.compressClientSide(file, level, onProgress, signal, startTime);
+    return compressResultContainer;
   }
 
   /**

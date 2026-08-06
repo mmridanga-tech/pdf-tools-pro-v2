@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import JSZip from 'jszip';
 import { FileUploader } from '../components/FileUploader';
-import { ProcessingModal } from '../components/ProcessingModal';
 import { ToolHeader } from '../components/ToolHeader';
 import { usePDFProcessor } from '../hooks/usePDFProcessor';
 import { ImageService, ConvertedPdfPageImage } from '../services/imageService';
@@ -119,7 +118,7 @@ export const PDFToImage: React.FC = () => {
       );
 
       setConvertedPages(results);
-      setSuccess(`Rendered ${results.length} page${results.length > 1 ? 's' : ''} to ${format.toUpperCase()} images!`);
+      reset();
       toast.success(`Extracted ${results.length} image page(s)!`);
 
       const totalSize = results.reduce((acc, c) => acc + c.blob.size, 0);
@@ -448,8 +447,23 @@ export const PDFToImage: React.FC = () => {
               </div>
             )}
 
+            {/* Conversion Progress Indicator */}
+            {state.status === 'processing' && (
+              <div className="p-6 text-center bg-slate-900/80 rounded-2xl border border-slate-800 space-y-3">
+                <div className="w-full bg-slate-800 rounded-full h-2.5 max-w-md mx-auto overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full transition-all duration-200"
+                    style={{ width: `${state.progress}%` }}
+                  />
+                </div>
+                <p className="text-xs font-semibold text-slate-300">
+                  {state.message || 'Converting PDF pages...'} ({state.progress}%)
+                </p>
+              </div>
+            )}
+
             {/* Convert Trigger Button */}
-            {convertedPages.length === 0 && (
+            {convertedPages.length === 0 && state.status !== 'processing' && (
               <div className="pt-4 border-t border-slate-800 flex justify-end">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -579,15 +593,6 @@ export const PDFToImage: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Processing Modal */}
-        <ProcessingModal
-          state={state}
-          resultBlob={null}
-          resultFileName={`${selectedFile?.name.replace(/\.pdf$/i, '') || 'extracted'}_images`}
-          onReset={handleReset}
-          title="Converting PDF to High-Res Images"
-        />
       </div>
     </motion.div>
   );

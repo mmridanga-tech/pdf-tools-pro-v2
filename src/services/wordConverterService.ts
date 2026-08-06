@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { ConversionManager } from '../core/ConversionManager';
 
 export type ConversionEngineMode = 'client' | 'server' | 'auto';
 
@@ -46,28 +47,44 @@ export class WordConverterService {
     file: File,
     options: WordConversionOptions = {}
   ): Promise<Blob> {
-    const engine = options.engine || 'client';
-    const serverEndpoint = options.serverEndpoint || '/api/convert/word-to-pdf';
+    const conversionManager = ConversionManager.getInstance();
 
-    // If server engine is explicitly requested or set to auto
-    if (engine === 'server') {
-      return this.convertOnServer(file, serverEndpoint, options.onProgress);
-    }
+    return conversionManager.executeConversion(
+      file,
+      'pdf',
+      async (inputFile, tracker, logger) => {
+        const engine = options.engine || 'client';
+        const serverEndpoint = options.serverEndpoint || '/api/convert/word-to-pdf';
 
-    if (engine === 'auto') {
-      try {
-        return await this.convertOnServer(file, serverEndpoint, options.onProgress);
-      } catch (serverErr) {
-        console.warn(
-          'Server-side conversion endpoint unavailable or failed. Falling back to client-side engine:',
-          serverErr
-        );
-        return this.convertOnClient(file, options);
-      }
-    }
+        const progressBridge = (percent: number, msg?: string) => {
+          if (options.onProgress) {
+            options.onProgress(percent, msg);
+          }
+          tracker.update('processing', percent, msg || 'Converting Word to PDF...');
+        };
 
-    // Default to client-side conversion
-    return this.convertOnClient(file, options);
+        const optsWithBridge = { ...options, onProgress: progressBridge };
+
+        if (engine === 'server') {
+          return this.convertOnServer(inputFile, serverEndpoint, progressBridge);
+        }
+
+        if (engine === 'auto') {
+          try {
+            return await this.convertOnServer(inputFile, serverEndpoint, progressBridge);
+          } catch (serverErr) {
+            logger.warn(
+              'Server-side conversion endpoint unavailable or failed. Falling back to client-side engine:',
+              serverErr
+            );
+            return this.convertOnClient(inputFile, optsWithBridge);
+          }
+        }
+
+        return this.convertOnClient(inputFile, optsWithBridge);
+      },
+      options
+    );
   }
 
   /**
