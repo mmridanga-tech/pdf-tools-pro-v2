@@ -13,3 +13,4 @@ export * from './LayoutAnalyzer';
 export * from './DocumentStructure';
 export * from './TableEngine';
 export * from './ImageProcessor';
+export * from './builders';

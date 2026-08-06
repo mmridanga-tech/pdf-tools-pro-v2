@@ -16,6 +16,21 @@ import {
   AlignmentType,
   PageBreak,
 } from 'docx';
+import {
+  LayoutAnalyzer,
+  TypographyEngine,
+  MemoryManager,
+  FileValidator,
+  OutputValidator,
+  PositionedTextItem,
+  StructuredLine,
+  SemanticParagraph,
+  DocxParagraphBuilder,
+  DocxImageBuilder,
+  DocxTablePlaceholder,
+  DocxDocumentBuilder,
+  DocxPageBreakEngine,
+} from '../core';
 
 export type PDFToWordEngineMode = 'client' | 'server' | 'auto';
 
@@ -40,19 +55,7 @@ export interface PDFQueueItem {
   pageCount?: number;
 }
 
-interface TextItemData {
-  str: string;
-  leftX: number;
-  topY: number;
-  width: number;
-  height: number;
-  fontSize: number;
-  fontName: string;
-  fontFamily: string;
-  isBold: boolean;
-  isItalic: boolean;
-  linkUrl?: string;
-}
+interface TextItemData extends PositionedTextItem {}
 
 interface ImageItemData {
   topY: number;
@@ -63,20 +66,7 @@ interface ImageItemData {
   buffer: Uint8Array;
 }
 
-interface LineData {
-  items: TextItemData[];
-  topY: number;
-  leftX: number;
-  rightX: number;
-  height: number;
-  maxFontSize: number;
-  alignment: any;
-  heading?: any;
-  isBulletList: boolean;
-  isNumberedList: boolean;
-  listMarker?: string;
-  cleanText: string;
-}
+interface LineData extends StructuredLine {}
 
 export class PDFToWordService {
   /**
@@ -196,6 +186,7 @@ export class PDFToWordService {
     }
 
     const bodyFontSize = this.calculateMedian(allFontSizes, 11);
+    DocxImageBuilder.resetDeduplicationCache();
 
     // Process each page
     for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
@@ -207,14 +198,9 @@ export class PDFToWordService {
         );
       }
 
-      // Page Break before page 2+
+      // Page Break before page 2+ using DocxPageBreakEngine
       if (pageNum > 1) {
-        sectionChildren.push(
-          new Paragraph({
-            children: [new PageBreak()],
-            spacing: { before: 0, after: 120 },
-          })
-        );
+        DocxPageBreakEngine.appendPageBreakIfNeeded(sectionChildren);
       }
 
       const page = await pdfDoc.getPage(pageNum);
@@ -441,42 +427,30 @@ export class PDFToWordService {
         continue;
       }
 
-      // Multi-Column Layout Detection & Block Sorting
-      const sortedItems = this.sortItemsByColumnsAndFlow(textItems, pageWidth);
+      // File Validation using FileValidator core module
+      await FileValidator.validateFile(file, { allowedExtensions: ['pdf'] });
 
-      // Line Grouping & Analysis
-      const lines = this.groupItemsIntoLines(sortedItems, pageWidth, bodyFontSize);
+      // Multi-Column Layout Detection & Block Sorting via LayoutAnalyzer
+      const sortedItems = LayoutAnalyzer.sortItemsByReadingOrder(textItems, pageWidth, pageHeight);
 
-      // Table Detection across lines
-      const blocks = this.detectTablesAndParagraphs(lines, imageItems, pageWidth);
+      // Line Grouping & Analysis via LayoutAnalyzer
+      const lines = LayoutAnalyzer.groupItemsIntoLines(sortedItems, pageWidth, bodyFontSize);
 
-      // Render Page Blocks into DOCX
+      // Table Detection & Paragraph Reconstruction across lines
+      const blocks = this.detectTablesAndParagraphs(lines, imageItems, pageWidth, bodyFontSize);
+
+      // Render Page Blocks into DOCX using dedicated builder modules
       for (const block of blocks) {
         if (block.type === 'table') {
           sectionChildren.push(block.tableComponent);
           sectionChildren.push(new Paragraph({ text: '', spacing: { after: 120 } }));
         } else if (block.type === 'image') {
-          const imgRun = new ImageRun({
-            data: block.image.buffer,
-            type: 'png',
-            transformation: {
-              width: Math.min(500, Math.round(block.image.width * 0.8)),
-              height: Math.round(
-                Math.min(500, Math.round(block.image.width * 0.8)) *
-                  (block.image.height / Math.max(1, block.image.width))
-              ),
-            },
-          });
-
-          sectionChildren.push(
-            new Paragraph({
-              children: [imgRun],
-              alignment: AlignmentType.CENTER,
-              spacing: { before: 140, after: 140 },
-            })
-          );
+          const imgPara = DocxImageBuilder.buildImageParagraph(block.image);
+          if (imgPara) {
+            sectionChildren.push(imgPara);
+          }
         } else if (block.type === 'paragraph') {
-          const paragraph = this.buildParagraphFromLine(block.line, bodyFontSize);
+          const paragraph = DocxParagraphBuilder.buildParagraph(block.paragraph, bodyFontSize);
           sectionChildren.push(paragraph);
         }
       }
@@ -484,17 +458,17 @@ export class PDFToWordService {
 
     if (onProgress) onProgress(85, 'Assembling DOCX structure, XML elements & styles...');
 
-    const doc = new Document({
-      sections: [
-        {
-          headers: { default: header },
-          footers: { default: footer },
-          children: sectionChildren,
-        },
-      ],
+    const doc = DocxDocumentBuilder.buildDocument({
+      sectionChildren,
+      header,
+      footer,
     });
 
-    const docxBlob = await Packer.toBlob(doc);
+    const docxBlob = await DocxDocumentBuilder.exportToBlob(doc);
+
+    // Validate Output Blob using OutputValidator core module
+    await OutputValidator.validateOutputBlob(docxBlob, 'docx');
+
     if (onProgress) onProgress(100, 'PDF to Word conversion completed successfully!');
 
     return docxBlob;
@@ -640,6 +614,7 @@ export class PDFToWordService {
       topY,
       leftX,
       rightX,
+      width: rightX - leftX,
       height,
       maxFontSize,
       alignment,
@@ -652,12 +627,13 @@ export class PDFToWordService {
   }
 
   /**
-   * Detect tables and interleave images and paragraphs
+   * Detect tables and interleave images and semantic paragraphs
    */
   private static detectTablesAndParagraphs(
-    lines: LineData[],
+    lines: StructuredLine[],
     images: ImageItemData[],
-    pageWidth: number
+    pageWidth: number,
+    bodyFontSize: number
   ): any[] {
     const blocks: any[] = [];
     let i = 0;
@@ -675,10 +651,10 @@ export class PDFToWordService {
       const isTableRow =
         currentLine.items.length >= 2 &&
         this.hasWideColumnGaps(currentLine.items) &&
-        !currentLine.heading;
+        !currentLine.headingLevel;
 
       if (isTableRow) {
-        const tableLines: LineData[] = [currentLine];
+        const tableLines: StructuredLine[] = [currentLine];
         let j = i + 1;
 
         while (j < lines.length) {
@@ -686,7 +662,7 @@ export class PDFToWordService {
           const isNextTableRow =
             nextLine.items.length >= 2 &&
             this.hasWideColumnGaps(nextLine.items) &&
-            !nextLine.heading;
+            !nextLine.headingLevel;
 
           if (isNextTableRow && Math.abs(nextLine.topY - lines[j - 1].topY) < 40) {
             tableLines.push(nextLine);
@@ -697,15 +673,45 @@ export class PDFToWordService {
         }
 
         if (tableLines.length >= 2) {
-          const tableComponent = this.buildTableFromLines(tableLines, pageWidth);
+          const tableComponent = DocxTablePlaceholder.buildTableFromLines(tableLines, pageWidth);
           blocks.push({ type: 'table', tableComponent });
           i = j;
           continue;
         }
       }
 
-      blocks.push({ type: 'paragraph', line: currentLine });
-      i++;
+      // Collect contiguous non-table lines until next table or image
+      const nonTableLines: StructuredLine[] = [currentLine];
+      let j = i + 1;
+      while (j < lines.length) {
+        const nextLine = lines[j];
+        if (remainingImages.length > 0 && remainingImages[0].topY <= nextLine.topY) {
+          break;
+        }
+        const isNextTableRow =
+          nextLine.items.length >= 2 &&
+          this.hasWideColumnGaps(nextLine.items) &&
+          !nextLine.headingLevel;
+
+        if (isNextTableRow) {
+          break;
+        }
+
+        nonTableLines.push(nextLine);
+        j++;
+      }
+
+      // Reconstruct semantic paragraphs from continuous non-table lines
+      const semanticParagraphs = LayoutAnalyzer.reconstructParagraphs(
+        nonTableLines,
+        bodyFontSize
+      );
+
+      for (const para of semanticParagraphs) {
+        blocks.push({ type: 'paragraph', paragraph: para });
+      }
+
+      i = j;
     }
 
     while (remainingImages.length > 0) {
@@ -719,7 +725,7 @@ export class PDFToWordService {
   /**
    * Check if text items on a line are separated by table column gaps
    */
-  private static hasWideColumnGaps(items: TextItemData[]): boolean {
+  private static hasWideColumnGaps(items: PositionedTextItem[]): boolean {
     if (items.length < 2) return false;
     for (let k = 1; k < items.length; k++) {
       const gap = items[k].leftX - (items[k - 1].leftX + items[k - 1].width);
@@ -731,7 +737,7 @@ export class PDFToWordService {
   /**
    * Build a DOCX Table component from detected table lines
    */
-  private static buildTableFromLines(tableLines: LineData[], pageWidth: number): Table {
+  private static buildTableFromLines(tableLines: StructuredLine[], pageWidth: number): Table {
     const colXSet = new Set<number>();
     tableLines.forEach((l) => {
       l.items.forEach((it) => colXSet.add(Math.round(it.leftX / 15) * 15));
@@ -751,7 +757,7 @@ export class PDFToWordService {
                   bold: item.isBold || rIdx === 0,
                   italics: item.isItalic,
                   size: Math.max(16, Math.round(item.fontSize * 2)),
-                  font: this.mapToDocxFont(item.fontName, item.fontFamily),
+                  font: TypographyEngine.mapFontFamily(item.fontName, item.fontFamily),
                 }),
               ],
               spacing: { before: 40, after: 40 },
@@ -796,81 +802,106 @@ export class PDFToWordService {
   }
 
   /**
-   * Build DOCX Paragraph from LineData preserving fonts, styles, links & lists
+   * Build DOCX Paragraph from SemanticParagraph preserving fonts, styles, links, headings & lists
    */
-  private static buildParagraphFromLine(line: LineData, bodyFontSize: number): Paragraph {
+  private static buildParagraphFromSemanticParagraph(
+    para: SemanticParagraph,
+    bodyFontSize: number
+  ): Paragraph {
     const textRuns: any[] = [];
 
-    let lineItems = line.items;
-    if ((line.isBulletList || line.isNumberedList) && line.listMarker) {
-      const firstStr = lineItems[0].str.replace(line.listMarker, '').trim();
-      if (firstStr) {
-        lineItems = [{ ...lineItems[0], str: firstStr }, ...lineItems.slice(1)];
-      } else if (lineItems.length > 1) {
-        lineItems = lineItems.slice(1);
-      }
-    }
+    let docxAlignment: any = AlignmentType.LEFT;
+    if (para.alignment === 'center') docxAlignment = AlignmentType.CENTER;
+    else if (para.alignment === 'right') docxAlignment = AlignmentType.RIGHT;
+    else if (para.alignment === 'justify') docxAlignment = AlignmentType.JUSTIFIED;
 
-    for (let k = 0; k < lineItems.length; k++) {
-      const item = lineItems[k];
-      const isLast = k === lineItems.length - 1;
+    let docxHeading: any = undefined;
+    if (para.headingLevel === 'h1') docxHeading = HeadingLevel.HEADING_1;
+    else if (para.headingLevel === 'h2') docxHeading = HeadingLevel.HEADING_2;
+    else if (para.headingLevel === 'h3') docxHeading = HeadingLevel.HEADING_3;
 
-      let itemStr = item.str;
-      if (!isLast) {
-        const nextItem = lineItems[k + 1];
-        if (nextItem.leftX - (item.leftX + item.width) > 2) {
-          itemStr += ' ';
+    for (let lIdx = 0; lIdx < para.lines.length; lIdx++) {
+      const line = para.lines[lIdx];
+      let lineItems = line.items;
+
+      if ((para.isBulletList || para.isNumberedList) && para.listMarker && lIdx === 0) {
+        const firstStr = lineItems[0].str.replace(para.listMarker, '').trim();
+        if (firstStr) {
+          lineItems = [{ ...lineItems[0], str: firstStr }, ...lineItems.slice(1)];
+        } else if (lineItems.length > 1) {
+          lineItems = lineItems.slice(1);
         }
       }
 
-      const fontName = this.mapToDocxFont(item.fontName, item.fontFamily);
-      const fontSizeInPts = Math.max(16, Math.round(item.fontSize * 2));
+      for (let k = 0; k < lineItems.length; k++) {
+        const item = lineItems[k];
+        const isLastInLine = k === lineItems.length - 1;
 
-      if (item.linkUrl || itemStr.startsWith('http://') || itemStr.startsWith('https://')) {
-        const url = item.linkUrl || itemStr;
-        textRuns.push(
-          new ExternalHyperlink({
-            children: [
-              new TextRun({
-                text: itemStr,
-                style: 'Hyperlink',
-                color: '0563C1',
-                underline: {},
-                size: fontSizeInPts,
-                font: fontName,
-              }),
-            ],
-            link: url,
-          })
-        );
-      } else {
-        textRuns.push(
-          new TextRun({
-            text: itemStr,
-            bold: item.isBold,
-            italics: item.isItalic,
-            size: fontSizeInPts,
-            font: fontName,
-          })
-        );
+        let itemStr = TypographyEngine.normalizeText(item.str);
+        if (!itemStr) continue;
+
+        if (!isLastInLine) {
+          const nextItem = lineItems[k + 1];
+          if (nextItem.leftX - (item.leftX + item.width) > 2) {
+            itemStr += ' ';
+          }
+        } else if (lIdx < para.lines.length - 1) {
+          if (/[a-zA-Z]-$/.test(itemStr)) {
+            itemStr = itemStr.slice(0, -1);
+          } else {
+            itemStr += ' ';
+          }
+        }
+
+        const fontName = TypographyEngine.mapFontFamily(item.fontName, item.fontFamily);
+        const fontSizeInPts = Math.max(16, Math.round(item.fontSize * 2));
+
+        if (item.linkUrl || itemStr.startsWith('http://') || itemStr.startsWith('https://')) {
+          const url = item.linkUrl || itemStr;
+          textRuns.push(
+            new ExternalHyperlink({
+              children: [
+                new TextRun({
+                  text: itemStr,
+                  style: 'Hyperlink',
+                  color: '0563C1',
+                  underline: {},
+                  size: fontSizeInPts,
+                  font: fontName,
+                }),
+              ],
+              link: url,
+            })
+          );
+        } else {
+          textRuns.push(
+            new TextRun({
+              text: itemStr,
+              bold: item.isBold,
+              italics: item.isItalic,
+              size: fontSizeInPts,
+              font: fontName,
+            })
+          );
+        }
       }
     }
 
     const paragraphOptions: any = {
       children: textRuns,
-      alignment: line.alignment,
-      heading: line.heading,
+      alignment: docxAlignment,
+      heading: docxHeading,
       spacing: {
-        before: line.heading ? 200 : 40,
-        after: line.heading ? 120 : 100,
+        before: docxHeading ? 200 : 40,
+        after: docxHeading ? 120 : 100,
         line: 240,
       },
     };
 
-    if (line.isBulletList) {
-      paragraphOptions.bullet = { level: 0 };
-    } else if (line.isNumberedList) {
-      paragraphOptions.indent = { left: 360 };
+    if (para.isBulletList) {
+      paragraphOptions.bullet = { level: para.bulletLevel };
+    } else if (para.isNumberedList) {
+      paragraphOptions.indent = { left: 360 * (para.bulletLevel + 1) };
     }
 
     return new Paragraph(paragraphOptions);
