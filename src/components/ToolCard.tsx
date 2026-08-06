@@ -1,6 +1,31 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
+import {
+  Layers,
+  Scissors,
+  Trash2,
+  FileOutput,
+  ArrowUpDown,
+  Copy,
+  Minimize2,
+  FileText,
+  FileType,
+  RotateCw,
+  Stamp,
+  Hash,
+  ScanText,
+  Lock,
+  MessageSquare,
+  Sparkles,
+  Image,
+  FileImage,
+  Scaling,
+  Unlock,
+  ArrowRight,
+  Flame,
+  ShieldCheck,
+  Zap,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { PDFTool } from '../types/toolTypes';
 
@@ -8,13 +33,36 @@ interface ToolCardProps {
   tool: PDFTool;
 }
 
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  Layers,
+  Scissors,
+  Trash2,
+  FileOutput,
+  ArrowUpDown,
+  Copy,
+  Minimize2,
+  FileText,
+  FileType,
+  RotateCw,
+  Stamp,
+  Hash,
+  ScanText,
+  Lock,
+  MessageSquare,
+  Sparkles,
+  Image,
+  FileImage,
+  Scaling,
+  Unlock,
+};
+
 // Function to determine the standardized feature badge for each tool
 const getBadgeDetails = (tool: PDFTool) => {
   // Check AI tools
   if (tool.category === 'ai' || tool.id === 'ocr-pdf' || tool.badge === 'AI OCR' || tool.badge === 'Gemini AI') {
     return {
       label: 'AI Powered',
-      icon: Icons.Sparkles,
+      icon: Sparkles,
       badgeStyle: 'bg-purple-500/10 text-purple-400 border-purple-500/25 group-hover:bg-purple-500/20 group-hover:border-purple-500/40',
       iconBg: 'from-purple-500/15 via-purple-500/5 to-slate-900 border-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white group-hover:border-purple-500',
       glow: 'bg-purple-500/10'
@@ -25,7 +73,7 @@ const getBadgeDetails = (tool: PDFTool) => {
   if (tool.category === 'security' || tool.id === 'protect-pdf' || tool.id === 'unlock-pdf' || tool.id === 'watermark-pdf' || tool.badge === 'Security') {
     return {
       label: 'Secure',
-      icon: Icons.ShieldCheck,
+      icon: ShieldCheck,
       badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/40',
       iconBg: 'from-emerald-500/15 via-emerald-500/5 to-slate-900 border-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500',
       glow: 'bg-emerald-500/10'
@@ -36,7 +84,7 @@ const getBadgeDetails = (tool: PDFTool) => {
   if (tool.popular || tool.badge === 'Popular') {
     return {
       label: 'Popular',
-      icon: Icons.Flame,
+      icon: Flame,
       badgeStyle: 'bg-red-500/10 text-red-400 border-red-500/25 group-hover:bg-red-500/20 group-hover:border-red-500/40',
       iconBg: 'from-red-500/15 via-red-500/5 to-slate-900 border-red-500/20 text-red-400 group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500',
       glow: 'bg-red-500/10'
@@ -46,7 +94,7 @@ const getBadgeDetails = (tool: PDFTool) => {
   // Default Fast badge for high-performance browser tools
   return {
     label: 'Fast',
-    icon: Icons.Zap,
+    icon: Zap,
     badgeStyle: 'bg-amber-500/10 text-amber-400 border-amber-500/25 group-hover:bg-amber-500/20 group-hover:border-amber-500/40',
     iconBg: 'from-amber-500/15 via-amber-500/5 to-slate-900 border-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500',
     glow: 'bg-amber-500/10'
@@ -54,10 +102,8 @@ const getBadgeDetails = (tool: PDFTool) => {
 };
 
 export const ToolCard: React.FC<ToolCardProps> = React.memo(({ tool }) => {
-  // Dynamically get main tool icon component from lucide-react
-  const IconComponent =
-    (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[tool.icon] ||
-    Icons.FileText;
+  // Dynamically get main tool icon component from ICON_MAP
+  const IconComponent = ICON_MAP[tool.icon] || FileText;
 
   const badgeDetails = getBadgeDetails(tool);
   const BadgeIcon = badgeDetails.icon;
@@ -102,7 +148,7 @@ export const ToolCard: React.FC<ToolCardProps> = React.memo(({ tool }) => {
         <div className="flex items-center justify-between text-xs font-semibold text-slate-300 group-hover:text-white pt-4 mt-auto border-t border-slate-800/80 group-hover:border-slate-700/80 transition-colors">
           <span className="group-hover:text-red-400 transition-colors font-bold">Use Tool</span>
           <div className="w-7 h-7 rounded-lg bg-slate-800/80 group-hover:bg-red-500 group-hover:text-white flex items-center justify-center text-slate-400 transition-all duration-300 group-hover:translate-x-1 shadow-sm">
-            <Icons.ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </div>
         </div>
       </Link>

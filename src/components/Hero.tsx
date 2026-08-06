@@ -48,35 +48,39 @@ export const Hero: React.FC<HeroProps> = React.memo(({ searchQuery, onSearchChan
         {/* Top Glow Beam */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-red-600/15 via-rose-600/5 to-transparent blur-3xl rounded-full" />
 
-        {/* Animated Ambient Light Orb 1 */}
-        <motion.div
-          animate={{
-            x: [0, 20, -20, 0],
-            y: [0, -25, 15, 0],
-            scale: [1, 1.1, 0.95, 1],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: 'easeInOut'
-          }}
-          className="absolute -top-16 left-1/4 w-80 h-80 bg-red-600/20 rounded-full blur-[100px] opacity-60"
-        />
+        {/* Animated Ambient Light Orb 1 (Desktop only to minimize mobile main-thread work) */}
+        <div className="hidden sm:block">
+          <motion.div
+            animate={{
+              x: [0, 20, -20, 0],
+              y: [0, -25, 15, 0],
+              scale: [1, 1.1, 0.95, 1],
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+            className="absolute -top-16 left-1/4 w-80 h-80 bg-red-600/20 rounded-full blur-[100px] opacity-60"
+          />
+        </div>
 
-        {/* Animated Ambient Light Orb 2 */}
-        <motion.div
-          animate={{
-            x: [0, -30, 20, 0],
-            y: [0, 20, -20, 0],
-            scale: [1, 0.9, 1.1, 1],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: 'easeInOut'
-          }}
-          className="absolute top-12 right-1/4 w-96 h-96 bg-rose-700/15 rounded-full blur-[110px] opacity-50"
-        />
+        {/* Animated Ambient Light Orb 2 (Desktop only to minimize mobile main-thread work) */}
+        <div className="hidden sm:block">
+          <motion.div
+            animate={{
+              x: [0, -30, 20, 0],
+              y: [0, 20, -20, 0],
+              scale: [1, 0.9, 1.1, 1],
+            }}
+            transition={{
+              duration: 15,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+            className="absolute top-12 right-1/4 w-96 h-96 bg-rose-700/15 rounded-full blur-[110px] opacity-50"
+          />
+        </div>
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">

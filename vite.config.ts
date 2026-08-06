@@ -30,6 +30,35 @@ export default defineConfig(() => {
       cssMinify: true,
       minify: 'esbuild' as const,
       chunkSizeWarningLimit: 2000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('pdfjs-dist')) {
+                return 'vendor-pdfjs';
+              }
+              if (id.includes('tesseract.js')) {
+                return 'vendor-tesseract';
+              }
+              if (id.includes('docx') || id.includes('mammoth')) {
+                return 'vendor-docx';
+              }
+              if (id.includes('jspdf') || id.includes('html2canvas')) {
+                return 'vendor-jspdf';
+              }
+              if (id.includes('lucide-react')) {
+                return 'vendor-icons';
+              }
+              if (id.includes('motion')) {
+                return 'vendor-motion';
+              }
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                return 'vendor-react';
+              }
+            }
+          },
+        },
+      },
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
