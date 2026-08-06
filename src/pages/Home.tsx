@@ -1,13 +1,90 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Hero } from '../components/Hero';
 import { CategoryFilter } from '../components/CategoryFilter';
 import { ToolCard } from '../components/ToolCard';
 import { PDF_TOOLS } from '../utils/toolsData';
 import { ToolCategory } from '../types/toolTypes';
-import { ShieldCheck, Zap, Lock, HelpCircle, Star, EyeOff, Sparkles, HardDriveDownload, Smartphone } from 'lucide-react';
+import {
+  ShieldCheck,
+  Zap,
+  Lock,
+  HelpCircle,
+  Star,
+  EyeOff,
+  Sparkles,
+  HardDriveDownload,
+  Smartphone,
+  Layers,
+  Scissors,
+  Minimize2,
+  FileText,
+  FileType,
+  ScanText,
+  Flame,
+  ArrowRight,
+} from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { getFavoriteTools } from '../utils/storageUtils';
+
+// Featured Popular PDF Tools Data (Highlighting 6 core tools)
+const POPULAR_TOOLS = [
+  {
+    id: 'merge-pdf',
+    name: 'Merge PDF',
+    description: 'Combine multiple PDF files into one unified document easily in seconds.',
+    icon: Layers,
+    badge: 'Popular',
+    badgeType: 'popular' as const,
+    path: '/merge',
+  },
+  {
+    id: 'split-pdf',
+    name: 'Split PDF',
+    description: 'Separate one PDF page range or extract all pages into independent files.',
+    icon: Scissors,
+    badge: 'Popular',
+    badgeType: 'popular' as const,
+    path: '/split',
+  },
+  {
+    id: 'compress-pdf',
+    name: 'Compress PDF',
+    description: 'Reduce file size of your PDF while maintaining optimal visual quality.',
+    icon: Minimize2,
+    badge: 'Fast',
+    badgeType: 'fast' as const,
+    path: '/compress',
+  },
+  {
+    id: 'pdf-to-word',
+    name: 'PDF to Word',
+    description: 'Convert PDF files into editable DOCX Word documents seamlessly.',
+    icon: FileText,
+    badge: 'Popular',
+    badgeType: 'popular' as const,
+    path: '/pdf-to-word',
+  },
+  {
+    id: 'word-to-pdf',
+    name: 'Word to PDF',
+    description: 'Convert Microsoft Word DOC and DOCX files to PDF documents quickly.',
+    icon: FileType,
+    badge: 'Fast',
+    badgeType: 'fast' as const,
+    path: '/word-to-pdf',
+  },
+  {
+    id: 'ocr-pdf',
+    name: 'OCR PDF',
+    description: 'Extract and convert scanned PDF pages into selectable, searchable text.',
+    icon: ScanText,
+    badge: 'AI Powered',
+    badgeType: 'ai' as const,
+    path: '/ocr-pdf',
+  },
+];
 
 export const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,6 +149,97 @@ export const Home: React.FC = () => {
               {favoriteTools.map((tool) => (
                 <ToolCard key={`fav-${tool.id}`} tool={tool} />
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Popular PDF Tools Section (Featured Grid when viewing default catalog) */}
+        {!searchQuery && selectedCategory === 'all' && (
+          <div className="mb-14">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 pb-4 border-b border-slate-800/80 gap-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/40 border border-red-800/40 text-[11px] font-bold text-red-400 uppercase tracking-wider mb-2">
+                  <Flame className="w-3.5 h-3.5 text-red-400" />
+                  <span>Most Popular</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Popular PDF Tools
+                </h2>
+              </div>
+              <p className="text-slate-400 text-sm max-w-md">
+                Our most used client-side PDF utility tools for fast, private, and high-performance document editing.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {POPULAR_TOOLS.map((tool) => {
+                const IconComp = tool.icon;
+                const isPopular = tool.badgeType === 'popular';
+                const isAI = tool.badgeType === 'ai';
+
+                const badgeBg = isAI
+                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/25 group-hover:bg-purple-500/20'
+                  : isPopular
+                  ? 'bg-red-500/10 text-red-400 border-red-500/25 group-hover:bg-red-500/20'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/25 group-hover:bg-amber-500/20';
+
+                const iconBg = isAI
+                  ? 'from-purple-500/15 via-purple-500/5 to-slate-900 border-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white group-hover:border-purple-500'
+                  : isPopular
+                  ? 'from-red-500/15 via-red-500/5 to-slate-900 border-red-500/20 text-red-400 group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500'
+                  : 'from-amber-500/15 via-amber-500/5 to-slate-900 border-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500';
+
+                const BadgeIcon = isAI ? Sparkles : isPopular ? Flame : Zap;
+
+                return (
+                  <motion.div
+                    key={tool.id}
+                    whileHover={{ y: -6, scale: 1.015 }}
+                    whileTap={{ scale: 0.985 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  >
+                    <Link
+                      to={tool.path}
+                      className="group relative h-full bg-[#111218]/90 hover:bg-[#151722] rounded-2xl p-6.5 border border-slate-800/80 hover:border-red-500/40 shadow-xl hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300 flex flex-col justify-between overflow-hidden backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                    >
+                      {/* Ambient Glow */}
+                      <div className="absolute -right-8 -top-8 w-28 h-28 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/15 group-hover:scale-150 transition-all duration-500 pointer-events-none" />
+
+                      <div>
+                        {/* Header: Icon & Badge */}
+                        <div className="flex items-center justify-between mb-5">
+                          <div
+                            className={`w-12 h-12 rounded-xl bg-gradient-to-br ${iconBg} border flex items-center justify-center group-hover:scale-110 group-hover:shadow-lg transition-all duration-300 shadow-md`}
+                          >
+                            <IconComp className="w-6 h-6 transition-transform duration-300 group-hover:rotate-3" />
+                          </div>
+
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold tracking-wide rounded-full border transition-all duration-300 ${badgeBg}`}
+                          >
+                            <BadgeIcon className="w-3 h-3" />
+                            <span>{tool.badge}</span>
+                          </span>
+                        </div>
+
+                        {/* Title & Description */}
+                        <h3 className="text-xl font-bold text-white mb-2.5 tracking-tight group-hover:text-red-400 transition-colors">
+                          {tool.name}
+                        </h3>
+                        <p className="text-sm text-slate-400 leading-relaxed mb-6 group-hover:text-slate-300 transition-colors line-clamp-2">
+                          {tool.description}
+                        </p>
+                      </div>
+
+                      {/* Open Tool Button */}
+                      <div className="inline-flex items-center justify-between w-full px-4 py-3 rounded-xl bg-slate-800/70 group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-rose-600 text-slate-300 group-hover:text-white font-semibold text-xs sm:text-sm transition-all duration-300 border border-slate-700/60 group-hover:border-red-500/50 shadow-sm mt-auto">
+                        <span>Open Tool</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         )}
