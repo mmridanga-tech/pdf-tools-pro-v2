@@ -21,7 +21,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = React.memo(({
   onSelectCategory,
 }) => {
   return (
-    <div className="flex items-center justify-center gap-2.5 flex-wrap mb-10">
+    <div className="flex items-center justify-center p-1.5 rounded-2xl bg-[#111218]/80 border border-slate-800/80 backdrop-blur-md max-w-fit mx-auto gap-1.5 flex-wrap mb-10 shadow-lg">
       {CATEGORIES.map((category) => {
         const isActive = selectedCategory === category.id;
         return (
@@ -29,16 +29,16 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = React.memo(({
             key={category.id}
             onClick={() => onSelectCategory(category.id)}
             aria-pressed={isActive}
-            className={`relative px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
+            className={`relative px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 cursor-pointer ${
               isActive
-                ? 'text-white'
-                : 'text-slate-400 hover:text-slate-200 bg-[#141417]/80 hover:bg-[#18181d] border border-slate-800/80'
+                ? 'text-white font-bold'
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
             }`}
           >
             {isActive && (
               <motion.div
                 layoutId="category-active-pill"
-                className="absolute inset-0 bg-red-600 rounded-xl shadow-lg shadow-red-600/30"
+                className="absolute inset-0 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl shadow-md shadow-red-600/30"
                 transition={{ type: 'spring', stiffness: 500, damping: 35 }}
               />
             )}
