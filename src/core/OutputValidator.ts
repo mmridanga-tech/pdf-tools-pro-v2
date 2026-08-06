@@ -3,6 +3,14 @@ export interface OutputValidationResult {
   fileSize: number;
   mimeType: string;
   errors: string[];
+  warnings?: string[];
+}
+
+export interface DocumentMetrics {
+  pageCount: number;
+  paragraphCount: number;
+  tableCount: number;
+  imageCount: number;
 }
 
 export class OutputValidator {
@@ -48,6 +56,42 @@ export class OutputValidator {
       fileSize: blob.size,
       mimeType: blob.type || 'application/octet-stream',
       errors,
+    };
+  }
+
+  /**
+   * Part 9: Quality Validation - verify table count, image count, page count, and paragraph count
+   */
+  static validateDocumentMetrics(
+    metrics: DocumentMetrics,
+    expectedMetrics?: Partial<DocumentMetrics>
+  ): { isValid: boolean; warnings: string[] } {
+    const warnings: string[] = [];
+
+    if (metrics.pageCount > 0 && metrics.paragraphCount === 0 && metrics.tableCount === 0 && metrics.imageCount === 0) {
+      warnings.push(`Document has ${metrics.pageCount} page(s) but zero paragraphs, tables, or images were generated.`);
+    }
+
+    if (expectedMetrics) {
+      if (expectedMetrics.tableCount !== undefined && metrics.tableCount < expectedMetrics.tableCount) {
+        warnings.push(
+          `Detected ${expectedMetrics.tableCount} table(s) in source PDF, but only ${metrics.tableCount} table(s) were generated in DOCX.`
+        );
+      }
+      if (expectedMetrics.imageCount !== undefined && metrics.imageCount < expectedMetrics.imageCount) {
+        warnings.push(
+          `Detected ${expectedMetrics.imageCount} image(s) in source PDF, but only ${metrics.imageCount} image(s) were placed in DOCX.`
+        );
+      }
+    }
+
+    if (warnings.length > 0) {
+      console.warn('OutputValidator Quality Check Warnings:', warnings);
+    }
+
+    return {
+      isValid: warnings.length === 0,
+      warnings,
     };
   }
 

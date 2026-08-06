@@ -4,5 +4,6 @@ export * from './DocxListBuilder';
 export * from './DocxPageBreakEngine';
 export * from './DocxImageBuilder';
 export * from './DocxTablePlaceholder';
+export * from './DocxTableBuilder';
 export * from './DocxParagraphBuilder';
 export * from './DocxDocumentBuilder';

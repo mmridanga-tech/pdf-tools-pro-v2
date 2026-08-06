@@ -28,6 +28,7 @@ import {
   DocxParagraphBuilder,
   DocxImageBuilder,
   DocxTablePlaceholder,
+  DocxTableBuilder,
   DocxDocumentBuilder,
   DocxPageBreakEngine,
 } from '../core';
@@ -187,6 +188,10 @@ export class PDFToWordService {
 
     const bodyFontSize = this.calculateMedian(allFontSizes, 11);
     DocxImageBuilder.resetDeduplicationCache();
+
+    let totalParagraphs = 0;
+    let totalTables = 0;
+    let totalImages = 0;
 
     // Process each page
     for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
@@ -442,14 +447,17 @@ export class PDFToWordService {
       // Render Page Blocks into DOCX using dedicated builder modules
       for (const block of blocks) {
         if (block.type === 'table') {
+          totalTables++;
           sectionChildren.push(block.tableComponent);
           sectionChildren.push(new Paragraph({ text: '', spacing: { after: 120 } }));
         } else if (block.type === 'image') {
-          const imgPara = DocxImageBuilder.buildImageParagraph(block.image);
-          if (imgPara) {
-            sectionChildren.push(imgPara);
+          const imgParas = DocxImageBuilder.buildImageParagraph(block.image, 500, pageWidth);
+          if (imgParas.length > 0) totalImages++;
+          for (const imgP of imgParas) {
+            sectionChildren.push(imgP);
           }
         } else if (block.type === 'paragraph') {
+          totalParagraphs++;
           const paragraph = DocxParagraphBuilder.buildParagraph(block.paragraph, bodyFontSize);
           sectionChildren.push(paragraph);
         }
@@ -457,6 +465,14 @@ export class PDFToWordService {
     }
 
     if (onProgress) onProgress(85, 'Assembling DOCX structure, XML elements & styles...');
+
+    // Part 9: Quality Validation via OutputValidator
+    OutputValidator.validateDocumentMetrics({
+      pageCount,
+      paragraphCount: totalParagraphs,
+      tableCount: totalTables,
+      imageCount: totalImages,
+    });
 
     const doc = DocxDocumentBuilder.buildDocument({
       sectionChildren,
@@ -673,7 +689,7 @@ export class PDFToWordService {
         }
 
         if (tableLines.length >= 2) {
-          const tableComponent = DocxTablePlaceholder.buildTableFromLines(tableLines, pageWidth);
+          const tableComponent = DocxTableBuilder.buildRealTable(tableLines, pageWidth);
           blocks.push({ type: 'table', tableComponent });
           i = j;
           continue;

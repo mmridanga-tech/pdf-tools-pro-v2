@@ -7,7 +7,7 @@ import { DocxListBuilder } from './DocxListBuilder';
 
 export class DocxParagraphBuilder {
   /**
-   * Build DOCX Paragraph from SemanticParagraph with full paragraph spacing, alignment, first-line indent, and font runs
+   * Build DOCX Paragraph from SemanticParagraph with full paragraph spacing, alignment, first-line indent, captions & footnotes
    */
   static buildParagraph(para: SemanticParagraph, bodyFontSize = 11): Paragraph {
     // Route headings to HeadingBuilder
@@ -20,10 +20,13 @@ export class DocxParagraphBuilder {
       return DocxListBuilder.buildListParagraph(para, bodyFontSize);
     }
 
+    const isCaption = para.type === 'caption' || para.isCaption;
+    const isFootnote = para.type === 'footnote' || para.isFootnote;
+
     const textRuns: any[] = [];
 
     let docxAlignment: any = AlignmentType.LEFT;
-    if (para.alignment === 'center') docxAlignment = AlignmentType.CENTER;
+    if (para.alignment === 'center' || isCaption) docxAlignment = AlignmentType.CENTER;
     else if (para.alignment === 'right') docxAlignment = AlignmentType.RIGHT;
     else if (para.alignment === 'justify') docxAlignment = AlignmentType.JUSTIFIED;
 
@@ -52,7 +55,10 @@ export class DocxParagraphBuilder {
         }
 
         const fontName = TypographyEngine.mapFontFamily(item.fontName, item.fontFamily);
-        const fontSizeInPts = Math.max(16, Math.round(item.fontSize * 2));
+        let fontSizeInPts = Math.max(16, Math.round(item.fontSize * 2));
+        if (isFootnote) {
+          fontSizeInPts = Math.min(18, Math.round(item.fontSize * 1.8));
+        }
 
         if (item.linkUrl || DocxHyperlinkBuilder.isUrlString(itemStr)) {
           textRuns.push(
@@ -62,7 +68,7 @@ export class DocxParagraphBuilder {
               fontSizePts: fontSizeInPts,
               fontName,
               isBold: item.isBold,
-              isItalic: item.isItalic,
+              isItalic: item.isItalic || isCaption,
             })
           );
         } else {
@@ -70,11 +76,12 @@ export class DocxParagraphBuilder {
             new TextRun({
               text: itemStr,
               bold: item.isBold,
-              italics: item.isItalic,
+              italics: item.isItalic || isCaption,
               underline: item.isUnderline ? {} : undefined,
               strike: item.isStrike,
               superScript: item.isSuperScript,
               subScript: item.isSubScript,
+              color: isCaption ? '4B5563' : isFootnote ? '374151' : undefined,
               size: fontSizeInPts,
               font: fontName,
             })
@@ -87,13 +94,15 @@ export class DocxParagraphBuilder {
       children: textRuns,
       alignment: docxAlignment,
       spacing: {
-        before: para.spaceBefore ?? 40,
-        after: para.spaceAfter ?? 120,
+        before: isCaption ? 40 : isFootnote ? 100 : (para.spaceBefore ?? 40),
+        after: isCaption ? 140 : isFootnote ? 60 : (para.spaceAfter ?? 120),
         line: para.lineSpacing ?? 240,
       },
     };
 
-    if (para.firstLineIndent && para.firstLineIndent > 0) {
+    if (isFootnote) {
+      paragraphOptions.indent = { left: 240 };
+    } else if (para.firstLineIndent && para.firstLineIndent > 0) {
       paragraphOptions.indent = { firstLine: para.firstLineIndent };
     }
 

@@ -1,4 +1,5 @@
-import { Paragraph, ImageRun, AlignmentType } from 'docx';
+import { Paragraph, ImageRun, AlignmentType, TextRun } from 'docx';
+import { TypographyEngine } from '../TypographyEngine';
 
 export interface ImageBlockData {
   buffer: Uint8Array;
@@ -7,6 +8,8 @@ export interface ImageBlockData {
   topY?: number;
   leftX?: number;
   id?: string;
+  isChart?: boolean;
+  caption?: string;
 }
 
 export class DocxImageBuilder {
@@ -20,7 +23,7 @@ export class DocxImageBuilder {
   }
 
   /**
-   * Calculate SHA-256 / quick hash of buffer for deduplication
+   * Calculate fast buffer hash for deduplication
    */
   private static computeHash(buffer: Uint8Array): string {
     let hash = 0;
@@ -33,18 +36,19 @@ export class DocxImageBuilder {
   }
 
   /**
-   * Build DOCX Image paragraph maintaining aspect ratio and quality without stretching
+   * Build DOCX Image paragraph maintaining strict aspect ratio, no stretching, with optional caption
    */
   static buildImageParagraph(
     img: ImageBlockData,
-    maxWidthPt = 500
-  ): Paragraph | null {
-    if (!img || !img.buffer || img.buffer.length === 0) return null;
+    maxWidthPt = 500,
+    pageWidthPt = 612
+  ): Paragraph[] {
+    if (!img || !img.buffer || img.buffer.length === 0) return [];
 
     // Deduplication check
     const imgHash = img.id || this.computeHash(img.buffer);
     if (this.processedHashes.has(imgHash)) {
-      return null; // Skip duplicate image insertion
+      return []; // Skip duplicate image insertion
     }
     this.processedHashes.add(imgHash);
 
@@ -52,23 +56,65 @@ export class DocxImageBuilder {
     const origHeight = Math.max(1, img.height || 200);
     const aspectRatio = origHeight / origWidth;
 
-    // Constrain width to container max width preserving original aspect ratio
-    const targetWidth = Math.min(maxWidthPt, Math.round(origWidth * 0.8));
-    const targetHeight = Math.round(targetWidth * aspectRatio);
+    // Scale calculation - preserve strict aspect ratio
+    let targetWidthPt = Math.min(maxWidthPt, Math.round(origWidth * 0.85));
+    if (img.isChart) {
+      targetWidthPt = Math.min(maxWidthPt, Math.max(380, Math.round(origWidth * 0.95)));
+    }
+    const targetHeightPt = Math.round(targetWidthPt * aspectRatio);
+
+    // Determine alignment based on leftX position
+    let alignment: any = AlignmentType.CENTER;
+    if (img.leftX !== undefined) {
+      if (img.leftX < 70) {
+        alignment = AlignmentType.LEFT;
+      } else if (img.leftX > pageWidthPt * 0.4) {
+        alignment = AlignmentType.RIGHT;
+      }
+    }
 
     const imgRun = new ImageRun({
       data: img.buffer,
       type: 'png',
       transformation: {
-        width: Math.max(20, targetWidth),
-        height: Math.max(20, targetHeight),
+        width: Math.max(20, targetWidthPt),
+        height: Math.max(20, targetHeightPt),
       },
     });
 
-    return new Paragraph({
-      children: [imgRun],
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 140, after: 140 },
-    });
+    const resultParagraphs: Paragraph[] = [];
+
+    const hasCaption = !!img.caption && img.caption.trim().length > 0;
+
+    resultParagraphs.push(
+      new Paragraph({
+        children: [imgRun],
+        alignment,
+        keepNext: hasCaption,
+        spacing: { before: 160, after: hasCaption ? 60 : 160 },
+      })
+    );
+
+    // Part 7: Caption attachment
+    if (hasCaption) {
+      const normalizedCaption = TypographyEngine.normalizeText(img.caption!);
+      resultParagraphs.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: normalizedCaption,
+              size: 18, // 9pt
+              italics: true,
+              color: '4B5563', // Grey caption text
+              font: 'Calibri',
+            }),
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 40, after: 160 },
+        })
+      );
+    }
+
+    return resultParagraphs;
   }
 }

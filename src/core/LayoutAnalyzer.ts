@@ -32,10 +32,12 @@ export interface StructuredLine extends BoundingBox {
   isNumberedList: boolean;
   listMarker?: string;
   cleanText: string;
+  isCaption?: boolean;
+  isFootnote?: boolean;
 }
 
 export interface SemanticParagraph extends BoundingBox {
-  type: 'paragraph' | 'heading' | 'list';
+  type: 'paragraph' | 'heading' | 'list' | 'caption' | 'footnote';
   headingLevel?: 'h1' | 'h2' | 'h3' | 'h4';
   alignment: 'left' | 'center' | 'right' | 'justify';
   isBulletList: boolean;
@@ -49,11 +51,13 @@ export interface SemanticParagraph extends BoundingBox {
   lineSpacing?: number;
   spaceBefore?: number;
   spaceAfter?: number;
+  isCaption?: boolean;
+  isFootnote?: boolean;
 }
 
 export class LayoutAnalyzer {
   /**
-   * Sort items by reading flow with multi-column and header/footer region awareness
+   * Sort items by reading flow with multi-column (2-col & 3-col) and header/footer region awareness
    */
   static sortItemsByReadingOrder(
     items: PositionedTextItem[],
@@ -95,7 +99,36 @@ export class LayoutAnalyzer {
       return [...headers, ...footers];
     }
 
-    // Column detection for body items (1, 2, or 3 columns)
+    // 3 Column Detection (Newsletter / Magazine layouts)
+    const col1Threshold = pageWidth * 0.35;
+    const col2Threshold = pageWidth * 0.68;
+
+    const col1Items = bodyItems.filter((it) => it.leftX + it.width <= col1Threshold + 10);
+    const col2Items = bodyItems.filter(
+      (it) => it.leftX >= col1Threshold - 10 && it.leftX + it.width <= col2Threshold + 10
+    );
+    const col3Items = bodyItems.filter((it) => it.leftX >= col2Threshold - 10);
+
+    const isThreeColumn =
+      col1Items.length >= 4 &&
+      col2Items.length >= 4 &&
+      col3Items.length >= 4 &&
+      col1Items.length + col2Items.length + col3Items.length >= bodyItems.length * 0.75;
+
+    if (isThreeColumn) {
+      col1Items.sort(sortYThenX);
+      col2Items.sort(sortYThenX);
+      col3Items.sort(sortYThenX);
+
+      const spanningItems = bodyItems.filter(
+        (it) => !col1Items.includes(it) && !col2Items.includes(it) && !col3Items.includes(it)
+      );
+      spanningItems.sort(sortYThenX);
+
+      return [...headers, ...spanningItems, ...col1Items, ...col2Items, ...col3Items, ...footers];
+    }
+
+    // 2 Column Detection
     const midX = pageWidth / 2;
     const leftCol = bodyItems.filter((it) => it.leftX + it.width < midX + 15);
     const rightCol = bodyItems.filter((it) => it.leftX > midX - 15);
@@ -109,7 +142,6 @@ export class LayoutAnalyzer {
       leftCol.sort(sortYThenX);
       rightCol.sort(sortYThenX);
 
-      // Remaining items that span both columns (e.g. wide titles)
       const spanningItems = bodyItems.filter(
         (it) => !(it.leftX + it.width < midX + 15) && !(it.leftX > midX - 15)
       );
@@ -129,7 +161,8 @@ export class LayoutAnalyzer {
   static groupItemsIntoLines(
     sortedItems: PositionedTextItem[],
     pageWidth: number,
-    bodyFontSize = 11
+    bodyFontSize = 11,
+    pageHeight = 792
   ): StructuredLine[] {
     const lines: StructuredLine[] = [];
     if (!sortedItems || sortedItems.length === 0) return lines;
@@ -145,16 +178,38 @@ export class LayoutAnalyzer {
       if (isSameLine) {
         currentLineItems.push(curr);
       } else {
-        lines.push(this.buildStructuredLine(currentLineItems, pageWidth, bodyFontSize));
+        lines.push(this.buildStructuredLine(currentLineItems, pageWidth, bodyFontSize, pageHeight));
         currentLineItems = [curr];
       }
     }
 
     if (currentLineItems.length > 0) {
-      lines.push(this.buildStructuredLine(currentLineItems, pageWidth, bodyFontSize));
+      lines.push(this.buildStructuredLine(currentLineItems, pageWidth, bodyFontSize, pageHeight));
     }
 
     return lines;
+  }
+
+  /**
+   * Detect Figure / Table Captions
+   */
+  static detectCaption(cleanText: string): boolean {
+    if (!cleanText) return false;
+    const lower = cleanText.trim().toLowerCase();
+    return (
+      /^(figure|fig\.|table|tab\.|chart|graph|illustration|photo|plate)\s*\d+[:\.]/i.test(lower) ||
+      /^(source|note):/i.test(lower)
+    );
+  }
+
+  /**
+   * Detect Footnotes at page bottom
+   */
+  static detectFootnote(cleanText: string, topY: number, maxFontSize: number, bodyFontSize: number, pageHeight: number): boolean {
+    if (topY < pageHeight * 0.8) return false;
+    if (maxFontSize >= bodyFontSize * 0.9) return false;
+    const text = cleanText.trim();
+    return /^[0-9\*\†\‡\§\#]{1,3}[\.\)]?\s+[A-Z]/i.test(text);
   }
 
   /**
@@ -194,8 +249,12 @@ export class LayoutAnalyzer {
       const height = currentLines[currentLines.length - 1].topY + currentLines[currentLines.length - 1].height - topY;
 
       // Determine type
-      let type: 'paragraph' | 'heading' | 'list' = 'paragraph';
-      if (firstLine.headingLevel) {
+      let type: 'paragraph' | 'heading' | 'list' | 'caption' | 'footnote' = 'paragraph';
+      if (firstLine.isCaption) {
+        type = 'caption';
+      } else if (firstLine.isFootnote) {
+        type = 'footnote';
+      } else if (firstLine.headingLevel) {
         type = 'heading';
       } else if (firstLine.isBulletList || firstLine.isNumberedList) {
         type = 'list';
@@ -242,6 +301,8 @@ export class LayoutAnalyzer {
         lineSpacing,
         spaceBefore,
         spaceAfter,
+        isCaption: firstLine.isCaption,
+        isFootnote: firstLine.isFootnote,
       });
 
       currentLines = [];
@@ -262,6 +323,10 @@ export class LayoutAnalyzer {
       const isCurrHeading = Boolean(line.headingLevel);
       const isPrevList = prevLine.isBulletList || prevLine.isNumberedList;
       const isCurrList = line.isBulletList || line.isNumberedList;
+      const isPrevCaption = Boolean(prevLine.isCaption);
+      const isCurrCaption = Boolean(line.isCaption);
+      const isPrevFootnote = Boolean(prevLine.isFootnote);
+      const isCurrFootnote = Boolean(line.isFootnote);
       const alignmentChanged = prevLine.alignment !== line.alignment;
       const fontSizeShift = Math.abs(prevLine.maxFontSize - line.maxFontSize) > 2;
 
@@ -280,6 +345,10 @@ export class LayoutAnalyzer {
         isCurrHeading ||
         isPrevList ||
         isCurrList ||
+        isPrevCaption ||
+        isCurrCaption ||
+        isPrevFootnote ||
+        isCurrFootnote ||
         alignmentChanged ||
         fontSizeShift ||
         isLargeGap ||
@@ -314,7 +383,8 @@ export class LayoutAnalyzer {
   private static buildStructuredLine(
     items: PositionedTextItem[],
     pageWidth: number,
-    bodyFontSize = 11
+    bodyFontSize = 11,
+    pageHeight = 792
   ): StructuredLine {
     items.sort((a, b) => a.leftX - b.leftX);
 
@@ -367,6 +437,9 @@ export class LayoutAnalyzer {
       if (match) listMarker = match[0];
     }
 
+    const isCaption = this.detectCaption(cleanText);
+    const isFootnote = this.detectFootnote(cleanText, topY, maxFontSize, bodyFontSize, pageHeight);
+
     return {
       items,
       leftX,
@@ -381,6 +454,8 @@ export class LayoutAnalyzer {
       isNumberedList,
       listMarker,
       cleanText,
+      isCaption,
+      isFootnote,
     };
   }
 }
