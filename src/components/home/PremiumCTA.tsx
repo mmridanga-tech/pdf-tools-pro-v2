@@ -15,7 +15,7 @@ export const PremiumCTA: React.FC = () => {
 
   return (
     <section className="relative py-12 sm:py-16 bg-[#08090d] border-b border-white/[0.06] overflow-hidden">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="rounded-2xl bg-[#0c0d14] border border-white/[0.08] p-8 sm:p-12 text-center relative overflow-hidden">
           {/* Subtle accent blur */}
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-32 bg-red-600/10 blur-3xl pointer-events-none rounded-full" />
