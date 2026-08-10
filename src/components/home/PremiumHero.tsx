@@ -35,7 +35,7 @@ export const PremiumHero: React.FC<PremiumHeroProps> = React.memo(({ searchQuery
   };
 
   return (
-    <section className="relative pt-20 pb-24 md:pt-32 md:pb-32 bg-[#08090E] overflow-hidden border-b border-white/[0.08]">
+    <section className="relative pt-12 pb-14 md:pt-16 md:pb-20 bg-[#08090E] overflow-hidden border-b border-white/[0.08]">
       {/* Background Lighting and Ambient FX */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Modern Dot Matrix Grid */}
@@ -78,7 +78,7 @@ export const PremiumHero: React.FC<PremiumHeroProps> = React.memo(({ searchQuery
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-3 px-4.5 py-2 rounded-full bg-white/[0.03] border border-white/10 text-xs sm:text-sm font-semibold text-red-400 mb-8 shadow-2xl backdrop-blur-xl hover:border-red-500/40 transition-colors"
+            className="inline-flex items-center gap-3 px-4.5 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-xs sm:text-sm font-semibold text-red-400 mb-5 shadow-2xl backdrop-blur-xl hover:border-red-500/40 transition-colors"
           >
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -96,7 +96,7 @@ export const PremiumHero: React.FC<PremiumHeroProps> = React.memo(({ searchQuery
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.08 }}
-            className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.08] mb-8"
+            className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.08] mb-4"
           >
             The Next-Generation <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-red-500 via-rose-400 to-amber-300 bg-clip-text text-transparent">
@@ -109,7 +109,7 @@ export const PremiumHero: React.FC<PremiumHeroProps> = React.memo(({ searchQuery
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.16 }}
-            className="max-w-3xl mx-auto text-base sm:text-lg lg:text-xl text-slate-300/90 leading-relaxed font-normal mb-10"
+            className="max-w-3xl mx-auto text-base sm:text-lg lg:text-xl text-slate-300/90 leading-relaxed font-normal mb-6"
           >
             Merge, split, compress, convert, OCR, and converse with documents directly in browser memory. High-performance, zero file uploads, and enterprise privacy guaranteed.
           </motion.p>
@@ -119,7 +119,7 @@ export const PremiumHero: React.FC<PremiumHeroProps> = React.memo(({ searchQuery
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.24 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-7"
           >
             <button
               onClick={handleStartExploring}
@@ -143,7 +143,7 @@ export const PremiumHero: React.FC<PremiumHeroProps> = React.memo(({ searchQuery
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.3 }}
-            className="max-w-2xl mx-auto mb-14"
+            className="max-w-2xl mx-auto mb-8"
           >
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">

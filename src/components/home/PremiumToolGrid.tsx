@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PDFTool, ToolCategory } from '../../types/toolTypes';
 import { PremiumToolCard } from './PremiumToolCard';
@@ -17,7 +17,9 @@ import {
   ScanText,
   Shield,
   Image as ImageIcon,
-  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
 } from 'lucide-react';
 
 interface PremiumToolGridProps {
@@ -119,34 +121,67 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
   favoriteIds,
   onToggleFavorite,
 }) => {
+  const [showAllFavorites, setShowAllFavorites] = useState(false);
+  const [showAllTools, setShowAllTools] = useState(false);
+
   const favoriteTools = useMemo(() => {
     return tools.filter((t) => favoriteIds.includes(t.id));
   }, [tools, favoriteIds]);
 
+  const displayedFavorites = useMemo(() => {
+    if (showAllFavorites || favoriteTools.length <= 4) {
+      return favoriteTools;
+    }
+    return favoriteTools.slice(0, 4);
+  }, [favoriteTools, showAllFavorites]);
+
+  const isFiltering = Boolean(searchQuery || selectedCategory !== 'all');
+
+  const visibleTools = useMemo(() => {
+    if (isFiltering || showAllTools) {
+      return tools;
+    }
+    return tools.slice(0, 8);
+  }, [tools, isFiltering, showAllTools]);
+
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 space-y-10">
       {/* Starred Favorite Tools Section */}
-      {favoriteTools.length > 0 && !searchQuery && selectedCategory === 'all' && (
+      {favoriteTools.length > 0 && !isFiltering && (
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-amber-950/30 via-[#141522] to-amber-950/20 border border-amber-500/30 rounded-[24px] p-6.5 shadow-2xl backdrop-blur-xl"
+          className="bg-gradient-to-r from-amber-950/30 via-[#141522] to-amber-950/20 border border-amber-500/30 rounded-[20px] p-5 sm:p-6 shadow-2xl backdrop-blur-xl"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                <Star className="w-4.5 h-4.5 fill-current" />
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <Star className="w-4 h-4 fill-current" />
               </div>
-              <h2 className="text-base font-extrabold uppercase tracking-wider text-amber-300">
+              <h2 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-amber-300">
                 Your Starred Favorite Tools
               </h2>
             </div>
-            <span className="text-xs font-semibold text-slate-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-              {favoriteTools.length} starred
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
+                {favoriteTools.length} starred
+              </span>
+              {favoriteTools.length > 4 && (
+                <button
+                  onClick={() => setShowAllFavorites(!showAllFavorites)}
+                  className="text-xs font-bold text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  {showAllFavorites ? (
+                    <>Show Less <ChevronUp className="w-3 h-3" /></>
+                  ) : (
+                    <>View All ({favoriteTools.length}) <ChevronDown className="w-3 h-3" /></>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {favoriteTools.map((tool) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            {displayedFavorites.map((tool) => (
               <PremiumToolCard
                 key={`fav-${tool.id}`}
                 tool={tool}
@@ -159,25 +194,25 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
       )}
 
       {/* Spotlight Popular PDF Tools Section */}
-      {!searchQuery && selectedCategory === 'all' && (
-        <DeferredSection fallbackHeight="min-h-[480px]">
+      {!isFiltering && (
+        <DeferredSection fallbackHeight="min-h-[380px]">
           <div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 pb-4 border-b border-white/10 gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-5 pb-3 border-b border-white/10 gap-3">
               <div>
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-[11px] font-bold text-red-400 uppercase tracking-wider mb-2.5 shadow-md">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-[11px] font-bold text-red-400 uppercase tracking-wider mb-2 shadow-md">
                   <Flame className="w-3.5 h-3.5 text-red-400" />
                   <span>Most Popular Workflows</span>
                 </div>
-                <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                   Featured PDF Tools
                 </h2>
               </div>
-              <p className="text-slate-400 text-sm max-w-md">
+              <p className="text-slate-400 text-xs sm:text-sm max-w-md">
                 Fast, client-side PDF utilities engineered for zero server latency and maximum visual clarity.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {FEATURED_POPULAR.map((tool) => (
                 <PremiumToolCard
                   key={`featured-${tool.id}`}
@@ -193,14 +228,14 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
 
       {/* Category Navigation Bar */}
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-            Explore All Tools ({tools.length})
+            {isFiltering ? `Filtered Tools (${tools.length})` : `Explore All Tools (${tools.length})`}
           </h2>
         </div>
 
         {/* Categories Bar */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-4 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
           {CATEGORIES.map((cat) => {
             const IconComp = cat.icon;
             const isSelected = selectedCategory === cat.id;
@@ -209,13 +244,13 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                className={`inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-300 cursor-pointer ${
+                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-300 cursor-pointer ${
                   isSelected
                     ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-600/30 border border-red-400/50'
                     : 'bg-[#12131F]/90 text-slate-400 hover:text-white hover:bg-[#181928] border border-white/10'
                 }`}
               >
-                <IconComp className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                <IconComp className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
                 <span>{cat.label}</span>
               </button>
             );
@@ -223,35 +258,56 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
         </div>
       </div>
 
-      {/* Main Filtered Tools Grid */}
+      {/* Main Filtered / Compact Tools Grid */}
       <AnimatePresence mode="wait">
         {tools.length > 0 ? (
-          <motion.div
-            key={selectedCategory + searchQuery}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-          >
-            {tools.map((tool) => (
-              <PremiumToolCard
-                key={tool.id}
-                tool={tool}
-                isFavorite={favoriteIds.includes(tool.id)}
-                onToggleFavorite={onToggleFavorite}
-              />
-            ))}
-          </motion.div>
+          <div className="space-y-6">
+            <motion.div
+              key={selectedCategory + searchQuery + (showAllTools ? 'expanded' : 'compact')}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"
+            >
+              {visibleTools.map((tool) => (
+                <PremiumToolCard
+                  key={tool.id}
+                  tool={tool}
+                  isFavorite={favoriteIds.includes(tool.id)}
+                  onToggleFavorite={onToggleFavorite}
+                />
+              ))}
+            </motion.div>
+
+            {/* View All Tools / Show Less Button */}
+            {!isFiltering && tools.length > 8 && (
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => setShowAllTools(!showAllTools)}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-white text-sm font-bold border border-white/10 hover:border-white/20 transition-all shadow-lg backdrop-blur-md group cursor-pointer"
+                >
+                  <span>
+                    {showAllTools ? 'Show Fewer Tools' : `View All Tools (${tools.length})`}
+                  </span>
+                  {showAllTools ? (
+                    <ChevronUp className="w-4 h-4 text-red-400 group-hover:-translate-y-0.5 transition-transform" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4 text-red-400 group-hover:translate-x-1 transition-transform" />
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#12131F] rounded-[24px] p-12 text-center border border-white/10 max-w-md mx-auto shadow-2xl backdrop-blur-xl"
+            className="bg-[#12131F] rounded-[24px] p-8 text-center border border-white/10 max-w-md mx-auto shadow-2xl backdrop-blur-xl"
           >
-            <HelpCircle className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No PDF tools found</h3>
-            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+            <HelpCircle className="w-10 h-10 text-slate-500 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-white mb-2">No PDF tools found</h3>
+            <p className="text-xs sm:text-sm text-slate-400 mb-5 leading-relaxed">
               We couldn't find any tool matching "{searchQuery}". Try searching for merge, split, compress, or OCR.
             </p>
             <button
@@ -259,7 +315,7 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
                 onSearchChange('');
                 onSelectCategory('all');
               }}
-              className="px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl text-sm font-bold hover:from-red-500 hover:to-rose-500 transition-all shadow-lg shadow-red-600/25 cursor-pointer"
+              className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:from-red-500 hover:to-rose-500 transition-all shadow-lg shadow-red-600/25 cursor-pointer"
             >
               Reset Search & Filters
             </button>

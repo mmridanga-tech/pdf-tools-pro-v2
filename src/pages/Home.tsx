@@ -27,7 +27,7 @@ export const Home: React.FC = () => {
   }, []);
 
   const latestArticles = useMemo(() => {
-    return getAllBlogPosts().slice(0, 6);
+    return getAllBlogPosts().slice(0, 3);
   }, []);
 
   const handleSearchChange = useCallback((query: string) => {
@@ -65,7 +65,7 @@ export const Home: React.FC = () => {
       <PremiumHero searchQuery={searchQuery} onSearchChange={handleSearchChange} />
 
       {/* Premium Key Statistics */}
-      <DeferredSection fallbackHeight="min-h-[220px]">
+      <DeferredSection fallbackHeight="min-h-[150px]">
         <PremiumStats />
       </DeferredSection>
 
@@ -81,17 +81,17 @@ export const Home: React.FC = () => {
       />
 
       {/* Premium Why Choose SmartPDF AI Section */}
-      <DeferredSection fallbackHeight="min-h-[550px]">
+      <DeferredSection fallbackHeight="min-h-[380px]">
         <PremiumWhyChoose />
       </DeferredSection>
 
       {/* Premium Latest Articles & Guides Section */}
-      <DeferredSection fallbackHeight="min-h-[500px]">
+      <DeferredSection fallbackHeight="min-h-[360px]">
         <PremiumArticles articles={latestArticles} />
       </DeferredSection>
 
       {/* Premium CTA Bottom Banner */}
-      <DeferredSection fallbackHeight="min-h-[350px]">
+      <DeferredSection fallbackHeight="min-h-[250px]">
         <PremiumCTA />
       </DeferredSection>
     </div>

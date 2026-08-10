@@ -65,18 +65,18 @@ const FEATURES = [
 
 export const PremiumWhyChoose: React.FC = () => {
   return (
-    <section className="relative py-24 sm:py-32 bg-[#08090E] border-b border-white/[0.08] overflow-hidden">
+    <section className="relative py-12 sm:py-16 bg-[#08090E] border-b border-white/[0.08] overflow-hidden">
       {/* Soft Background Ambient Light */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-red-600/5 blur-[140px] rounded-full pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
-        <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-semibold text-red-400 mb-4 shadow-sm"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-semibold text-red-400 mb-3 shadow-sm"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
             <span>Architected for Modern Teams</span>
@@ -87,7 +87,7 @@ export const PremiumWhyChoose: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: 0.08 }}
-            className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mb-5"
+            className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight mb-3"
           >
             Why Millions Trust SmartPDF AI
           </motion.h2>
@@ -97,14 +97,14 @@ export const PremiumWhyChoose: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: 0.16 }}
-            className="text-slate-300 text-base sm:text-lg leading-relaxed font-normal"
+            className="text-slate-300 text-sm sm:text-base leading-relaxed font-normal"
           >
             Combining local WebAssembly execution with cloud AI capabilities to deliver unmatched security, speed, and document precision.
           </motion.p>
         </div>
 
         {/* Bento / Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {FEATURES.map((feature, idx) => {
             const IconComp = feature.icon;
 
@@ -115,31 +115,31 @@ export const PremiumWhyChoose: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: idx * 0.06 }}
-                whileHover={{ y: -6, scale: 1.01 }}
-                className="group relative p-8 rounded-[24px] bg-[#10111A]/90 hover:bg-[#151624] border border-white/10 hover:border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300 backdrop-blur-xl flex flex-col justify-between"
+                whileHover={{ y: -4, scale: 1.01 }}
+                className="group relative p-5.5 sm:p-6 rounded-[20px] bg-[#10111A]/90 hover:bg-[#151624] border border-white/10 hover:border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300 backdrop-blur-xl flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className={`w-13 h-13 rounded-2xl bg-gradient-to-br ${feature.iconBg} border flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
-                      <IconComp className="w-6.5 h-6.5" />
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feature.iconBg} border flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
+                      <IconComp className="w-5.5 h-5.5" />
                     </div>
 
-                    <span className={`px-3 py-1 text-[11px] font-bold rounded-full border ${feature.badgeColor}`}>
+                    <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${feature.badgeColor}`}>
                       {feature.badge}
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-white mb-3 tracking-tight group-hover:text-red-400 transition-colors">
+                  <h3 className="text-lg font-bold text-white mb-2 tracking-tight group-hover:text-red-400 transition-colors">
                     {feature.title}
                   </h3>
 
-                  <p className="text-sm text-slate-300/80 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-slate-300/80 leading-relaxed font-normal">
                     {feature.description}
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-2 text-xs font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <div className="mt-4 pt-3 border-t border-white/5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Verified Client Architecture</span>
                 </div>
               </motion.div>
