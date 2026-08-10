@@ -5,7 +5,7 @@ import { ShieldCheck, Github, Linkedin, Twitter, Heart } from 'lucide-react';
 export const Footer: React.FC = React.memo(() => {
   return (
     <footer className="bg-[#08090d] text-slate-400 border-t border-white/[0.06] pt-12 pb-8 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-8 pb-10 border-b border-white/[0.06]">
           
           {/* Column 1: Brand Info */}

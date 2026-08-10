@@ -55,7 +55,7 @@ export const PremiumHero: React.FC<PremiumHeroProps> = React.memo(({ searchQuery
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-red-500/10 via-rose-500/5 to-transparent blur-[120px] rounded-full pointer-events-none" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+      <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <div className="text-center max-w-2xl mx-auto">
           {/* Eyebrow */}
           <motion.div

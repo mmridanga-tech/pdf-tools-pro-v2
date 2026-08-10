@@ -15,7 +15,7 @@ export const PremiumArticles: React.FC<PremiumArticlesProps> = React.memo(({ art
 
   return (
     <section className="py-10 sm:py-12 bg-[#08090d] border-b border-white/[0.06] relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 pb-3 border-b border-white/[0.06] gap-3">
           <div>
