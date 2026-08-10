@@ -25,7 +25,7 @@ const TRUST_PILLARS = [
 
 export const PremiumWhyChoose: React.FC = () => {
   return (
-    <section className="relative py-10 sm:py-12 bg-[#08090d] border-b border-white/[0.06] overflow-hidden">
+    <section className="relative py-10 sm:py-14 bg-[#08090d] border-b border-white/[0.06] overflow-hidden">
       <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 z-10">
         {/* Header */}
         <div className="text-center max-w-lg mx-auto mb-8 sm:mb-10">

@@ -124,7 +124,7 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
   const isFiltering = Boolean(searchQuery || selectedCategory !== 'all');
 
   return (
-    <section id="tools-section" className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
+    <section id="tools-section" className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-6">
       {/* Compact Favorites Strip */}
       {favoriteTools.length > 0 && !isFiltering && (
         <motion.div
