@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { SEO } from '../components/SEO';
 import { PremiumHero } from '../components/home/PremiumHero';
 import { PremiumToolGrid } from '../components/home/PremiumToolGrid';
-import { PremiumStats } from '../components/home/PremiumStats';
 import { PremiumWhyChoose } from '../components/home/PremiumWhyChoose';
 import { PremiumArticles } from '../components/home/PremiumArticles';
 import { PremiumCTA } from '../components/home/PremiumCTA';
@@ -54,7 +53,7 @@ export const Home: React.FC = () => {
   }, [searchQuery, selectedCategory]);
 
   return (
-    <div className="min-h-screen bg-[#06070B] text-slate-100 font-sans selection:bg-red-500/30 selection:text-white">
+    <div className="min-h-screen bg-[#08090d] text-slate-100 font-sans selection:bg-red-500/30 selection:text-white">
       <SEO
         title="SmartPDF AI - Next-Gen Commercial Browser PDF Utility Suite"
         description="Merge, split, compress, protect, unlock, OCR, and convert PDF documents easily online with zero server uploads."
@@ -64,12 +63,7 @@ export const Home: React.FC = () => {
       {/* Premium Hero Section */}
       <PremiumHero searchQuery={searchQuery} onSearchChange={handleSearchChange} />
 
-      {/* Premium Key Statistics */}
-      <DeferredSection fallbackHeight="min-h-[150px]">
-        <PremiumStats />
-      </DeferredSection>
-
-      {/* Premium Tools Catalog & Spotlights */}
+      {/* Premium Tools Catalog (Favorites, Featured 6, Expandable Suite) */}
       <PremiumToolGrid
         tools={filteredTools}
         searchQuery={searchQuery}
@@ -80,18 +74,18 @@ export const Home: React.FC = () => {
         onToggleFavorite={handleToggleFavorite}
       />
 
-      {/* Premium Why Choose SmartPDF AI Section */}
-      <DeferredSection fallbackHeight="min-h-[380px]">
+      {/* Premium Why Choose SmartPDF AI (3 Compact Trust Pillars) */}
+      <DeferredSection fallbackHeight="min-h-[220px]">
         <PremiumWhyChoose />
       </DeferredSection>
 
-      {/* Premium Latest Articles & Guides Section */}
-      <DeferredSection fallbackHeight="min-h-[360px]">
+      {/* Premium Latest Articles & Guides Section (3 Latest Cards) */}
+      <DeferredSection fallbackHeight="min-h-[300px]">
         <PremiumArticles articles={latestArticles} />
       </DeferredSection>
 
       {/* Premium CTA Bottom Banner */}
-      <DeferredSection fallbackHeight="min-h-[250px]">
+      <DeferredSection fallbackHeight="min-h-[200px]">
         <PremiumCTA />
       </DeferredSection>
     </div>

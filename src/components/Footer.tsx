@@ -1,25 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Sparkles, Zap, Github, Linkedin, Twitter, Heart, Lock, Layers, Scissors, Minimize2, FileText, FileType, Image, ScanText, Bot, FileSearch } from 'lucide-react';
+import { ShieldCheck, Github, Linkedin, Twitter, Heart } from 'lucide-react';
 
 export const Footer: React.FC = React.memo(() => {
   return (
-    <footer className="bg-[#06070B] text-slate-400 border-t border-slate-800/80 pt-16 pb-12 relative overflow-hidden">
-      {/* Background ambient lighting */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-48 pointer-events-none opacity-15">
-        <div className="absolute bottom-0 left-1/3 w-96 h-32 bg-red-600/30 rounded-full blur-3xl" />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-slate-800/80">
+    <footer className="bg-[#08090d] text-slate-400 border-t border-white/[0.06] pt-12 pb-8 relative">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-8 pb-10 border-b border-white/[0.06]">
           
           {/* Column 1: Brand Info */}
-          <div className="col-span-2 sm:col-span-2 lg:col-span-1 space-y-4">
-            <Link to="/" className="flex items-center gap-2.5 group w-fit">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-rose-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-red-600/25 group-hover:scale-105 transition-transform">
+          <div className="col-span-2 sm:col-span-2 md:col-span-2 space-y-3 pr-0 md:pr-4">
+            <Link to="/" className="flex items-center gap-2 group w-fit">
+              <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center text-white font-bold text-base group-hover:bg-red-500 transition-colors">
                 S
               </div>
-              <span className="text-xl font-extrabold text-white tracking-tight">
+              <span className="text-base font-bold text-white tracking-tight">
                 SmartPDF <span className="text-red-500">AI</span>
               </span>
             </Link>
@@ -28,167 +23,154 @@ export const Footer: React.FC = React.memo(() => {
               Enterprise-grade PDF productivity platform running 100% locally in your browser with on-device conversion, OCR, and AI insights.
             </p>
 
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-400 bg-emerald-950/30 px-3 py-1.5 rounded-xl border border-emerald-800/40 w-fit">
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 w-fit">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
               <span>100% Client-Side & Private</span>
             </div>
 
-            {/* Social Icons with Touch Target */}
-            <div className="flex items-center gap-2.5 pt-1">
+            {/* Social Icons */}
+            <div className="flex items-center gap-2 pt-1">
               <a
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub Repository"
-                className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
+                className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] hover:text-white text-slate-400 flex items-center justify-center transition-all cursor-pointer"
               >
-                <Github className="w-4 h-4" />
+                <Github className="w-3.5 h-3.5" />
               </a>
               <a
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn Profile"
-                className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
+                className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] hover:text-white text-slate-400 flex items-center justify-center transition-all cursor-pointer"
               >
-                <Linkedin className="w-4 h-4" />
+                <Linkedin className="w-3.5 h-3.5" />
               </a>
               <a
                 href="https://x.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="X Twitter"
-                className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
+                className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] hover:text-white text-slate-400 flex items-center justify-center transition-all cursor-pointer"
               >
-                <Twitter className="w-4 h-4" />
+                <Twitter className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
 
-          {/* Column 2: Popular PDF Tools */}
+          {/* Column 2: Popular Tools */}
           <div className="col-span-1">
-            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              Popular PDF Tools
+            <h3 className="text-[11px] font-semibold text-slate-200 uppercase tracking-wider mb-3">
+              Tools
             </h3>
-            <ul className="space-y-1.5 sm:space-y-2.5 text-xs font-medium">
+            <ul className="space-y-2 text-xs font-normal">
               <li>
-                <Link to="/merge" className="hover:text-red-400 transition-colors flex items-center gap-2 py-1.5 sm:py-0">
-                  <Layers className="w-3.5 h-3.5 text-slate-500 shrink-0" /> Merge PDF
+                <Link to="/merge" className="text-slate-400 hover:text-white transition-colors block">
+                  Merge PDF
                 </Link>
               </li>
               <li>
-                <Link to="/split" className="hover:text-red-400 transition-colors flex items-center gap-2 py-1.5 sm:py-0">
-                  <Scissors className="w-3.5 h-3.5 text-slate-500 shrink-0" /> Split PDF
+                <Link to="/split" className="text-slate-400 hover:text-white transition-colors block">
+                  Split PDF
                 </Link>
               </li>
               <li>
-                <Link to="/compress" className="hover:text-red-400 transition-colors flex items-center gap-2 py-1.5 sm:py-0">
-                  <Minimize2 className="w-3.5 h-3.5 text-slate-500 shrink-0" /> Compress PDF
+                <Link to="/compress" className="text-slate-400 hover:text-white transition-colors block">
+                  Compress PDF
                 </Link>
               </li>
               <li>
-                <Link to="/pdf-to-word" className="hover:text-red-400 transition-colors flex items-center gap-2 py-1.5 sm:py-0">
-                  <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" /> PDF to Word
+                <Link to="/pdf-to-word" className="text-slate-400 hover:text-white transition-colors block">
+                  PDF to Word
                 </Link>
               </li>
               <li>
-                <Link to="/word-to-pdf" className="hover:text-red-400 transition-colors flex items-center gap-2 py-1.5 sm:py-0">
-                  <FileType className="w-3.5 h-3.5 text-slate-500 shrink-0" /> Word to PDF
+                <Link to="/word-to-pdf" className="text-slate-400 hover:text-white transition-colors block">
+                  Word to PDF
                 </Link>
               </li>
               <li>
-                <Link to="/image-to-pdf" className="hover:text-red-400 transition-colors flex items-center gap-2 py-1.5 sm:py-0">
-                  <Image className="w-3.5 h-3.5 text-slate-500 shrink-0" /> Image to PDF
+                <Link to="/image-to-pdf" className="text-slate-400 hover:text-white transition-colors block">
+                  Image to PDF
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: AI Tools */}
+          {/* Column 3: AI & Intelligence */}
           <div className="col-span-1">
-            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+            <h3 className="text-[11px] font-semibold text-slate-200 uppercase tracking-wider mb-3">
               AI Tools
             </h3>
-            <ul className="space-y-1.5 sm:space-y-2.5 text-xs font-medium">
+            <ul className="space-y-2 text-xs font-normal">
               <li>
-                <Link to="/ai-assistant" className="hover:text-purple-400 transition-colors flex items-center gap-2 text-purple-400 font-semibold py-1.5 sm:py-0">
-                  <Zap className="w-3.5 h-3.5 text-purple-400 shrink-0" /> AI Assistant
+                <Link to="/ai-assistant" className="text-slate-400 hover:text-white transition-colors block">
+                  AI Assistant
                 </Link>
               </li>
               <li>
-                <Link to="/ai-chat" className="hover:text-amber-400 transition-colors flex items-center gap-2 text-amber-400 font-semibold py-1.5 sm:py-0">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" /> AI PDF Chat
+                <Link to="/ai-chat" className="text-slate-400 hover:text-white transition-colors block">
+                  AI PDF Chat
                 </Link>
               </li>
               <li>
-                <Link to="/ocr-pdf" className="hover:text-red-400 transition-colors flex items-center gap-2 py-1.5 sm:py-0">
-                  <ScanText className="w-3.5 h-3.5 text-slate-500 shrink-0" /> OCR PDF
+                <Link to="/ocr-pdf" className="text-slate-400 hover:text-white transition-colors block">
+                  OCR PDF
                 </Link>
               </li>
               <li>
-                <Link to="/analyzer" className="hover:text-red-400 transition-colors flex items-center gap-2 py-1.5 sm:py-0">
-                  <FileSearch className="w-3.5 h-3.5 text-slate-500 shrink-0" /> Doc Analyzer
+                <Link to="/analyzer" className="text-slate-400 hover:text-white transition-colors block">
+                  Doc Analyzer
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 4: Company */}
+          {/* Column 4: Company & Legal */}
           <div className="col-span-1">
-            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-              Company
+            <h3 className="text-[11px] font-semibold text-slate-200 uppercase tracking-wider mb-3">
+              Company & Legal
             </h3>
-            <ul className="space-y-1.5 sm:space-y-2.5 text-xs font-medium">
+            <ul className="space-y-2 text-xs font-normal">
               <li>
-                <Link to="/about" className="hover:text-red-400 transition-colors block py-1.5 sm:py-0">
+                <Link to="/about" className="text-slate-400 hover:text-white transition-colors block">
                   About
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-red-400 transition-colors block py-1.5 sm:py-0">
+                <Link to="/contact" className="text-slate-400 hover:text-white transition-colors block">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link to="/editorial-policy" className="hover:text-red-400 transition-colors block py-1.5 sm:py-0">
+                <Link to="/editorial-policy" className="text-slate-400 hover:text-white transition-colors block">
                   Editorial Policy
                 </Link>
               </li>
               <li>
-                <Link to="/review-process" className="hover:text-red-400 transition-colors block py-1.5 sm:py-0">
+                <Link to="/review-process" className="text-slate-400 hover:text-white transition-colors block">
                   Review Process
                 </Link>
               </li>
               <li>
-                <Link to="/ai-content-policy" className="hover:text-red-400 transition-colors block py-1.5 sm:py-0">
+                <Link to="/ai-content-policy" className="text-slate-400 hover:text-white transition-colors block">
                   AI Content Policy
                 </Link>
               </li>
-            </ul>
-          </div>
-
-          {/* Column 5: Legal */}
-          <div className="col-span-1">
-            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-              Legal
-            </h3>
-            <ul className="space-y-1.5 sm:space-y-2.5 text-xs font-medium">
               <li>
-                <Link to="/privacy" className="hover:text-red-400 transition-colors block py-1.5 sm:py-0">
+                <Link to="/privacy" className="text-slate-400 hover:text-white transition-colors block">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="hover:text-red-400 transition-colors block py-1.5 sm:py-0">
+                <Link to="/terms" className="text-slate-400 hover:text-white transition-colors block">
                   Terms
                 </Link>
               </li>
               <li>
-                <Link to="/cookies" className="hover:text-red-400 transition-colors block py-1.5 sm:py-0">
+                <Link to="/cookies" className="text-slate-400 hover:text-white transition-colors block">
                   Cookie Policy
                 </Link>
               </li>
@@ -198,17 +180,17 @@ export const Footer: React.FC = React.memo(() => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-3">
           <p>© 2026 SmartPDF AI. All rights reserved.</p>
 
-          <p className="flex items-center gap-1.5 text-slate-400 font-medium">
+          <p className="flex items-center gap-1 text-slate-400">
             <span>Made with</span>
-            <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-pulse" />
-            <span>by <strong className="text-slate-200">SmartPDF AI</strong></span>
+            <Heart className="w-3 h-3 text-red-500 fill-red-500" />
+            <span>by <strong className="text-slate-300">SmartPDF AI</strong></span>
           </p>
 
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-400 text-[11px]">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-slate-400 text-[10px]">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               v2.6.0 (Production)
             </span>
@@ -219,4 +201,5 @@ export const Footer: React.FC = React.memo(() => {
     </footer>
   );
 });
+
 

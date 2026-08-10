@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Settings,
   HelpCircle,
+  BookOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PDF_TOOLS } from '../utils/toolsData';
@@ -27,22 +28,60 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+
+  const moreDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   const { user, openAuthModal, logout } = useAuth();
   const location = useLocation();
   const activePath = location.pathname;
 
-  // Global Keyboard Listener for Cmd+K / Ctrl+K
+  // Global Keyboard Listener & Click Outside Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setCommandPaletteOpen((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        setMoreDropdownOpen(false);
+        setUserDropdownOpen(false);
       }
     };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        moreDropdownRef.current &&
+        !moreDropdownRef.current.contains(event.target as Node)
+      ) {
+        setMoreDropdownOpen(false);
+      }
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target as Node)
+      ) {
+        setUserDropdownOpen(false);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
+
+  const isMoreActive = [
+    '/dashboard',
+    '/team',
+    '/cloud-storage',
+    '/pricing',
+    '/blog',
+    '/admin',
+  ].some((path) =>
+    path === '/blog' ? activePath.startsWith('/blog') : activePath === path
+  );
 
   return (
     <>
@@ -54,31 +93,33 @@ export const Navbar: React.FC = () => {
         Skip to main content
       </a>
 
-      <header className="sticky top-0 z-40 bg-[#0C0C0E]/90 backdrop-blur-md border-b border-slate-800/60 transition-all">
+      <header className="sticky top-0 z-40 bg-[#08090d]/85 backdrop-blur-md border-b border-white/[0.06] transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Brand Logo */}
-            <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+            <Link to="/" className="flex items-center gap-2 group shrink-0">
               <motion.div
-                whileHover={{ scale: 1.05, rotate: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-9 h-9 rounded-xl bg-gradient-to-tr from-red-600 to-rose-500 flex items-center justify-center font-black text-white text-lg shadow-md shadow-red-600/30"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-600 text-white font-extrabold flex items-center justify-center text-sm shadow-sm"
               >
                 S
               </motion.div>
               <div>
-                <span className="text-xl font-extrabold tracking-tight text-white">
+                <span className="text-base sm:text-lg font-bold tracking-tight text-white">
                   SmartPDF <span className="text-red-500">AI</span>
                 </span>
               </div>
             </Link>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden xl:flex items-center gap-1">
+            {/* Desktop Primary Navigation */}
+            <nav className="hidden lg:flex items-center gap-1">
               <Link
                 to="/"
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  activePath === '/' ? 'text-red-400 font-bold' : 'text-slate-400 hover:text-white'
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  activePath === '/'
+                    ? 'text-white font-semibold bg-white/[0.06]'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.03]'
                 }`}
               >
                 Tools Suite
@@ -86,122 +127,186 @@ export const Navbar: React.FC = () => {
 
               <Link
                 to="/ai-chat"
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
                   activePath === '/ai-chat'
-                    ? 'text-red-400 bg-red-500/10 border border-red-500/20'
-                    : 'text-amber-400 hover:text-amber-300'
+                    ? 'text-red-400 font-semibold bg-white/[0.06]'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.03]'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5" /> AI Chat
+                <Sparkles className="w-3.5 h-3.5 text-red-400" /> AI Chat
               </Link>
 
               <Link
                 to="/ai-assistant"
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
                   activePath === '/ai-assistant'
-                    ? 'text-red-400 bg-red-500/10 border border-red-500/20'
-                    : 'text-purple-400 hover:text-purple-300'
+                    ? 'text-red-400 font-semibold bg-white/[0.06]'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.03]'
                 }`}
               >
-                <Zap className="w-3.5 h-3.5" /> AI Tools
+                <Zap className="w-3.5 h-3.5 text-slate-400" /> AI Tools
               </Link>
 
               <Link
                 to="/document-analyzer"
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
                   activePath === '/document-analyzer'
-                    ? 'text-red-400 bg-red-500/10 border border-red-500/20'
-                    : 'text-emerald-400 hover:text-emerald-300'
+                    ? 'text-red-400 font-semibold bg-white/[0.06]'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.03]'
                 }`}
               >
-                <ShieldCheck className="w-3.5 h-3.5" /> Doc Analyzer
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" /> Doc Analyzer
               </Link>
 
-              <Link
-                to="/dashboard"
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  activePath === '/dashboard' ? 'text-red-400 font-bold' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Dashboard
-              </Link>
-
-              <Link
-                to="/team"
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  activePath === '/team' ? 'text-red-400 font-bold' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Team
-              </Link>
-
-              <Link
-                to="/cloud-storage"
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  activePath === '/cloud-storage' ? 'text-red-400 font-bold' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Cloud Sync
-              </Link>
-
-              <Link
-                to="/pricing"
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  activePath === '/pricing' ? 'text-red-400 font-bold' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Pricing
-              </Link>
-
-              <Link
-                to="/blog"
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  activePath.startsWith('/blog') ? 'text-red-400 font-bold' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Blog
-              </Link>
-
-              {user?.role === 'admin' && (
-                <Link
-                  to="/admin"
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors text-red-500 hover:text-red-400 ${
-                    activePath === '/admin' ? 'bg-red-500/10 border border-red-500/20' : ''
+              {/* More Dropdown */}
+              <div className="relative" ref={moreDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMoreDropdownOpen((prev) => !prev);
+                    setUserDropdownOpen(false);
+                  }}
+                  aria-expanded={moreDropdownOpen}
+                  aria-haspopup="true"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer ${
+                    isMoreActive || moreDropdownOpen
+                      ? 'text-white bg-white/[0.06] font-semibold'
+                      : 'text-slate-300 hover:text-white hover:bg-white/[0.03]'
                   }`}
                 >
-                  Admin
-                </Link>
-              )}
+                  <span>More</span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                      moreDropdownOpen ? 'rotate-180 text-white' : ''
+                    }`}
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {moreDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, y: 4 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute left-0 mt-2 w-48 bg-[#0e0f15] border border-white/[0.08] rounded-xl p-1 shadow-2xl z-50 space-y-0.5"
+                    >
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setMoreDropdownOpen(false)}
+                        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          activePath === '/dashboard'
+                            ? 'text-white bg-white/[0.08] font-semibold'
+                            : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <LayoutDashboard className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Dashboard</span>
+                      </Link>
+
+                      <Link
+                        to="/team"
+                        onClick={() => setMoreDropdownOpen(false)}
+                        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          activePath === '/team'
+                            ? 'text-white bg-white/[0.08] font-semibold'
+                            : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Team</span>
+                      </Link>
+
+                      <Link
+                        to="/cloud-storage"
+                        onClick={() => setMoreDropdownOpen(false)}
+                        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          activePath === '/cloud-storage'
+                            ? 'text-white bg-white/[0.08] font-semibold'
+                            : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <Cloud className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Cloud Sync</span>
+                      </Link>
+
+                      <Link
+                        to="/pricing"
+                        onClick={() => setMoreDropdownOpen(false)}
+                        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          activePath === '/pricing'
+                            ? 'text-white bg-white/[0.08] font-semibold'
+                            : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <Zap className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Pricing</span>
+                      </Link>
+
+                      <Link
+                        to="/blog"
+                        onClick={() => setMoreDropdownOpen(false)}
+                        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          activePath.startsWith('/blog')
+                            ? 'text-white bg-white/[0.08] font-semibold'
+                            : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Blog</span>
+                      </Link>
+
+                      {user?.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setMoreDropdownOpen(false)}
+                          className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-white/[0.04] transition-colors ${
+                            activePath === '/admin' ? 'bg-white/[0.08]' : ''
+                          }`}
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          <span>Admin</span>
+                        </Link>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </nav>
 
             {/* Right Header Actions */}
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              {/* Command Palette Button (Mobile & Desktop) */}
+            <div className="flex items-center gap-2">
+              {/* Command Palette Button */}
               <button
                 onClick={() => setCommandPaletteOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 sm:py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-xl border border-slate-800 transition-colors shadow-sm cursor-pointer min-h-[40px] sm:min-h-0"
+                className="flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.03] hover:bg-white/[0.06] text-slate-400 hover:text-slate-200 text-xs font-medium rounded-lg border border-white/[0.08] transition-colors cursor-pointer"
                 aria-label="Search tools"
               >
-                <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <span className="hidden sm:inline">Search</span>
-                <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 bg-slate-950 rounded border border-slate-800">
+                <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-mono font-semibold text-slate-500 bg-white/[0.04] rounded border border-white/[0.08]">
                   ⌘K
                 </kbd>
               </button>
 
               {/* User Account / Auth Dropdown */}
               {user ? (
-                <div className="relative">
+                <div className="relative" ref={userDropdownRef}>
                   <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 pl-2.5 bg-[#18181d] hover:bg-[#202028] border border-slate-800 rounded-2xl transition-colors cursor-pointer min-h-[40px]"
+                    onClick={() => {
+                      setUserDropdownOpen(!userDropdownOpen);
+                      setMoreDropdownOpen(false);
+                    }}
+                    aria-expanded={userDropdownOpen}
+                    aria-haspopup="true"
+                    className="flex items-center gap-2 p-1 pl-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] rounded-xl transition-colors cursor-pointer"
                   >
                     <img
                       src={user.avatar}
                       alt={user.name}
-                      className="w-7 h-7 rounded-full object-cover ring-1 ring-red-500/40"
+                      className="w-6 h-6 rounded-full object-cover ring-1 ring-red-500/40"
                     />
-                    <span className="text-xs font-bold text-white hidden sm:inline-block">
+                    <span className="text-xs font-medium text-slate-200 hidden sm:inline-block">
                       {user.name.split(' ')[0]}
                     </span>
                     <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -210,15 +315,15 @@ export const Navbar: React.FC = () => {
                   <AnimatePresence>
                     {userDropdownOpen && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 5 }}
+                        initial={{ opacity: 0, scale: 0.96, y: 5 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 5 }}
-                        className="absolute right-0 mt-2 w-60 bg-[#121215] border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 space-y-1"
+                        exit={{ opacity: 0, scale: 0.96, y: 5 }}
+                        className="absolute right-0 mt-2 w-56 bg-[#0e0f15] border border-white/[0.08] rounded-xl p-1.5 shadow-2xl z-50 space-y-1"
                       >
-                        <div className="px-3 py-2 border-b border-slate-800/80 mb-1">
-                          <p className="text-xs font-bold text-white">{user.name}</p>
+                        <div className="px-2.5 py-1.5 border-b border-white/[0.06] mb-1">
+                          <p className="text-xs font-semibold text-white">{user.name}</p>
                           <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
-                          <span className="mt-1.5 inline-block px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-gradient-to-r from-red-600 to-amber-600 text-white">
+                          <span className="mt-1 inline-block px-2 py-0.5 text-[9px] font-semibold rounded bg-red-500/20 text-red-400 border border-red-500/30">
                             {user.plan} Plan
                           </span>
                         </div>
@@ -226,50 +331,50 @@ export const Navbar: React.FC = () => {
                         <Link
                           to="/dashboard"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
+                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors"
                         >
-                          <LayoutDashboard className="w-4 h-4 text-slate-400" /> Dashboard & History
+                          <LayoutDashboard className="w-3.5 h-3.5 text-slate-400" /> Dashboard & History
                         </Link>
 
                         <Link
                           to="/settings"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
+                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors"
                         >
-                          <Settings className="w-4 h-4 text-slate-400" /> Settings
+                          <Settings className="w-3.5 h-3.5 text-slate-400" /> Settings
                         </Link>
 
                         <Link
                           to="/help"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
+                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors"
                         >
-                          <HelpCircle className="w-4 h-4 text-slate-400" /> Help & Support
+                          <HelpCircle className="w-3.5 h-3.5 text-slate-400" /> Help & Support
                         </Link>
 
                         <Link
                           to="/team"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
+                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors"
                         >
-                          <Users className="w-4 h-4 text-slate-400" /> Team Workspace
+                          <Users className="w-3.5 h-3.5 text-slate-400" /> Team Workspace
                         </Link>
 
                         <Link
                           to="/pricing"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
+                          className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-white/[0.04] rounded-lg transition-colors"
                         >
-                          <Zap className="w-4 h-4" /> Upgrade Plan
+                          <Zap className="w-3.5 h-3.5" /> Upgrade Plan
                         </Link>
 
                         {user.role === 'admin' && (
                           <Link
                             to="/admin"
                             onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-slate-800/60 rounded-xl transition-colors min-h-[40px]"
+                            className="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-white/[0.04] rounded-lg transition-colors"
                           >
-                            <ShieldAlert className="w-4 h-4" /> Admin Console
+                            <ShieldAlert className="w-3.5 h-3.5" /> Admin Console
                           </Link>
                         )}
 
@@ -278,9 +383,9 @@ export const Navbar: React.FC = () => {
                             logout();
                             setUserDropdownOpen(false);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition-colors text-left cursor-pointer mt-1 border-t border-slate-800/60 min-h-[40px]"
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-left cursor-pointer mt-1 border-t border-white/[0.06]"
                         >
-                          <LogOut className="w-4 h-4" /> Log Out
+                          <LogOut className="w-3.5 h-3.5" /> Log Out
                         </button>
                       </motion.div>
                     )}
@@ -289,7 +394,7 @@ export const Navbar: React.FC = () => {
               ) : (
                 <button
                   onClick={() => openAuthModal('login')}
-                  className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-2xl text-xs font-bold shadow-md transition-all cursor-pointer min-h-[40px]"
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-sm"
                 >
                   Sign In
                 </button>
@@ -298,10 +403,10 @@ export const Navbar: React.FC = () => {
               {/* Mobile Hamburger Menu Toggle */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="xl:hidden p-2.5 rounded-xl text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                className="lg:hidden p-2 rounded-lg text-slate-300 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition-colors flex items-center justify-center cursor-pointer"
                 aria-label="Toggle navigation menu"
               >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -314,16 +419,16 @@ export const Navbar: React.FC = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="xl:hidden border-b border-slate-800 bg-[#0C0C0E] px-4 pt-3 pb-6 space-y-2.5 shadow-2xl max-h-[85vh] overflow-y-auto"
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="lg:hidden border-b border-white/[0.08] bg-[#08090d] px-4 pt-3 pb-6 space-y-2 shadow-2xl max-h-[85vh] overflow-y-auto"
             >
-              <p className="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+              <p className="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 Main Navigation
               </p>
               <Link
                 to="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-200 font-bold text-sm min-h-[44px]"
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.04] text-slate-200 font-medium text-sm min-h-[44px]"
               >
                 <span>Tools Suite</span>
                 <ArrowRight className="w-4 h-4 text-slate-500" />
@@ -331,7 +436,7 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm min-h-[44px]"
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.04] text-slate-300 font-medium text-sm min-h-[44px]"
               >
                 <span>Dashboard & History</span>
                 <ArrowRight className="w-4 h-4 text-slate-500" />
@@ -339,37 +444,37 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/ai-chat"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3.5 rounded-xl bg-amber-500/5 hover:bg-amber-500/10 text-amber-400 font-bold text-sm border border-amber-500/20 min-h-[44px]"
+                className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-slate-200 font-medium text-sm border border-white/[0.08] min-h-[44px]"
               >
                 <span className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-400" /> AI PDF Chat
+                  <Sparkles className="w-4 h-4 text-red-400" /> AI PDF Chat
                 </span>
-                <ArrowRight className="w-4 h-4 text-amber-400" />
+                <ArrowRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 to="/ai-assistant"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3.5 rounded-xl bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 font-bold text-sm border border-purple-500/20 min-h-[44px]"
+                className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-slate-200 font-medium text-sm border border-white/[0.08] min-h-[44px]"
               >
                 <span className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-purple-400" /> AI Assistant Suite
+                  <Zap className="w-4 h-4 text-slate-400" /> AI Assistant Suite
                 </span>
-                <ArrowRight className="w-4 h-4 text-purple-400" />
+                <ArrowRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 to="/document-analyzer"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 min-h-[44px]"
+                className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-slate-200 font-medium text-sm border border-white/[0.08] min-h-[44px]"
               >
                 <span className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> Doc Analyzer
+                  <ShieldCheck className="w-4 h-4 text-slate-400" /> Doc Analyzer
                 </span>
-                <ArrowRight className="w-4 h-4 text-emerald-400" />
+                <ArrowRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 to="/team"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm min-h-[44px]"
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.04] text-slate-300 font-medium text-sm min-h-[44px]"
               >
                 <span>Team Workspaces</span>
                 <Users className="w-4 h-4 text-slate-500" />
@@ -377,7 +482,7 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/pricing"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm min-h-[44px]"
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.04] text-slate-300 font-medium text-sm min-h-[44px]"
               >
                 <span>Pricing Plans</span>
                 <ArrowRight className="w-4 h-4 text-slate-500" />
@@ -385,41 +490,41 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/blog"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-900 text-slate-300 font-bold text-sm min-h-[44px]"
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.04] text-slate-300 font-medium text-sm min-h-[44px]"
               >
                 <span>Knowledge Hub & Articles</span>
                 <ArrowRight className="w-4 h-4 text-slate-500" />
               </Link>
 
-              <p className="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider pt-3 mb-1">
+              <p className="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider pt-3 mb-1">
                 Company & Legal
               </p>
-              <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-300">
+              <div className="grid grid-cols-2 gap-2 text-xs font-medium text-slate-300">
                 <Link
                   to="/about"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center min-h-[44px]"
+                  className="p-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:bg-white/[0.06] flex items-center min-h-[44px]"
                 >
                   About Us
                 </Link>
                 <Link
                   to="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center min-h-[44px]"
+                  className="p-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:bg-white/[0.06] flex items-center min-h-[44px]"
                 >
                   Contact Us
                 </Link>
                 <Link
                   to="/privacy"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center min-h-[44px]"
+                  className="p-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:bg-white/[0.06] flex items-center min-h-[44px]"
                 >
                   Privacy Policy
                 </Link>
                 <Link
                   to="/terms"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center min-h-[44px]"
+                  className="p-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:bg-white/[0.06] flex items-center min-h-[44px]"
                 >
                   Terms & Conditions
                 </Link>

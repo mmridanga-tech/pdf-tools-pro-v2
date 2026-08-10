@@ -1,147 +1,77 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import {
-  ShieldCheck,
-  Sparkles,
-  Zap,
-  HardDriveDownload,
-  Smartphone,
-  Lock,
-  EyeOff,
-  CheckCircle2,
-  Cpu,
-} from 'lucide-react';
+import { Shield, Zap, Sparkles } from 'lucide-react';
 
-const FEATURES = [
+const TRUST_PILLARS = [
   {
-    title: 'Client-Side Privacy',
-    description: 'All document operations execute directly inside your browser memory. Your confidential files never reach external servers.',
-    icon: EyeOff,
-    badge: '100% On-Device',
-    badgeColor: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
-    iconBg: 'from-rose-500/20 to-pink-600/10 text-rose-400 border-rose-500/30',
+    title: 'PRIVATE',
+    description: 'Local/browser-first document processing. Files remain on your device where supported.',
+    icon: Shield,
+    iconColor: 'text-slate-300',
   },
   {
-    title: 'Gemini AI Intelligence',
-    description: 'Harness advanced Gemini AI for automated OCR text extraction, document summarizing, smart rewriting, and interactive PDF chats.',
-    icon: Sparkles,
-    badge: 'Gemini Powered',
-    badgeColor: 'text-purple-300 bg-purple-500/10 border-purple-500/30',
-    iconBg: 'from-purple-500/20 to-indigo-600/10 text-purple-400 border-purple-500/30',
-  },
-  {
-    title: 'WebAssembly Processing',
-    description: 'Zero network upload delay. Multi-megabyte PDF merging, splitting, compression, and conversion execute in milliseconds.',
+    title: 'FAST',
+    description: 'Optimized browser and WebAssembly execution for rapid document workflows.',
     icon: Zap,
-    badge: 'Sub-Second Speed',
-    badgeColor: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-    iconBg: 'from-amber-500/20 to-orange-600/10 text-amber-400 border-amber-500/30',
+    iconColor: 'text-slate-300',
   },
   {
-    title: 'Zero Software Installation',
-    description: 'Full-featured professional PDF suite available instantly in your browser without desktop downloads or extension setups.',
-    icon: HardDriveDownload,
-    badge: 'Web Native',
-    badgeColor: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-    iconBg: 'from-sky-500/20 to-blue-600/10 text-sky-400 border-sky-500/30',
-  },
-  {
-    title: 'Cross-Platform Unity',
-    description: 'Designed fluidly for desktop, tablet, and mobile browsers across macOS, Windows, Linux, iOS, and Android.',
-    icon: Smartphone,
-    badge: 'All Devices',
-    badgeColor: 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30',
-    iconBg: 'from-indigo-500/20 to-blue-600/10 text-indigo-400 border-indigo-500/30',
-  },
-  {
-    title: 'Bank-Grade Security',
-    description: 'Encrypt PDFs with 256-bit AES encryption, set printing permissions, and unlock protected documents with full confidence.',
-    icon: Lock,
-    badge: 'AES 256-Bit',
-    badgeColor: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-    iconBg: 'from-emerald-500/20 to-teal-600/10 text-emerald-400 border-emerald-500/30',
+    title: 'AI POWERED',
+    description: 'Intelligent document workflows using Gemini AI for chat, summaries, and OCR.',
+    icon: Sparkles,
+    iconColor: 'text-red-400',
   },
 ];
 
 export const PremiumWhyChoose: React.FC = () => {
   return (
-    <section className="relative py-12 sm:py-16 bg-[#08090E] border-b border-white/[0.08] overflow-hidden">
-      {/* Soft Background Ambient Light */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-red-600/5 blur-[140px] rounded-full pointer-events-none" />
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
-        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-semibold text-red-400 mb-3 shadow-sm"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
-            <span>Architected for Modern Teams</span>
-          </motion.div>
-
+    <section className="relative py-10 sm:py-12 bg-[#08090d] border-b border-white/[0.06] overflow-hidden">
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+        {/* Header */}
+        <div className="text-center max-w-lg mx-auto mb-8 sm:mb-10">
           <motion.h2
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 6 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.08 }}
-            className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight mb-3"
+            transition={{ duration: 0.25 }}
+            className="text-xl sm:text-2xl font-bold text-white tracking-tight"
           >
-            Why Millions Trust SmartPDF AI
+            Why SmartPDF AI
           </motion.h2>
-
           <motion.p
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 6 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.16 }}
-            className="text-slate-300 text-sm sm:text-base leading-relaxed font-normal"
+            transition={{ duration: 0.25, delay: 0.05 }}
+            className="text-xs sm:text-sm text-slate-400 font-normal mt-1"
           >
-            Combining local WebAssembly execution with cloud AI capabilities to deliver unmatched security, speed, and document precision.
+            Built for modern document workflows.
           </motion.p>
         </div>
 
-        {/* Bento / Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {FEATURES.map((feature, idx) => {
-            const IconComp = feature.icon;
+        {/* 3 Connected Pillars with Hairline Separators */}
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.08] border-y border-white/[0.08]">
+          {TRUST_PILLARS.map((pillar, idx) => {
+            const IconComp = pillar.icon;
 
             return (
               <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
+                key={pillar.title}
+                initial={{ opacity: 0, y: 8 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: idx * 0.06 }}
-                whileHover={{ y: -4, scale: 1.01 }}
-                className="group relative p-5.5 sm:p-6 rounded-[20px] bg-[#10111A]/90 hover:bg-[#151624] border border-white/10 hover:border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300 backdrop-blur-xl flex flex-col justify-between"
+                transition={{ duration: 0.25, delay: idx * 0.05 }}
+                className="py-5 md:py-4 md:px-6 lg:px-8 flex flex-col justify-start"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feature.iconBg} border flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
-                      <IconComp className="w-5.5 h-5.5" />
-                    </div>
-
-                    <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${feature.badgeColor}`}>
-                      {feature.badge}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-bold text-white mb-2 tracking-tight group-hover:text-red-400 transition-colors">
-                    {feature.title}
+                <div className="flex items-center gap-2 mb-2">
+                  <IconComp className={`w-4 h-4 ${pillar.iconColor}`} />
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-200">
+                    {pillar.title}
                   </h3>
-
-                  <p className="text-xs sm:text-sm text-slate-300/80 leading-relaxed font-normal">
-                    {feature.description}
-                  </p>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 group-hover:text-slate-200 transition-colors">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Verified Client Architecture</span>
-                </div>
+                <p className="text-xs text-slate-400 leading-relaxed font-normal">
+                  {pillar.description}
+                </p>
               </motion.div>
             );
           })}
@@ -150,3 +80,5 @@ export const PremiumWhyChoose: React.FC = () => {
     </section>
   );
 };
+
+
