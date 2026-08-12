@@ -26,6 +26,9 @@ import {
   Star,
   ArrowUpRight,
   Wrench,
+  FileSpreadsheet,
+  Table,
+  Presentation,
   LucideIcon,
 } from 'lucide-react';
 
@@ -39,6 +42,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Minimize2,
   FileText,
   FileType,
+  FileSpreadsheet,
+  Table,
+  Presentation,
   RotateCw,
   Stamp,
   Hash,

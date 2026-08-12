@@ -13,6 +13,10 @@ const DuplicatePDFPages = lazy(() => import('../pages/DuplicatePDFPages').then((
 const CompressPDF = lazy(() => import('../pages/CompressPDF').then((m) => ({ default: m.CompressPDF })));
 const PDFToWord = lazy(() => import('../pages/PDFToWord').then((m) => ({ default: m.PDFToWord })));
 const WordToPDF = lazy(() => import('../pages/WordToPDF').then((m) => ({ default: m.WordToPDF })));
+const ExcelToPDF = lazy(() => import('../pages/ExcelToPDF').then((m) => ({ default: m.ExcelToPDF })));
+const PDFToExcel = lazy(() => import('../pages/PDFToExcel').then((m) => ({ default: m.PDFToExcel })));
+const PowerPointToPDF = lazy(() => import('../pages/PowerPointToPDF').then((m) => ({ default: m.PowerPointToPDF })));
+const PDFToPowerPoint = lazy(() => import('../pages/PDFToPowerPoint').then((m) => ({ default: m.PDFToPowerPoint })));
 const RotatePDF = lazy(() => import('../pages/RotatePDF').then((m) => ({ default: m.RotatePDF })));
 const WatermarkPDF = lazy(() => import('../pages/WatermarkPDF').then((m) => ({ default: m.WatermarkPDF })));
 const PageNumbersPDF = lazy(() => import('../pages/PageNumbersPDF').then((m) => ({ default: m.PageNumbersPDF })));
@@ -102,6 +106,10 @@ export const AppRoutes: React.FC = () => {
           <Route path="/compress-pdf" element={<CompressPDF />} />
           <Route path="/pdf-to-word" element={<PDFToWord />} />
           <Route path="/word-to-pdf" element={<WordToPDF />} />
+          <Route path="/excel-to-pdf-tool" element={<ExcelToPDF />} />
+          <Route path="/pdf-to-excel" element={<PDFToExcel />} />
+          <Route path="/powerpoint-to-pdf" element={<PowerPointToPDF />} />
+          <Route path="/pdf-to-powerpoint" element={<PDFToPowerPoint />} />
           <Route path="/rotate" element={<RotatePDF />} />
           <Route path="/watermark" element={<WatermarkPDF />} />
           <Route path="/page-numbers" element={<PageNumbersPDF />} />

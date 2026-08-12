@@ -1,4 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
+import { authenticateRequest } from '../middleware/auth';
+import { getUserEntitlement } from '../services/entitlement';
+import { checkRateAndQuota } from '../middleware/rateLimiter';
+import { usageTracker } from '../services/usageTracker';
 
 function getRequestBody(req: any) {
   if (!req.body) return {};
@@ -33,14 +37,14 @@ function handleServerError(res: any, endpoint: string, err: any) {
   res.setHeader('Content-Type', 'application/json');
   return res.status(statusCode).json({
     success: false,
-    error: msg,
+    error: statusCode === 500 ? 'Internal AI processing error. Please try again later.' : msg,
   });
 }
 
 function getGenAI() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is missing.');
+    throw new Error('GEMINI_API_KEY environment variable is missing on server.');
   }
   return new GoogleGenAI({
     apiKey,
@@ -55,7 +59,7 @@ function getGenAI() {
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -65,6 +69,19 @@ export default async function handler(req: any, res: any) {
     res.setHeader('Content-Type', 'application/json');
     return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }
+
+  // 1. Authenticate Request
+  const user = await authenticateRequest(req, res);
+  if (!user) return; // Auth middleware already responded with 401 JSON
+
+  // 2. Resolve Server-Side Entitlements
+  const entitlement = getUserEntitlement(user.uid);
+
+  // 3. Enforce Rate Limits & Daily Quota
+  const allowed = checkRateAndQuota(req, res, user.uid, '/api/gemini/chat', entitlement);
+  if (!allowed) return; // Rate limiter already responded with 429 JSON
+
+  const startTime = Date.now();
 
   try {
     const body = getRequestBody(req);
@@ -92,9 +109,10 @@ export default async function handler(req: any, res: any) {
       modeInstruction = `Answer questions with high accuracy using document context. Cite pages using [Page X] format wherever applicable.`;
     }
 
+    const maxChars = entitlement.maxContextChars || 35000;
     const systemInstruction = `You are SmartPDF AI Document Assistant. You analyze PDF document content and process user requests.
 Document Context:
-${pdfContext ? pdfContext.substring(0, 35000) : 'No document content extracted yet.'}
+${pdfContext ? pdfContext.substring(0, maxChars) : 'No document content extracted yet.'}
 
 Task Specific Guideline:
 ${modeInstruction}
@@ -120,9 +138,26 @@ Always format output clearly using markdown, bold headers, bullet points, or mar
     });
 
     const replyText = aiResponse.text || 'I analyzed the document but could not generate a textual reply.';
+
+    // Log successful usage execution
+    usageTracker.logExecution({
+      uid: user.uid,
+      endpoint: '/api/gemini/chat',
+      timestamp: startTime,
+      durationMs: Date.now() - startTime,
+      status: 'success',
+    });
+
     res.setHeader('Content-Type', 'application/json');
     return res.status(200).json({ success: true, data: { reply: replyText } });
   } catch (err: any) {
+    usageTracker.logExecution({
+      uid: user.uid,
+      endpoint: '/api/gemini/chat',
+      timestamp: startTime,
+      durationMs: Date.now() - startTime,
+      status: 'error',
+    });
     return handleServerError(res, '/api/gemini/chat', err);
   }
 }
