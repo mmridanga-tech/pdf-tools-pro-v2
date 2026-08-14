@@ -174,6 +174,11 @@ export const Footer: React.FC = React.memo(() => {
                   Cookie Policy
                 </Link>
               </li>
+              <li>
+                <Link to="/security" className="text-slate-400 hover:text-white transition-colors block">
+                  Security & Trust
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -74,11 +74,11 @@ export default async function handler(req: any, res: any) {
   const user = await authenticateRequest(req, res);
   if (!user) return; // Auth middleware already responded with 401 JSON
 
-  // 2. Resolve Server-Side Entitlements
-  const entitlement = getUserEntitlement(user.uid);
+  // 2. Resolve Server-Side Entitlements from Firestore
+  const entitlement = await getUserEntitlement(user.uid, user.email);
 
-  // 3. Enforce Rate Limits & Daily Quota
-  const allowed = checkRateAndQuota(req, res, user.uid, '/api/gemini/analyzer', entitlement);
+  // 3. Enforce Rate Limits & Persistent Daily Quota
+  const allowed = await checkRateAndQuota(req, res, user.uid, '/api/gemini/analyzer', entitlement);
   if (!allowed) return; // Rate limiter already responded with 429 JSON
 
   const startTime = Date.now();
@@ -151,24 +151,42 @@ Identify compliance and operational risks such as expired document dates, missin
       analysisData = JSON.parse(cleaned);
     }
 
-    // Log successful usage execution
-    usageTracker.logExecution({
+    // Extract token metrics if available from Gemini response
+    const usageMeta = (aiResponse as any)?.usageMetadata;
+    const promptTokens = usageMeta?.promptTokenCount || Math.round(userPrompt.length / 4);
+    const responseTokens = usageMeta?.candidatesTokenCount || Math.round(rawText.length / 4);
+    const totalTokens = usageMeta?.totalTokenCount || promptTokens + responseTokens;
+
+    // Log successful usage execution with full token and observability telemetry
+    await usageTracker.logExecution({
       uid: user.uid,
+      workspaceId: body?.workspaceId,
       endpoint: '/api/gemini/analyzer',
       timestamp: startTime,
       durationMs: Date.now() - startTime,
       status: 'success',
+      httpStatus: 200,
+      model: 'gemini-3.6-flash',
+      tokenUsage: {
+        promptTokens,
+        responseTokens,
+        totalTokens,
+      },
     });
 
     res.setHeader('Content-Type', 'application/json');
     return res.status(200).json({ success: true, data: analysisData });
   } catch (err: any) {
-    usageTracker.logExecution({
+    const durationMs = Date.now() - startTime;
+    await usageTracker.logExecution({
       uid: user.uid,
       endpoint: '/api/gemini/analyzer',
       timestamp: startTime,
-      durationMs: Date.now() - startTime,
+      durationMs,
       status: 'error',
+      httpStatus: 500,
+      model: 'gemini-3.6-flash',
+      errorCategory: 'gemini_error',
     });
     return handleServerError(res, '/api/gemini/analyzer', err);
   }

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { auth } from '../lib/firebase';
 import { SEO } from '../components/SEO';
 import {
   Check,
@@ -14,29 +15,119 @@ import {
   X,
   ArrowRight,
   CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 
 export const Pricing: React.FC = () => {
-  const { user, upgradePlan } = useAuth();
+  const { user, openAuthModal, refreshBillingStatus } = useAuth();
   const toast = useToast();
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [selectedPlanModal, setSelectedPlanModal] = useState<'pro' | 'enterprise' | null>(null);
   const [paymentGateway, setPaymentGateway] = useState<'stripe' | 'razorpay'>('stripe');
-  const [cardNumber, setCardNumber] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentErrorMessage, setPaymentErrorMessage] = useState<string | null>(null);
 
-  const handleCheckout = (e: React.FormEvent) => {
+  // Check URL parameters on mount for payment success / cancellation callbacks
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('payment_status');
+    const provider = params.get('provider');
+
+    if (status === 'success') {
+      toast.success(`Payment confirmed via ${provider || 'payment provider'}! Updating your subscription...`);
+      refreshBillingStatus();
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (status === 'cancelled') {
+      toast.info('Checkout session was cancelled.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+
+    if (!selectedPlanModal) return;
+
     setProcessingPayment(true);
-    setTimeout(() => {
-      if (selectedPlanModal) {
-        upgradePlan(selectedPlanModal);
-        toast.success(`Upgraded to SmartPDF ${selectedPlanModal.toUpperCase()} plan!`);
+    setPaymentErrorMessage(null);
+
+    try {
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        const devToken = localStorage.getItem('mock_dev_token');
+        if (devToken) headers['Authorization'] = `Bearer ${devToken}`;
       }
+
+      const endpoint = paymentGateway === 'stripe' ? '/api/checkout/stripe' : '/api/checkout/razorpay';
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ plan: selectedPlanModal }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || data.message || `Failed to initiate ${paymentGateway} checkout.`);
+      }
+
+      if (paymentGateway === 'stripe' && data.url) {
+        // Securely redirect to Stripe-hosted Checkout Page
+        window.location.href = data.url;
+      } else if (paymentGateway === 'razorpay') {
+        if ((window as any).Razorpay && data.orderId && data.keyId) {
+          const options = {
+            key: data.keyId,
+            amount: data.amount,
+            currency: data.currency,
+            name: 'SmartPDF AI',
+            description: `SmartPDF ${selectedPlanModal.toUpperCase()} Subscription`,
+            order_id: data.orderId,
+            handler: async function (_response: any) {
+              toast.success('Razorpay payment completed! Verifying webhook confirmation...');
+              setTimeout(() => {
+                refreshBillingStatus();
+                setSelectedPlanModal(null);
+              }, 1500);
+            },
+            prefill: {
+              name: user.name,
+              email: user.email,
+            },
+            theme: {
+              color: '#DC2626',
+            },
+          };
+          const rzp = new (window as any).Razorpay(options);
+          rzp.open();
+        } else {
+          toast.success(`Razorpay checkout order #${data.orderId || 'created'} initialized! Order Amount: ₹${data.amount ? data.amount / 100 : 0}`);
+          setTimeout(() => {
+            refreshBillingStatus();
+            setSelectedPlanModal(null);
+          }, 1500);
+        }
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      setPaymentErrorMessage(err.message || 'Payment checkout initialization failed.');
+      toast.error(err.message || 'Checkout failed');
+    } finally {
       setProcessingPayment(false);
-      setSelectedPlanModal(null);
-    }, 1200);
+    }
   };
 
   return (
@@ -252,68 +343,54 @@ export const Pricing: React.FC = () => {
               </div>
 
               <form onSubmit={handleCheckout} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
-                    Cardholder Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    defaultValue={user?.name}
-                    className="w-full px-4 py-3 bg-[#18181d] border border-slate-800 rounded-2xl text-white text-sm focus:outline-none focus:border-red-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
-                    Card Number
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="4242 •••• •••• 4242"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    className="w-full px-4 py-3 bg-[#18181d] border border-slate-800 rounded-2xl text-white text-sm focus:outline-none focus:border-red-500 font-mono"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
-                      Expiry Date
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="MM/YY"
-                      className="w-full px-4 py-3 bg-[#18181d] border border-slate-800 rounded-2xl text-white text-sm focus:outline-none focus:border-red-500"
-                    />
+                {paymentErrorMessage && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-start gap-2 text-red-400 text-xs">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{paymentErrorMessage}</span>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-slate-400 mb-1">
-                      CVC / CVV
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      maxLength={4}
-                      placeholder="•••"
-                      className="w-full px-4 py-3 bg-[#18181d] border border-slate-800 rounded-2xl text-white text-sm focus:outline-none focus:border-red-500"
-                    />
+                )}
+
+                <div className="p-4 bg-[#18181d] border border-slate-800 rounded-2xl space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Selected Plan:</span>
+                    <span className="text-white font-extrabold uppercase">{selectedPlanModal} Plan</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Billing Cycle:</span>
+                    <span className="text-slate-200 font-semibold capitalize">{billingCycle}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-800">
+                    <span className="text-slate-400">Total Due Today:</span>
+                    <span className="text-red-400 font-black text-sm">
+                      {selectedPlanModal === 'enterprise'
+                        ? billingCycle === 'yearly' ? '$39/mo' : '$49/mo'
+                        : billingCycle === 'yearly' ? '$12/mo' : '$15/mo'}
+                    </span>
                   </div>
                 </div>
+
+                {paymentGateway === 'stripe' ? (
+                  <p className="text-xs text-slate-400 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                    <Shield className="w-3.5 h-3.5 text-emerald-400 inline mr-1" />
+                    You will be redirected to Stripe's 256-bit encrypted checkout server to enter payment details securely.
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-400 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                    <Shield className="w-3.5 h-3.5 text-emerald-400 inline mr-1" />
+                    Creates a server-verified Razorpay order with instant UPI / NetBanking / Card settlement.
+                  </p>
+                )}
 
                 <button
                   type="submit"
                   disabled={processingPayment}
-                  className="w-full py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm font-extrabold rounded-2xl shadow-lg shadow-red-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm font-extrabold rounded-2xl shadow-lg shadow-red-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {processingPayment ? (
-                    <span className="inline-block animate-pulse">Confirming Payment...</span>
+                    <span className="inline-block animate-pulse">Initializing Gateway...</span>
                   ) : (
                     <>
-                      <Lock className="w-4 h-4" /> Pay & Upgrade Now
+                      <Lock className="w-4 h-4" /> Proceed to {paymentGateway === 'stripe' ? 'Stripe Checkout' : 'Razorpay Order'}
                     </>
                   )}
                 </button>

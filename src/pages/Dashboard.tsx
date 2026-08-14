@@ -8,6 +8,7 @@ import { SEO } from '../components/SEO';
 import { ToolCard } from '../components/ToolCard';
 import { PDF_TOOLS } from '../utils/toolsData';
 import { formatBytes } from '../utils/fileUtils';
+import { auth } from '../lib/firebase';
 import {
   getRecentFiles,
   updateRecentFile,
@@ -30,6 +31,8 @@ import {
   getFavoriteTools,
   getThemePreference,
   setThemePreference,
+  subscribeToUserWorkspace,
+  WORKSPACE_SYNC_EVENT,
   DEFAULT_WORKSPACE_FOLDERS,
   RecentFileRecord,
   SavedAiChat,
@@ -73,8 +76,17 @@ import {
   Zap,
   Filter,
   Plus,
+  Building,
+  Users,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  getCachedUserWorkspaces,
+  getActiveWorkspaceId,
+  setActiveWorkspaceId,
+  TeamWorkspace as ITeamWorkspace,
+  TEAM_WORKSPACE_SYNC_EVENT,
+} from '../services/teamWorkspaceService';
 
 export const Dashboard: React.FC = () => {
   const { user, updateProfile, sendEmailVerification, googleLogin } = useAuth();
@@ -130,9 +142,40 @@ export const Dashboard: React.FC = () => {
   // Copy Feedback State
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Team Workspaces State
+  const [teamWorkspaces, setTeamWorkspaces] = useState<ITeamWorkspace[]>(getCachedUserWorkspaces());
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(getActiveWorkspaceId());
+
   useEffect(() => {
     refreshAllCollections();
-  }, []);
+
+    // Listen for custom workspace sync events
+    const handleWorkspaceSync = () => {
+      refreshAllCollections();
+      setTeamWorkspaces(getCachedUserWorkspaces());
+      setSelectedWorkspaceId(getActiveWorkspaceId());
+    };
+    window.addEventListener(WORKSPACE_SYNC_EVENT, handleWorkspaceSync);
+    window.addEventListener(TEAM_WORKSPACE_SYNC_EVENT, handleWorkspaceSync);
+
+    // If user is authenticated with Firebase, attach live Firestore listener
+    const firebaseUid = auth.currentUser?.uid || (user?.id?.startsWith('google_') ? user.id.replace('google_', '') : null);
+    let unsubscribeWorkspace: (() => void) | null = null;
+
+    if (firebaseUid) {
+      unsubscribeWorkspace = subscribeToUserWorkspace(firebaseUid, () => {
+        refreshAllCollections();
+      });
+    }
+
+    return () => {
+      window.removeEventListener(WORKSPACE_SYNC_EVENT, handleWorkspaceSync);
+      window.removeEventListener(TEAM_WORKSPACE_SYNC_EVENT, handleWorkspaceSync);
+      if (unsubscribeWorkspace) {
+        unsubscribeWorkspace();
+      }
+    };
+  }, [user]);
 
   const refreshAllCollections = () => {
     setHistoryFiles(getRecentFiles());
@@ -544,6 +587,10 @@ export const Dashboard: React.FC = () => {
                     Google SSO
                   </span>
                 )}
+                <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Cloud Sync Active
+                </span>
               </div>
               <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
                 <span>{user?.email}</span>
@@ -606,6 +653,70 @@ export const Dashboard: React.FC = () => {
                 Connect Google
               </button>
             )}
+          </div>
+        </div>
+
+        {/* ========================================== */}
+        {/* Workspace Hub Bar (Personal vs Team) */}
+        {/* ========================================== */}
+        <div className="bg-[#121215] border border-slate-800 rounded-3xl p-4 sm:p-5 mb-8 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-red-600/10 border border-red-500/20 text-red-400">
+              <Building className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Current Workspace</span>
+                {selectedWorkspaceId ? (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    Team Workspace
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Personal Cloud Workspace
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-bold text-white">
+                {selectedWorkspaceId
+                  ? teamWorkspaces.find((w) => w.id === selectedWorkspaceId)?.name || 'Team Workspace'
+                  : `${user?.name || 'User'}'s Personal Space`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={selectedWorkspaceId || 'personal'}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'personal') {
+                  setActiveWorkspaceId(null);
+                  setSelectedWorkspaceId(null);
+                  toast.success('Switched to Personal Workspace');
+                } else {
+                  setActiveWorkspaceId(val);
+                  setSelectedWorkspaceId(val);
+                  const ws = teamWorkspaces.find((w) => w.id === val);
+                  toast.success(`Switched to Team Workspace: ${ws?.name}`);
+                }
+              }}
+              className="px-3.5 py-2 bg-[#18181d] border border-slate-800 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-red-500 cursor-pointer shadow-sm"
+            >
+              <option value="personal">👤 Personal Cloud Workspace</option>
+              {teamWorkspaces.map((w) => (
+                <option key={w.id} value={w.id}>
+                  🏢 {w.name} ({w.plan.toUpperCase()})
+                </option>
+              ))}
+            </select>
+
+            <Link
+              to="/team"
+              className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Users className="w-3.5 h-3.5" /> Manage Team & Telemetry
+            </Link>
           </div>
         </div>
 

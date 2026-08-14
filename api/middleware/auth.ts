@@ -1,5 +1,4 @@
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import { getAdminAuth } from '../services/firestore';
 
 export interface AuthenticatedUser {
   uid: string;
@@ -8,35 +7,6 @@ export interface AuthenticatedUser {
   role: 'user' | 'admin';
   provider?: string;
   isMock?: boolean;
-}
-
-let adminInitialized = false;
-
-function initFirebaseAdmin() {
-  if (adminInitialized) return;
-
-  try {
-    if (getApps().length === 0) {
-      const projectId = process.env.FIREBASE_PROJECT_ID || 'smartpdf-c2800';
-      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-      if (clientEmail && privateKey) {
-        initializeApp({
-          credential: cert({
-            projectId,
-            clientEmail,
-            privateKey,
-          }),
-        });
-      } else {
-        initializeApp({ projectId });
-      }
-    }
-    adminInitialized = true;
-  } catch (err) {
-    console.warn('Firebase Admin SDK initialization warning:', err);
-  }
 }
 
 /**
@@ -124,19 +94,17 @@ export async function authenticateRequest(req: any, res: any): Promise<Authentic
 
   // Attempt 1: Verify token with firebase-admin SDK
   try {
-    initFirebaseAdmin();
-    if (getApps().length > 0) {
-      const decoded = await getAuth().verifyIdToken(token);
-      const user: AuthenticatedUser = {
-        uid: decoded.uid,
-        email: decoded.email || '',
-        emailVerified: !!decoded.email_verified,
-        role: decoded.email && decoded.email.includes('admin') ? 'admin' : 'user',
-        provider: decoded.firebase?.sign_in_provider,
-      };
-      req.user = user;
-      return user;
-    }
+    const auth = getAdminAuth();
+    const decoded = await auth.verifyIdToken(token);
+    const user: AuthenticatedUser = {
+      uid: decoded.uid,
+      email: decoded.email || '',
+      emailVerified: !!decoded.email_verified,
+      role: decoded.email && decoded.email.includes('admin') ? 'admin' : 'user',
+      provider: decoded.firebase?.sign_in_provider,
+    };
+    req.user = user;
+    return user;
   } catch (err: any) {
     console.warn('Firebase Admin token verification failed, trying Identity Toolkit REST fallback:', err?.message || err);
   }

@@ -1,8 +1,26 @@
 /**
- * SmartPDF AI v1.3 - Workspace Storage Utility
- * Manages Document History, Saved AI Chats, Saved AI Analysis, Saved Analyzer Reports,
- * Favorite Tools/Docs, Folder/Tag Organizations, and Persistent Dark Theme.
+ * SmartPDF AI v1.4 - Phase 12 Workspace Cloud Persistence & Storage Utility
+ * Provides authenticated-user Firestore synchronization with offline-first local caching,
+ * real-time listeners across devices, and localStorage fallback for guest users.
+ *
+ * Supported collections under users/{uid}/:
+ *  - recentFiles
+ *  - aiChats
+ *  - aiAnalysis
+ *  - analyzerReports
  */
+
+import { auth, db } from '../lib/firebase';
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  Unsubscribe,
+} from 'firebase/firestore';
 
 export interface RecentFileRecord {
   id: string;
@@ -16,6 +34,9 @@ export interface RecentFileRecord {
   tags?: string[];
   isFavorite?: boolean;
   notes?: string;
+  uid?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ChatMessageItem {
@@ -35,6 +56,9 @@ export interface SavedAiChat {
   folder?: string;
   tags?: string[];
   isFavorite?: boolean;
+  uid?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SavedAiAnalysis {
@@ -47,6 +71,9 @@ export interface SavedAiAnalysis {
   folder?: string;
   tags?: string[];
   isFavorite?: boolean;
+  uid?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface RiskItem {
@@ -96,6 +123,9 @@ export interface SavedAnalyzerReport {
   folder?: string;
   tags?: string[];
   isFavorite?: boolean;
+  uid?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ActivityLog {
@@ -106,7 +136,7 @@ export interface ActivityLog {
   user: string;
 }
 
-// Local Storage Keys
+// Local Storage Base Keys
 const RECENT_FILES_KEY = 'pdf_tools_recent_files';
 const FAVORITES_KEY = 'pdf_tools_favorite_tools';
 const ACTIVITY_KEY = 'pdf_tools_activity_logs';
@@ -115,8 +145,23 @@ const SAVED_ANALYSIS_KEY = 'smartpdf_ai_analysis';
 const SAVED_ANALYZER_KEY = 'smartpdf_analyzer_reports';
 const THEME_KEY = 'smartpdf_theme_preference';
 
+export const WORKSPACE_SYNC_EVENT = 'smartpdf-workspace-sync';
+
 // Default Folders
 export const DEFAULT_WORKSPACE_FOLDERS = ['General', 'Invoices', 'Contracts', 'Personal', 'Work', 'Finance'];
+
+// Helper to determine storage key scoped to current user if logged in
+function getStorageKey(baseKey: string): string {
+  const uid = auth.currentUser?.uid;
+  return uid ? `${baseKey}_${uid}` : baseKey;
+}
+
+// Dispatch event for UI reactivity across components
+function notifyWorkspaceUpdate() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(WORKSPACE_SYNC_EVENT));
+  }
+}
 
 // ==========================================
 // 1. Theme Persistence
@@ -201,56 +246,116 @@ const INITIAL_MOCK_FILES: RecentFileRecord[] = [
 ];
 
 export function getRecentFiles(): RecentFileRecord[] {
+  const key = getStorageKey(RECENT_FILES_KEY);
   try {
-    const data = localStorage.getItem(RECENT_FILES_KEY);
+    const data = localStorage.getItem(key);
     if (data) return JSON.parse(data);
+    // If user is guest, check fallback
+    if (key !== RECENT_FILES_KEY) {
+      const fallback = localStorage.getItem(RECENT_FILES_KEY);
+      if (fallback) return JSON.parse(fallback);
+    }
   } catch {}
-  // Initialize with initial mock files if missing
-  try {
-    localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(INITIAL_MOCK_FILES));
-  } catch {}
-  return INITIAL_MOCK_FILES;
+
+  // Initialize with initial mock files if guest
+  if (!auth.currentUser) {
+    try {
+      localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(INITIAL_MOCK_FILES));
+    } catch {}
+    return INITIAL_MOCK_FILES;
+  }
+  return [];
 }
 
-export function saveRecentFile(record: Omit<RecentFileRecord, 'id' | 'timestamp'> & { id?: string; timestamp?: number }): RecentFileRecord {
+export function saveRecentFile(
+  record: Omit<RecentFileRecord, 'id' | 'timestamp'> & { id?: string; timestamp?: number }
+): RecentFileRecord {
   const list = getRecentFiles();
+  const uid = auth.currentUser?.uid;
+  const now = Date.now();
+  const isoNow = new Date().toISOString();
+
   const newRecord: RecentFileRecord = {
     folder: 'General',
     tags: [],
     isFavorite: false,
     ...record,
     id: record.id || 'doc_' + Math.random().toString(36).substring(2, 9),
-    timestamp: record.timestamp || Date.now(),
+    timestamp: record.timestamp || now,
+    uid: uid || undefined,
+    createdAt: isoNow,
+    updatedAt: isoNow,
   };
-  const updated = [newRecord, ...list.filter((f) => f.id !== newRecord.id)].slice(0, 30);
+
+  const updated = [newRecord, ...list.filter((f) => f.id !== newRecord.id)].slice(0, 50);
+  const key = getStorageKey(RECENT_FILES_KEY);
   try {
-    localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Persistence (Async background)
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'recentFiles', newRecord.id);
+    setDoc(docRef, { ...newRecord, uid }, { merge: true }).catch((err) => {
+      console.warn('RecentFile cloud sync warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return newRecord;
 }
 
 export function updateRecentFile(id: string, updates: Partial<RecentFileRecord>): RecentFileRecord[] {
   const list = getRecentFiles();
-  const updated = list.map((f) => (f.id === id ? { ...f, ...updates } : f));
+  const uid = auth.currentUser?.uid;
+  const isoNow = new Date().toISOString();
+
+  const updated = list.map((f) => (f.id === id ? { ...f, ...updates, updatedAt: isoNow } : f));
+  const key = getStorageKey(RECENT_FILES_KEY);
   try {
-    localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Update
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'recentFiles', id);
+    setDoc(docRef, { ...updates, updatedAt: isoNow }, { merge: true }).catch((err) => {
+      console.warn('RecentFile cloud update warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return updated;
 }
 
 export function removeRecentFile(id: string): RecentFileRecord[] {
   const list = getRecentFiles();
+  const uid = auth.currentUser?.uid;
+
   const updated = list.filter((f) => f.id !== id);
+  const key = getStorageKey(RECENT_FILES_KEY);
   try {
-    localStorage.setItem(RECENT_FILES_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Delete
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'recentFiles', id);
+    deleteDoc(docRef).catch((err) => {
+      console.warn('RecentFile cloud delete warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return updated;
 }
 
 export function clearRecentFiles(): void {
+  const key = getStorageKey(RECENT_FILES_KEY);
   try {
-    localStorage.removeItem(RECENT_FILES_KEY);
+    localStorage.removeItem(key);
   } catch {}
+  notifyWorkspaceUpdate();
 }
 
 export function getTotalStorageUsedBytes(): number {
@@ -314,55 +419,114 @@ const INITIAL_MOCK_CHATS: SavedAiChat[] = [
 ];
 
 export function getSavedAiChats(): SavedAiChat[] {
+  const key = getStorageKey(SAVED_CHATS_KEY);
   try {
-    const data = localStorage.getItem(SAVED_CHATS_KEY);
+    const data = localStorage.getItem(key);
     if (data) return JSON.parse(data);
+    if (key !== SAVED_CHATS_KEY) {
+      const fallback = localStorage.getItem(SAVED_CHATS_KEY);
+      if (fallback) return JSON.parse(fallback);
+    }
   } catch {}
-  try {
-    localStorage.setItem(SAVED_CHATS_KEY, JSON.stringify(INITIAL_MOCK_CHATS));
-  } catch {}
-  return INITIAL_MOCK_CHATS;
+
+  if (!auth.currentUser) {
+    try {
+      localStorage.setItem(SAVED_CHATS_KEY, JSON.stringify(INITIAL_MOCK_CHATS));
+    } catch {}
+    return INITIAL_MOCK_CHATS;
+  }
+  return [];
 }
 
-export function saveAiChat(chat: Omit<SavedAiChat, 'id' | 'timestamp'> & { id?: string; timestamp?: number }): SavedAiChat {
+export function saveAiChat(
+  chat: Omit<SavedAiChat, 'id' | 'timestamp'> & { id?: string; timestamp?: number }
+): SavedAiChat {
   const list = getSavedAiChats();
+  const uid = auth.currentUser?.uid;
+  const now = Date.now();
+  const isoNow = new Date().toISOString();
+
   const newChat: SavedAiChat = {
     folder: 'General',
     tags: [],
     isFavorite: false,
     ...chat,
     id: chat.id || 'chat_' + Math.random().toString(36).substring(2, 9),
-    timestamp: chat.timestamp || Date.now(),
+    timestamp: chat.timestamp || now,
+    uid: uid || undefined,
+    createdAt: isoNow,
+    updatedAt: isoNow,
   };
-  const updated = [newChat, ...list.filter((c) => c.id !== newChat.id)].slice(0, 25);
+
+  const updated = [newChat, ...list.filter((c) => c.id !== newChat.id)].slice(0, 40);
+  const key = getStorageKey(SAVED_CHATS_KEY);
   try {
-    localStorage.setItem(SAVED_CHATS_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Persistence
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'aiChats', newChat.id);
+    setDoc(docRef, { ...newChat, uid }, { merge: true }).catch((err) => {
+      console.warn('AiChat cloud sync warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return newChat;
 }
 
 export function updateAiChat(id: string, updates: Partial<SavedAiChat>): SavedAiChat[] {
   const list = getSavedAiChats();
-  const updated = list.map((c) => (c.id === id ? { ...c, ...updates } : c));
+  const uid = auth.currentUser?.uid;
+  const isoNow = new Date().toISOString();
+
+  const updated = list.map((c) => (c.id === id ? { ...c, ...updates, updatedAt: isoNow } : c));
+  const key = getStorageKey(SAVED_CHATS_KEY);
   try {
-    localStorage.setItem(SAVED_CHATS_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Update
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'aiChats', id);
+    setDoc(docRef, { ...updates, updatedAt: isoNow }, { merge: true }).catch((err) => {
+      console.warn('AiChat cloud update warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return updated;
 }
 
 export function removeAiChat(id: string): SavedAiChat[] {
   const list = getSavedAiChats();
+  const uid = auth.currentUser?.uid;
+
   const updated = list.filter((c) => c.id !== id);
+  const key = getStorageKey(SAVED_CHATS_KEY);
   try {
-    localStorage.setItem(SAVED_CHATS_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Delete
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'aiChats', id);
+    deleteDoc(docRef).catch((err) => {
+      console.warn('AiChat cloud delete warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return updated;
 }
 
 export function clearSavedAiChats(): void {
+  const key = getStorageKey(SAVED_CHATS_KEY);
   try {
-    localStorage.removeItem(SAVED_CHATS_KEY);
+    localStorage.removeItem(key);
   } catch {}
+  notifyWorkspaceUpdate();
 }
 
 // ==========================================
@@ -397,55 +561,114 @@ const INITIAL_MOCK_ANALYSIS: SavedAiAnalysis[] = [
 ];
 
 export function getSavedAiAnalysisList(): SavedAiAnalysis[] {
+  const key = getStorageKey(SAVED_ANALYSIS_KEY);
   try {
-    const data = localStorage.getItem(SAVED_ANALYSIS_KEY);
+    const data = localStorage.getItem(key);
     if (data) return JSON.parse(data);
+    if (key !== SAVED_ANALYSIS_KEY) {
+      const fallback = localStorage.getItem(SAVED_ANALYSIS_KEY);
+      if (fallback) return JSON.parse(fallback);
+    }
   } catch {}
-  try {
-    localStorage.setItem(SAVED_ANALYSIS_KEY, JSON.stringify(INITIAL_MOCK_ANALYSIS));
-  } catch {}
-  return INITIAL_MOCK_ANALYSIS;
+
+  if (!auth.currentUser) {
+    try {
+      localStorage.setItem(SAVED_ANALYSIS_KEY, JSON.stringify(INITIAL_MOCK_ANALYSIS));
+    } catch {}
+    return INITIAL_MOCK_ANALYSIS;
+  }
+  return [];
 }
 
-export function saveAiAnalysis(item: Omit<SavedAiAnalysis, 'id' | 'timestamp'> & { id?: string; timestamp?: number }): SavedAiAnalysis {
+export function saveAiAnalysis(
+  item: Omit<SavedAiAnalysis, 'id' | 'timestamp'> & { id?: string; timestamp?: number }
+): SavedAiAnalysis {
   const list = getSavedAiAnalysisList();
+  const uid = auth.currentUser?.uid;
+  const now = Date.now();
+  const isoNow = new Date().toISOString();
+
   const newItem: SavedAiAnalysis = {
     folder: 'General',
     tags: [],
     isFavorite: false,
     ...item,
     id: item.id || 'ans_' + Math.random().toString(36).substring(2, 9),
-    timestamp: item.timestamp || Date.now(),
+    timestamp: item.timestamp || now,
+    uid: uid || undefined,
+    createdAt: isoNow,
+    updatedAt: isoNow,
   };
-  const updated = [newItem, ...list.filter((a) => a.id !== newItem.id)].slice(0, 30);
+
+  const updated = [newItem, ...list.filter((a) => a.id !== newItem.id)].slice(0, 40);
+  const key = getStorageKey(SAVED_ANALYSIS_KEY);
   try {
-    localStorage.setItem(SAVED_ANALYSIS_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Persistence
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'aiAnalysis', newItem.id);
+    setDoc(docRef, { ...newItem, uid }, { merge: true }).catch((err) => {
+      console.warn('AiAnalysis cloud sync warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return newItem;
 }
 
 export function updateAiAnalysis(id: string, updates: Partial<SavedAiAnalysis>): SavedAiAnalysis[] {
   const list = getSavedAiAnalysisList();
-  const updated = list.map((a) => (a.id === id ? { ...a, ...updates } : a));
+  const uid = auth.currentUser?.uid;
+  const isoNow = new Date().toISOString();
+
+  const updated = list.map((a) => (a.id === id ? { ...a, ...updates, updatedAt: isoNow } : a));
+  const key = getStorageKey(SAVED_ANALYSIS_KEY);
   try {
-    localStorage.setItem(SAVED_ANALYSIS_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Update
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'aiAnalysis', id);
+    setDoc(docRef, { ...updates, updatedAt: isoNow }, { merge: true }).catch((err) => {
+      console.warn('AiAnalysis cloud update warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return updated;
 }
 
 export function removeAiAnalysis(id: string): SavedAiAnalysis[] {
   const list = getSavedAiAnalysisList();
+  const uid = auth.currentUser?.uid;
+
   const updated = list.filter((a) => a.id !== id);
+  const key = getStorageKey(SAVED_ANALYSIS_KEY);
   try {
-    localStorage.setItem(SAVED_ANALYSIS_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Delete
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'aiAnalysis', id);
+    deleteDoc(docRef).catch((err) => {
+      console.warn('AiAnalysis cloud delete warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return updated;
 }
 
 export function clearSavedAiAnalysisList(): void {
+  const key = getStorageKey(SAVED_ANALYSIS_KEY);
   try {
-    localStorage.removeItem(SAVED_ANALYSIS_KEY);
+    localStorage.removeItem(key);
   } catch {}
+  notifyWorkspaceUpdate();
 }
 
 // ==========================================
@@ -526,55 +749,114 @@ const INITIAL_MOCK_ANALYZER_REPORTS: SavedAnalyzerReport[] = [
 ];
 
 export function getSavedAnalyzerReports(): SavedAnalyzerReport[] {
+  const key = getStorageKey(SAVED_ANALYZER_KEY);
   try {
-    const data = localStorage.getItem(SAVED_ANALYZER_KEY);
+    const data = localStorage.getItem(key);
     if (data) return JSON.parse(data);
+    if (key !== SAVED_ANALYZER_KEY) {
+      const fallback = localStorage.getItem(SAVED_ANALYZER_KEY);
+      if (fallback) return JSON.parse(fallback);
+    }
   } catch {}
-  try {
-    localStorage.setItem(SAVED_ANALYZER_KEY, JSON.stringify(INITIAL_MOCK_ANALYZER_REPORTS));
-  } catch {}
-  return INITIAL_MOCK_ANALYZER_REPORTS;
+
+  if (!auth.currentUser) {
+    try {
+      localStorage.setItem(SAVED_ANALYZER_KEY, JSON.stringify(INITIAL_MOCK_ANALYZER_REPORTS));
+    } catch {}
+    return INITIAL_MOCK_ANALYZER_REPORTS;
+  }
+  return [];
 }
 
-export function saveAnalyzerReport(report: Omit<SavedAnalyzerReport, 'id' | 'timestamp'> & { id?: string; timestamp?: number }): SavedAnalyzerReport {
+export function saveAnalyzerReport(
+  report: Omit<SavedAnalyzerReport, 'id' | 'timestamp'> & { id?: string; timestamp?: number }
+): SavedAnalyzerReport {
   const list = getSavedAnalyzerReports();
+  const uid = auth.currentUser?.uid;
+  const now = Date.now();
+  const isoNow = new Date().toISOString();
+
   const newReport: SavedAnalyzerReport = {
     folder: 'General',
     tags: [],
     isFavorite: false,
     ...report,
     id: report.id || 'rep_' + Math.random().toString(36).substring(2, 9),
-    timestamp: report.timestamp || Date.now(),
+    timestamp: report.timestamp || now,
+    uid: uid || undefined,
+    createdAt: isoNow,
+    updatedAt: isoNow,
   };
-  const updated = [newReport, ...list.filter((r) => r.id !== newReport.id)].slice(0, 25);
+
+  const updated = [newReport, ...list.filter((r) => r.id !== newReport.id)].slice(0, 40);
+  const key = getStorageKey(SAVED_ANALYZER_KEY);
   try {
-    localStorage.setItem(SAVED_ANALYZER_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Persistence
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'analyzerReports', newReport.id);
+    setDoc(docRef, { ...newReport, uid }, { merge: true }).catch((err) => {
+      console.warn('AnalyzerReport cloud sync warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return newReport;
 }
 
 export function updateAnalyzerReport(id: string, updates: Partial<SavedAnalyzerReport>): SavedAnalyzerReport[] {
   const list = getSavedAnalyzerReports();
-  const updated = list.map((r) => (r.id === id ? { ...r, ...updates } : r));
+  const uid = auth.currentUser?.uid;
+  const isoNow = new Date().toISOString();
+
+  const updated = list.map((r) => (r.id === id ? { ...r, ...updates, updatedAt: isoNow } : r));
+  const key = getStorageKey(SAVED_ANALYZER_KEY);
   try {
-    localStorage.setItem(SAVED_ANALYZER_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Update
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'analyzerReports', id);
+    setDoc(docRef, { ...updates, updatedAt: isoNow }, { merge: true }).catch((err) => {
+      console.warn('AnalyzerReport cloud update warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return updated;
 }
 
 export function removeAnalyzerReport(id: string): SavedAnalyzerReport[] {
   const list = getSavedAnalyzerReports();
+  const uid = auth.currentUser?.uid;
+
   const updated = list.filter((r) => r.id !== id);
+  const key = getStorageKey(SAVED_ANALYZER_KEY);
   try {
-    localStorage.setItem(SAVED_ANALYZER_KEY, JSON.stringify(updated));
+    localStorage.setItem(key, JSON.stringify(updated));
   } catch {}
+
+  // Cloud Firestore Delete
+  if (uid && db) {
+    const docRef = doc(db, 'users', uid, 'analyzerReports', id);
+    deleteDoc(docRef).catch((err) => {
+      console.warn('AnalyzerReport cloud delete warning:', err);
+    });
+  }
+
+  notifyWorkspaceUpdate();
   return updated;
 }
 
 export function clearSavedAnalyzerReports(): void {
+  const key = getStorageKey(SAVED_ANALYZER_KEY);
   try {
-    localStorage.removeItem(SAVED_ANALYZER_KEY);
+    localStorage.removeItem(key);
   } catch {}
+  notifyWorkspaceUpdate();
 }
 
 // ==========================================
@@ -582,14 +864,37 @@ export function clearSavedAnalyzerReports(): void {
 // ==========================================
 
 export function getActivityLogs(): ActivityLog[] {
+  const key = getStorageKey(ACTIVITY_KEY);
   try {
-    const data = localStorage.getItem(ACTIVITY_KEY);
+    const data = localStorage.getItem(key);
     if (data) return JSON.parse(data);
+    if (key !== ACTIVITY_KEY) {
+      const fallback = localStorage.getItem(ACTIVITY_KEY);
+      if (fallback) return JSON.parse(fallback);
+    }
   } catch {}
   return [
-    { id: '1', action: 'Ran Enterprise Document Analyzer on Invoice #INV-8891', toolName: 'Document Analyzer', timestamp: Date.now() - 3600000, user: 'You' },
-    { id: '2', action: 'Saved AI Chat "Q3 Financial PDF Breakdown"', toolName: 'AI PDF Chat', timestamp: Date.now() - 86400000, user: 'You' },
-    { id: '3', action: 'Exported Executive Summary to DOCX', toolName: 'AI Assistant', timestamp: Date.now() - 172800000, user: 'You' },
+    {
+      id: '1',
+      action: 'Ran Enterprise Document Analyzer on Invoice #INV-8891',
+      toolName: 'Document Analyzer',
+      timestamp: Date.now() - 3600000,
+      user: 'You',
+    },
+    {
+      id: '2',
+      action: 'Saved AI Chat "Q3 Financial PDF Breakdown"',
+      toolName: 'AI PDF Chat',
+      timestamp: Date.now() - 86400000,
+      user: 'You',
+    },
+    {
+      id: '3',
+      action: 'Exported Executive Summary to DOCX',
+      toolName: 'AI Assistant',
+      timestamp: Date.now() - 172800000,
+      user: 'You',
+    },
   ];
 }
 
@@ -603,17 +908,19 @@ export function addActivityLog(action: string, toolName: string, userName = 'You
       timestamp: Date.now(),
       user: userName,
     };
-    localStorage.setItem(ACTIVITY_KEY, JSON.stringify([newLog, ...logs].slice(0, 30)));
+    const key = getStorageKey(ACTIVITY_KEY);
+    localStorage.setItem(key, JSON.stringify([newLog, ...logs].slice(0, 30)));
+    notifyWorkspaceUpdate();
   } catch {}
 }
 
 export function getFavoriteTools(): string[] {
+  const key = getStorageKey(FAVORITES_KEY);
   try {
-    const data = localStorage.getItem(FAVORITES_KEY);
-    return data ? JSON.parse(data) : ['document-analyzer', 'ai-chat', 'ai-assistant', 'merge-pdf', 'compress-pdf'];
-  } catch {
-    return ['document-analyzer', 'ai-chat', 'ai-assistant', 'merge-pdf', 'compress-pdf'];
-  }
+    const data = localStorage.getItem(key);
+    if (data) return JSON.parse(data);
+  } catch {}
+  return ['document-analyzer', 'ai-chat', 'ai-assistant', 'merge-pdf', 'compress-pdf'];
 }
 
 export function toggleFavoriteTool(toolId: string): string[] {
@@ -625,9 +932,122 @@ export function toggleFavoriteTool(toolId: string): string[] {
     } else {
       updated = [...favorites, toolId];
     }
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
+    const key = getStorageKey(FAVORITES_KEY);
+    localStorage.setItem(key, JSON.stringify(updated));
+    notifyWorkspaceUpdate();
     return updated;
   } catch {
     return getFavoriteTools();
+  }
+}
+
+// ==========================================
+// 7. Live Real-Time Firestore Synchronization
+// ==========================================
+
+let activeUnsubscribers: Unsubscribe[] = [];
+
+/**
+ * Subscribes to all 4 workspace subcollections for the authenticated user.
+ * Merges cloud data into local cache and notifies UI subscribers.
+ * Returns an unsubscription callback to prevent listener leaks.
+ */
+export function subscribeToUserWorkspace(uid: string, onUpdate?: () => void): () => void {
+  // Clean up any existing listeners first
+  unsubscribeUserWorkspace();
+
+  if (!uid || !db) {
+    return () => {};
+  }
+
+  try {
+    // 1. Recent Files Subcollection
+    const recentFilesQuery = query(collection(db, 'users', uid, 'recentFiles'), orderBy('timestamp', 'desc'));
+    const unsubsRecent = onSnapshot(
+      recentFilesQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const files = snapshot.docs.map((d) => d.data() as RecentFileRecord);
+          localStorage.setItem(`${RECENT_FILES_KEY}_${uid}`, JSON.stringify(files));
+          if (onUpdate) onUpdate();
+          notifyWorkspaceUpdate();
+        }
+      },
+      (err) => {
+        console.warn('Firestore recentFiles live sync notice:', err);
+      }
+    );
+    activeUnsubscribers.push(unsubsRecent);
+
+    // 2. Saved AI Chats Subcollection
+    const chatsQuery = query(collection(db, 'users', uid, 'aiChats'), orderBy('timestamp', 'desc'));
+    const unsubsChats = onSnapshot(
+      chatsQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const chats = snapshot.docs.map((d) => d.data() as SavedAiChat);
+          localStorage.setItem(`${SAVED_CHATS_KEY}_${uid}`, JSON.stringify(chats));
+          if (onUpdate) onUpdate();
+          notifyWorkspaceUpdate();
+        }
+      },
+      (err) => {
+        console.warn('Firestore aiChats live sync notice:', err);
+      }
+    );
+    activeUnsubscribers.push(unsubsChats);
+
+    // 3. Saved AI Analysis Subcollection
+    const analysisQuery = query(collection(db, 'users', uid, 'aiAnalysis'), orderBy('timestamp', 'desc'));
+    const unsubsAnalysis = onSnapshot(
+      analysisQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const analysisList = snapshot.docs.map((d) => d.data() as SavedAiAnalysis);
+          localStorage.setItem(`${SAVED_ANALYSIS_KEY}_${uid}`, JSON.stringify(analysisList));
+          if (onUpdate) onUpdate();
+          notifyWorkspaceUpdate();
+        }
+      },
+      (err) => {
+        console.warn('Firestore aiAnalysis live sync notice:', err);
+      }
+    );
+    activeUnsubscribers.push(unsubsAnalysis);
+
+    // 4. Saved Analyzer Reports Subcollection
+    const reportsQuery = query(collection(db, 'users', uid, 'analyzerReports'), orderBy('timestamp', 'desc'));
+    const unsubsReports = onSnapshot(
+      reportsQuery,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const reports = snapshot.docs.map((d) => d.data() as SavedAnalyzerReport);
+          localStorage.setItem(`${SAVED_ANALYZER_KEY}_${uid}`, JSON.stringify(reports));
+          if (onUpdate) onUpdate();
+          notifyWorkspaceUpdate();
+        }
+      },
+      (err) => {
+        console.warn('Firestore analyzerReports live sync notice:', err);
+      }
+    );
+    activeUnsubscribers.push(unsubsReports);
+  } catch (err) {
+    console.warn('Failed to attach workspace Firestore listeners:', err);
+  }
+
+  return () => {
+    unsubscribeUserWorkspace();
+  };
+}
+
+export function unsubscribeUserWorkspace(): void {
+  if (activeUnsubscribers.length > 0) {
+    activeUnsubscribers.forEach((unsub) => {
+      try {
+        unsub();
+      } catch {}
+    });
+    activeUnsubscribers = [];
   }
 }

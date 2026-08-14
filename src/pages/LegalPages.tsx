@@ -333,7 +333,7 @@ export const PrivacyPolicy: React.FC = () => {
                 </div>
               </div>
               <p>
-                To exercise any GDPR rights, please email our Data Protection team at <a href="mailto:mmridanga@gmail.com" className="text-red-400 hover:underline">mmridanga@gmail.com</a>.
+                You may also exercise your data portability and erasure rights automatically at any time directly through your <a href="/settings" className="text-red-400 hover:underline">Platform Settings &rarr; Data Rights</a> panel, or email our Data Protection team at <a href="mailto:mmridanga@gmail.com" className="text-red-400 hover:underline">mmridanga@gmail.com</a>.
               </p>
             </div>
           </section>

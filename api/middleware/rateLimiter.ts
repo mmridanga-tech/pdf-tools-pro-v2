@@ -2,18 +2,18 @@ import { UserEntitlement } from '../services/entitlement';
 import { usageTracker } from '../services/usageTracker';
 
 /**
- * Express middleware helper to enforce rate limits and daily request quotas
+ * Express middleware helper to enforce burst rate limits and atomic persistent daily request quotas
  */
-export function checkRateAndQuota(
+export async function checkRateAndQuota(
   req: any,
   res: any,
   uid: string,
   _endpoint: string,
   entitlement: UserEntitlement
-): boolean {
+): Promise<boolean> {
   const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket?.remoteAddress || '127.0.0.1';
 
-  // 1. Check per-minute rate limit (burst protection)
+  // 1. Check per-minute burst rate limit (in-memory)
   const rateResult = usageTracker.checkPerMinuteLimit(uid, clientIp, 10);
   if (!rateResult.allowed) {
     res.setHeader('Content-Type', 'application/json');
@@ -25,8 +25,8 @@ export function checkRateAndQuota(
     return false;
   }
 
-  // 2. Check daily quota limit
-  const quotaResult = usageTracker.checkDailyQuota(uid, entitlement.dailyAiLimit);
+  // 2. Check and increment daily quota atomically in Firestore
+  const quotaResult = await usageTracker.checkAndIncrementDailyQuota(uid, entitlement.dailyAiLimit);
   if (!quotaResult.allowed) {
     res.setHeader('Content-Type', 'application/json');
     res.status(429).json({
@@ -36,7 +36,7 @@ export function checkRateAndQuota(
     return false;
   }
 
-  // 3. Register request attempt
-  usageTracker.incrementUsage(uid, clientIp);
+  // 3. Register burst attempt
+  usageTracker.recordBurstRequest(uid, clientIp);
   return true;
 }

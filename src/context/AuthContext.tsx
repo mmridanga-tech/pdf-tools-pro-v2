@@ -33,6 +33,7 @@ interface AuthContextType {
   sendPasswordReset: (email: string) => Promise<void>;
   sendEmailVerification: () => Promise<void>;
   upgradePlan: (plan: 'pro' | 'enterprise') => void;
+  refreshBillingStatus: () => Promise<void>;
   openAuthModal: (mode?: 'login' | 'register' | 'forgot') => void;
   closeAuthModal: () => void;
   authModalOpen: boolean;
@@ -56,9 +57,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot'>('login');
 
+  const refreshBillingStatus = async () => {
+    try {
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        const testToken = localStorage.getItem('mock_dev_token');
+        if (testToken) headers['Authorization'] = `Bearer ${testToken}`;
+      }
+
+      const res = await fetch('/api/billing/status', { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.plan && user) {
+          setUser((prev) => (prev ? { ...prev, plan: data.plan } : prev));
+        }
+      }
+    } catch (err) {
+      console.warn('Billing status sync notice:', err);
+    }
+  };
+
   // Sync Firebase Auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
         const newUserProfile: UserProfile = {
           id: `google_${fbUser.uid}`,
@@ -67,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatar:
             fbUser.photoURL ||
             `https://api.dicebear.com/7.x/avataaars/svg?seed=${fbUser.email || fbUser.uid}`,
-          plan: 'pro',
+          plan: 'free',
           emailVerified: fbUser.emailVerified ?? true,
           createdAt: new Date().toISOString().split('T')[0],
           role: fbUser.email && fbUser.email.includes('admin') ? 'admin' : 'user',
@@ -75,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           provider: 'google',
         };
         setUser(newUserProfile);
+        setTimeout(refreshBillingStatus, 300);
       }
     });
 
@@ -208,6 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sendPasswordReset,
         sendEmailVerification,
         upgradePlan,
+        refreshBillingStatus,
         openAuthModal,
         closeAuthModal,
         authModalOpen,

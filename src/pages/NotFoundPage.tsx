@@ -13,6 +13,7 @@ export const NotFoundPage: React.FC = () => {
         title="404 - Page Not Found | SmartPDF AI"
         description="The page you are looking for does not exist or has been moved. Explore SmartPDF AI's suite of PDF tools, AI chat, and document utilities."
         path="/404"
+        noindex={true}
       />
 
       {/* Subtle Background Glows */}

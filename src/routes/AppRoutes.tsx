@@ -46,7 +46,8 @@ const HelpCenter = lazy(() => import('../pages/HelpCenter').then((m) => ({ defau
 // Legal & Policy Pages
 const PrivacyPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.PrivacyPolicy })));
 const TermsOfService = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.TermsOfService })));
-const CookiesPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.CookiesPolicy })));
+const CookiesPolicy = lazy(() => import('../pages/CookiePolicy').then((m) => ({ default: m.CookiePolicy })));
+const SecurityTrust = lazy(() => import('../pages/SecurityTrust').then((m) => ({ default: m.SecurityTrust })));
 const Disclaimer = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.Disclaimer })));
 const AboutUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.AboutUs })));
 const ContactUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.ContactUs })));
@@ -158,6 +159,22 @@ export const AppRoutes: React.FC = () => {
             }
           />
           <Route
+            path="/team-workspace"
+            element={
+              <ProtectedRoute>
+                <TeamWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/workspaces"
+            element={
+              <ProtectedRoute>
+                <TeamWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin"
             element={
               <ProtectedRoute adminOnly>
@@ -187,6 +204,9 @@ export const AppRoutes: React.FC = () => {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/cookies" element={<CookiesPolicy />} />
+          <Route path="/cookie-policy" element={<CookiesPolicy />} />
+          <Route path="/security" element={<SecurityTrust />} />
+          <Route path="/trust" element={<SecurityTrust />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
