@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smartpdf-ai-static-v2';
+const CACHE_NAME = 'smartpdf-ai-static-v3';
 
 const ASSETS_TO_CACHE = [
   '/',
@@ -43,7 +43,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. STRICT BYPASS: Never intercept or cache API, Gemini, Firebase, or Auth requests
+  // 2. STRICT BYPASS: Never intercept or cache API, Gemini, Firebase, Auth, tokens, telemetry, or private documents
   if (
     url.pathname.startsWith('/api/') ||
     url.hostname.includes('firebaseio.com') ||
@@ -51,7 +51,11 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('identitytoolkit') ||
     url.hostname.includes('securetoken') ||
     url.hostname.includes('firestore') ||
-    url.pathname.includes('/auth/')
+    url.pathname.includes('/auth/') ||
+    url.pathname.includes('/telemetry') ||
+    url.pathname.includes('/token') ||
+    url.pathname.includes('/pdf-worker') ||
+    url.pathname.endsWith('.pdf')
   ) {
     return;
   }
