@@ -2,6 +2,7 @@ import React, { useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { ProtectedRoute } from './ProtectedRoute';
+import { Footer } from '../components/Footer';
 
 const Home = lazy(() => import('../pages/Home').then((m) => ({ default: m.Home })));
 const MergePDF = lazy(() => import('../pages/MergePDF').then((m) => ({ default: m.MergePDF })));
@@ -222,6 +223,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
+      <Footer />
     </>
   );
 };
