@@ -94,7 +94,7 @@ export class ExcelConverterService {
 
         tracker.update('rendering', 88, 'Rendering PDF pages and object streams...');
         const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-        return new Blob([pdfBytes], { type: 'application/pdf' });
+        return new Blob([pdfBytes as any], { type: 'application/pdf' });
       },
       options
     );

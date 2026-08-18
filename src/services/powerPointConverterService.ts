@@ -121,7 +121,7 @@ export class PowerPointConverterService {
 
         tracker.update('rendering', 90, 'Serializing presentation PDF stream...');
         const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-        return new Blob([pdfBytes], { type: 'application/pdf' });
+        return new Blob([pdfBytes as any], { type: 'application/pdf' });
       },
       options
     );

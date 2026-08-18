@@ -174,7 +174,7 @@ export class AIChatService {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+    await (page.render({ canvasContext: ctx, viewport } as any)).promise;
   }
 
   /**
