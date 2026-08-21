@@ -12,14 +12,18 @@ export interface TextFormatting {
 
 export class TypographyEngine {
   /**
-   * Map PDF font names to DOCX standard web-safe font families
+   * Map PDF font names to DOCX standard or embedded font family names
    */
   static mapFontFamily(pdfFontName: string, fontFamilyHint?: string): string {
-    const combined = `${pdfFontName || ''} ${fontFamilyHint || ''}`.toLowerCase();
+    const rawName = pdfFontName || fontFamilyHint || '';
+    // Strip PDF subset prefix (e.g. ABCDEF+Kalpurush -> Kalpurush)
+    const fontName = rawName.replace(/^[A-Z]{6}\+/, '').trim();
+    const combined = `${fontName} ${fontFamilyHint || ''}`.toLowerCase();
 
+    // Preserve specific script & system fonts if present
     if (combined.includes('times') || combined.includes('serif')) return 'Times New Roman';
-    if (combined.includes('courier') || combined.includes('mono') || combined.includes('code')) return 'Courier New';
-    if (combined.includes('arial') || combined.includes('helvetica') || combined.includes('sans')) return 'Arial';
+    if (combined.includes('courier') || combined.includes('mono') || combined.includes('code') || combined.includes('consolas')) return 'Courier New';
+    if (combined.includes('arial') || combined.includes('helvetica') || combined.includes('sans-serif')) return 'Arial';
     if (combined.includes('calibri')) return 'Calibri';
     if (combined.includes('georgia')) return 'Georgia';
     if (combined.includes('garamond')) return 'Garamond';
@@ -27,6 +31,18 @@ export class TypographyEngine {
     if (combined.includes('cambria')) return 'Cambria';
     if (combined.includes('trebuchet')) return 'Trebuchet MS';
     if (combined.includes('tahoma')) return 'Tahoma';
+    if (combined.includes('segoe')) return 'Segoe UI';
+    if (combined.includes('palatino')) return 'Palatino Linotype';
+    if (combined.includes('baskerville')) return 'Baskerville';
+
+    // Check if clean font name is a readable font family (e.g., Bengali/Devanagari/CJK/Latin fonts)
+    if (fontName && !/^\/?f\d+$/i.test(fontName) && fontName.length > 2) {
+      // Clean fontName of internal traits like -Bold, -Italic, ,Bold
+      const cleanFamily = fontName.replace(/[-_](Bold|Italic|Oblique|Regular|Medium|Light|Heavy|Black|Semibold|Bd|It|PS|MT).*/i, '').trim();
+      if (cleanFamily.length > 2) {
+        return cleanFamily;
+      }
+    }
 
     return 'Calibri';
   }
@@ -152,13 +168,7 @@ export class TypographyEngine {
       .replace(/\uFB05/g, 'st')
       .replace(/\uFB06/g, 'st');
 
-    // Normalize special quotation marks & dashes
-    text = text
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u201C\u201D]/g, '"')
-      .replace(/[\u2013\u2014]/g, '-');
-
-    // Remove Private Use Area (PUA) and corrupt replacement glyphs
+    // Remove Private Use Area (PUA) and corrupt replacement glyphs while preserving all standard scripts & typography
     text = text.replace(/[\uE000-\uF8FF\uFFFD]/g, '');
 
     // Normalize multiple spaces into single space

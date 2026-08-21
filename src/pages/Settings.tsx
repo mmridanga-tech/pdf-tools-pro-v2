@@ -1,26 +1,36 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Settings as SettingsIcon,
   Moon,
   Sun,
   Globe,
-  Bell,
   Lock,
   Download,
   Eye,
   Check,
   Save,
   RotateCcw,
-  Sparkles,
   ShieldCheck,
-  Zap,
+  Trash2,
+  FileJson,
+  AlertTriangle,
+  ExternalLink,
+  Cookie,
+  FileText,
+  Loader2,
+  X,
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { auth } from '../lib/firebase';
 import { SEO } from '../components/SEO';
 
 export const Settings: React.FC = () => {
-  const { showToast, info } = useToast();
+  const { showToast, info, error: toastError } = useToast();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
   const [language, setLanguage] = useState('en');
@@ -45,6 +55,12 @@ export const Settings: React.FC = () => {
     fontSize: 'medium',
   });
 
+  // Export & Deletion State
+  const [isExporting, setIsExporting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleSave = () => {
     showToast('Settings preferences saved successfully', 'success');
   };
@@ -59,11 +75,91 @@ export const Settings: React.FC = () => {
     info('Settings reset to default values');
   };
 
+  const handleExportData = async () => {
+    try {
+      setIsExporting(true);
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+      if (!token) {
+        toastError('Please sign in to export your personal account data.');
+        setIsExporting(false);
+        return;
+      }
+
+      const response = await fetch('/api/user/export-data', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate export archive');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `smartpdf_data_export_${user?.id || 'account'}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      showToast('Personal data export downloaded successfully.', 'success');
+    } catch (err: any) {
+      console.error('Export error:', err);
+      toastError('Failed to download user data. Please try again later.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
+      toastError('Please type DELETE to confirm account deletion.');
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+      if (!token) {
+        toastError('Session expired. Please sign in again.');
+        setIsDeleting(false);
+        return;
+      }
+
+      const response = await fetch('/api/user/delete-account', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      setShowDeleteModal(false);
+      await logout();
+      showToast('Your account and personal data have been permanently deleted.', 'success');
+      navigate('/');
+    } catch (err: any) {
+      console.error('Account deletion error:', err);
+      toastError(err.message || 'An error occurred during account deletion.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0A0A0B] py-12 px-4 sm:px-6 lg:px-8">
       <SEO
         title="Settings & Preferences - SmartPDF AI"
-        description="Configure theme, privacy, notifications, download defaults, and accessibility settings."
+        description="Configure theme, privacy, notifications, download defaults, data export, and accessibility settings."
       />
 
       <div className="max-w-4xl mx-auto space-y-8">
@@ -216,7 +312,90 @@ export const Settings: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 4: Accessibility */}
+        {/* Section 4: Data Rights & Compliance (GDPR/CCPA) */}
+        <div className="bg-[#121215] border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+          <div className="flex items-center gap-2 border-b border-slate-800/80 pb-3">
+            <ShieldCheck className="w-4 h-4 text-red-500" />
+            <h2 className="text-base font-extrabold text-white">Data Rights & Privacy Controls</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Export Data */}
+            <div className="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-white font-bold text-xs">
+                  <FileJson className="w-4 h-4 text-emerald-400" />
+                  <span>Export Account Data (JSON)</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Download a structured, machine-readable JSON archive of your personal profile, chat histories, report metadata, and workspace settings.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleExportData}
+                disabled={isExporting}
+                className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                    <span>Preparing Archive...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Download JSON Archive</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Danger Zone: Delete Account */}
+            <div className="bg-red-500/5 border border-red-500/20 p-5 rounded-2xl flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-red-400 font-bold text-xs">
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                  <span>Delete Account & Data</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Permanently delete your profile, authentication credentials, chat history, and personal Firestore documents. This action is irreversible.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full py-2.5 px-4 bg-red-600/10 hover:bg-red-600/20 border border-red-500/30 text-red-400 hover:text-red-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Account...</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Legal and Compliance Links Bar */}
+          <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span className="text-slate-500 font-medium">Compliance & Trust Resources:</span>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link to="/privacy" className="text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1">
+                <FileText className="w-3 h-3" /> Privacy Policy
+              </Link>
+              <Link to="/terms" className="text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1">
+                <FileText className="w-3 h-3" /> Terms
+              </Link>
+              <Link to="/cookies" className="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1">
+                <Cookie className="w-3 h-3" /> Cookie Policy
+              </Link>
+              <Link to="/security" className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> Security & Trust
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 5: Accessibility */}
         <div className="bg-[#121215] border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-800/80 pb-3">
             <Eye className="w-4 h-4 text-amber-400" />
@@ -257,6 +436,79 @@ export const Settings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#141418] border border-red-500/30 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl relative"
+            >
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="space-y-2">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mb-4">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-bold text-white">Permanently Delete Account?</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  This action <strong className="text-red-400">CANNOT be undone</strong>. All your chat history, uploaded document analysis logs, and saved preferences will be permanently wiped from our database.
+                </p>
+              </div>
+
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[11px] text-red-300">
+                To confirm, please type <strong className="text-white font-mono uppercase">DELETE</strong> below:
+              </div>
+
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                className="w-full bg-[#1c1c22] border border-slate-700 focus:border-red-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+              />
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText.trim().toUpperCase() !== 'DELETE' || isDeleting}
+                  className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-500 disabled:bg-red-900/40 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      <span>Permanently Delete</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

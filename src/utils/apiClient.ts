@@ -1,3 +1,5 @@
+import { auth } from '../lib/firebase';
+
 interface ApiOptions extends RequestInit {
   timeoutMs?: number;
 }
@@ -10,10 +12,11 @@ export interface ApiResponse<T = any> {
 
 /**
   Robust API client for AI Gemini endpoints:
-  1. Prevents calling response.json() on invalid/empty/non-JSON responses.
-  2. Verifies response.ok, Content-Type (application/json), and non-empty response body.
-  3. Maps HTTP status codes (400, 401, 403, 404, 429, 500, Timeout, Network Failure) to friendly errors.
-  4. Returns the structured data payload or JSON object safely without crashing the UI.
+  1. Automatically attaches Firebase Auth ID token (`Authorization: Bearer <token>`).
+  2. Prevents calling response.json() on invalid/empty/non-JSON responses.
+  3. Verifies response.ok, Content-Type (application/json), and non-empty response body.
+  4. Maps HTTP status codes (400, 401, 403, 404, 429, 500, Timeout, Network Failure) to friendly errors.
+  5. Returns the structured data payload or JSON object safely without crashing the UI.
  */
 export async function postApiJson<T>(url: string, bodyData: any, options: ApiOptions = {}): Promise<T> {
   const { timeoutMs = 60000, ...customInit } = options;
@@ -21,15 +24,58 @@ export async function postApiJson<T>(url: string, bodyData: any, options: ApiOpt
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  // Prepare headers
+  const headersObj: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  if (customInit.headers) {
+    if (customInit.headers instanceof Headers) {
+      customInit.headers.forEach((val, key) => {
+        headersObj[key] = val;
+      });
+    } else if (Array.isArray(customInit.headers)) {
+      customInit.headers.forEach(([key, val]) => {
+        headersObj[key] = val;
+      });
+    } else {
+      Object.assign(headersObj, customInit.headers);
+    }
+  }
+
+  // Attach Firebase ID token if missing from headers
+  if (!headersObj['Authorization'] && !headersObj['authorization']) {
+    if (auth.currentUser) {
+      try {
+        const idToken = await auth.currentUser.getIdToken();
+        if (idToken) {
+          headersObj['Authorization'] = `Bearer ${idToken}`;
+        }
+      } catch (err) {
+        console.warn('Failed to retrieve Firebase Auth ID token:', err);
+      }
+    } else {
+      // Check if session exists in localStorage for dev mock token fallback
+      try {
+        const stored = localStorage.getItem('smartpdf_user_session');
+        if (stored) {
+          const userObj = JSON.parse(stored);
+          if (userObj?.id) {
+            headersObj['Authorization'] = `Bearer dev_mock_token_${userObj.id}`;
+          }
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+  }
+
   let response: Response;
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        ...(customInit.headers || {}),
-      },
+      headers: headersObj,
       body: JSON.stringify(bodyData),
       signal: controller.signal,
       ...customInit,
@@ -90,7 +136,7 @@ export async function postApiJson<T>(url: string, bodyData: any, options: ApiOpt
         friendlyError = backendError || 'Bad request (400). Please check your input and try again.';
         break;
       case 401:
-        friendlyError = backendError || 'Unauthorized (401). Gemini API key is invalid or missing.';
+        friendlyError = backendError || 'Authentication required (401). Please sign in to use SmartPDF AI tools.';
         break;
       case 403:
         friendlyError = backendError || 'Forbidden (403). Permission denied for this AI request.';
@@ -99,7 +145,7 @@ export async function postApiJson<T>(url: string, bodyData: any, options: ApiOpt
         friendlyError = backendError || 'Not Found (404). The requested AI service endpoint was not found.';
         break;
       case 429:
-        friendlyError = backendError || 'Rate limit exceeded (429). Too many requests. Please wait a moment.';
+        friendlyError = backendError || 'Rate limit or daily AI quota exceeded (429). Please wait a moment or upgrade your plan.';
         break;
       case 500:
       default:

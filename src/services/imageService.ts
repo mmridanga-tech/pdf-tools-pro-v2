@@ -232,7 +232,7 @@ export class ImageService {
       if (ctx) {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        await (page.render({ canvasContext: ctx, viewport } as any)).promise;
         thumbnails.push({
           pageNumber: i,
           thumbnailDataUrl: canvas.toDataURL('image/jpeg', 0.75),
@@ -322,7 +322,7 @@ export class ImageService {
           ctx.fillStyle = '#FFFFFF';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+          await (page.render({ canvasContext: ctx, viewport } as any)).promise;
 
           const mimeType = options.format === 'jpeg' ? 'image/jpeg' : 'image/png';
           const dataUrl = canvas.toDataURL(mimeType, quality);

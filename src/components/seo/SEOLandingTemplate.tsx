@@ -93,19 +93,29 @@ export const SEOLandingTemplate: React.FC<SEOLandingTemplateProps> = ({ data, ch
           price: '0',
           priceCurrency: 'USD',
         },
-        aggregateRating: {
-          '@type': 'AggregateRating',
-          ratingValue: '4.9',
-          ratingCount: '1420',
-          bestRating: '5',
-          worstRating: '1',
-        },
         publisher: {
           '@type': 'Organization',
           name: 'SmartPDF AI',
           url: 'https://smartpdfai.tech',
         },
       },
+      ...(data.howToSteps && data.howToSteps.length > 0
+        ? [
+            {
+              '@type': 'HowTo',
+              '@id': `${canonicalUrl}#howto`,
+              name: `How to Use ${data.toolName}`,
+              description: `Step-by-step instructions to use ${data.toolName} online for free.`,
+              step: data.howToSteps.map((step) => ({
+                '@type': 'HowToStep',
+                position: step.stepNumber,
+                name: step.title,
+                text: step.description,
+                url: `${canonicalUrl}#step-${step.stepNumber}`,
+              })),
+            },
+          ]
+        : []),
       {
         '@type': 'FAQPage',
         '@id': `${canonicalUrl}#faq`,

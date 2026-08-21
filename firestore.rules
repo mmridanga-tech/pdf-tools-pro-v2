@@ -1,0 +1,138 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Default catch-all deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User Profile collection: users can read their own document.
+    // Plan, role, and subscription fields CANNOT be written by client SDKs to prevent client self-granting.
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) 
+        && (!request.resource.data.keys().hasAny([
+              'plan', 'role', 'subscriptionStatus', 'provider', 
+              'providerCustomerId', 'providerSubscriptionId', 
+              'currentPeriodStart', 'currentPeriodEnd', 'cancelAtPeriodEnd'
+            ]) 
+            || (resource != null 
+                && request.resource.data.plan == resource.data.plan 
+                && request.resource.data.role == resource.data.role
+                && request.resource.data.subscriptionStatus == resource.data.subscriptionStatus
+                && request.resource.data.provider == resource.data.provider));
+
+      // Phase 12: User Workspace Cloud Persistence
+      // Restricted strictly to the document owner
+      match /recentFiles/{fileId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /aiChats/{chatId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /aiAnalysis/{analysisId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /analyzerReports/{reportId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ==========================================
+    // Phase 13: Team Workspaces & Permissions
+    // ==========================================
+    function isWorkspaceMember(workspaceId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+    }
+
+    function isWorkspaceOwner(workspaceId) {
+      return isSignedIn() && get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerUid == request.auth.uid;
+    }
+
+    function isWorkspaceAdminOrOwner(workspaceId) {
+      return isWorkspaceOwner(workspaceId) 
+        || (isWorkspaceMember(workspaceId) 
+            && get(/databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid)).data.role in ['owner', 'admin']);
+    }
+
+    match /workspaces/{workspaceId} {
+      allow read: if isSignedIn() && (resource.data.ownerUid == request.auth.uid || isWorkspaceMember(workspaceId));
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isWorkspaceAdminOrOwner(workspaceId) 
+        && (request.resource.data.ownerUid == resource.data.ownerUid || isWorkspaceOwner(workspaceId));
+      allow delete: if isWorkspaceOwner(workspaceId);
+
+      // Members Subcollection
+      match /members/{memberUid} {
+        allow read: if isWorkspaceMember(workspaceId) || isWorkspaceOwner(workspaceId);
+        allow create: if isWorkspaceAdminOrOwner(workspaceId) 
+          || (isSignedIn() && request.auth.uid == memberUid);
+        allow update: if isWorkspaceAdminOrOwner(workspaceId) && request.resource.data.role != 'owner';
+        allow delete: if isWorkspaceAdminOrOwner(workspaceId) || (isSignedIn() && request.auth.uid == memberUid);
+      }
+
+      // Invitations Subcollection
+      match /invitations/{inviteId} {
+        allow read: if isWorkspaceMember(workspaceId) 
+          || isWorkspaceOwner(workspaceId) 
+          || (isSignedIn() && resource.data.email == request.auth.token.email);
+        allow create: if isWorkspaceAdminOrOwner(workspaceId) && request.resource.data.role in ['admin', 'member'];
+        allow update, delete: if isWorkspaceAdminOrOwner(workspaceId) 
+          || (isSignedIn() && resource.data.email == request.auth.token.email);
+      }
+
+      // Shared Workspace Data Subcollections
+      match /sharedFiles/{fileId} {
+        allow read, write: if isWorkspaceMember(workspaceId) || isWorkspaceOwner(workspaceId);
+      }
+
+      match /sharedChats/{chatId} {
+        allow read, write: if isWorkspaceMember(workspaceId) || isWorkspaceOwner(workspaceId);
+      }
+
+      match /sharedAnalysis/{analysisId} {
+        allow read, write: if isWorkspaceMember(workspaceId) || isWorkspaceOwner(workspaceId);
+      }
+
+      match /sharedReports/{reportId} {
+        allow read, write: if isWorkspaceMember(workspaceId) || isWorkspaceOwner(workspaceId);
+      }
+
+      // Audit Logs: Immutable for security auditing
+      match /auditLogs/{logId} {
+        allow read: if isWorkspaceAdminOrOwner(workspaceId);
+        allow create: if isWorkspaceMember(workspaceId) || isWorkspaceOwner(workspaceId);
+        allow update, delete: if false;
+      }
+    }
+
+    // Payment webhook events collection: server Admin SDK manages writes only (idempotency)
+    match /paymentWebhookEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // Daily AI usage tracking collection: read-only for owner, server Admin SDK manages writes
+    match /aiUsage/{docId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
+    // AI audit logs: server Admin SDK manages writes
+    match /aiUsageLogs/{logId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+  }
+}

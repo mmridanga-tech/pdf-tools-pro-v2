@@ -2,6 +2,7 @@ import React, { useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { ProtectedRoute } from './ProtectedRoute';
+import { Footer } from '../components/Footer';
 
 const Home = lazy(() => import('../pages/Home').then((m) => ({ default: m.Home })));
 const MergePDF = lazy(() => import('../pages/MergePDF').then((m) => ({ default: m.MergePDF })));
@@ -13,6 +14,10 @@ const DuplicatePDFPages = lazy(() => import('../pages/DuplicatePDFPages').then((
 const CompressPDF = lazy(() => import('../pages/CompressPDF').then((m) => ({ default: m.CompressPDF })));
 const PDFToWord = lazy(() => import('../pages/PDFToWord').then((m) => ({ default: m.PDFToWord })));
 const WordToPDF = lazy(() => import('../pages/WordToPDF').then((m) => ({ default: m.WordToPDF })));
+const ExcelToPDF = lazy(() => import('../pages/ExcelToPDF').then((m) => ({ default: m.ExcelToPDF })));
+const PDFToExcel = lazy(() => import('../pages/PDFToExcel').then((m) => ({ default: m.PDFToExcel })));
+const PowerPointToPDF = lazy(() => import('../pages/PowerPointToPDF').then((m) => ({ default: m.PowerPointToPDF })));
+const PDFToPowerPoint = lazy(() => import('../pages/PDFToPowerPoint').then((m) => ({ default: m.PDFToPowerPoint })));
 const RotatePDF = lazy(() => import('../pages/RotatePDF').then((m) => ({ default: m.RotatePDF })));
 const WatermarkPDF = lazy(() => import('../pages/WatermarkPDF').then((m) => ({ default: m.WatermarkPDF })));
 const PageNumbersPDF = lazy(() => import('../pages/PageNumbersPDF').then((m) => ({ default: m.PageNumbersPDF })));
@@ -42,7 +47,8 @@ const HelpCenter = lazy(() => import('../pages/HelpCenter').then((m) => ({ defau
 // Legal & Policy Pages
 const PrivacyPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.PrivacyPolicy })));
 const TermsOfService = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.TermsOfService })));
-const CookiesPolicy = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.CookiesPolicy })));
+const CookiesPolicy = lazy(() => import('../pages/CookiePolicy').then((m) => ({ default: m.CookiePolicy })));
+const SecurityTrust = lazy(() => import('../pages/SecurityTrust').then((m) => ({ default: m.SecurityTrust })));
 const Disclaimer = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.Disclaimer })));
 const AboutUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.AboutUs })));
 const ContactUs = lazy(() => import('../pages/LegalPages').then((m) => ({ default: m.ContactUs })));
@@ -102,6 +108,10 @@ export const AppRoutes: React.FC = () => {
           <Route path="/compress-pdf" element={<CompressPDF />} />
           <Route path="/pdf-to-word" element={<PDFToWord />} />
           <Route path="/word-to-pdf" element={<WordToPDF />} />
+          <Route path="/excel-to-pdf-tool" element={<ExcelToPDF />} />
+          <Route path="/pdf-to-excel" element={<PDFToExcel />} />
+          <Route path="/powerpoint-to-pdf" element={<PowerPointToPDF />} />
+          <Route path="/pdf-to-powerpoint" element={<PDFToPowerPoint />} />
           <Route path="/rotate" element={<RotatePDF />} />
           <Route path="/watermark" element={<WatermarkPDF />} />
           <Route path="/page-numbers" element={<PageNumbersPDF />} />
@@ -150,6 +160,22 @@ export const AppRoutes: React.FC = () => {
             }
           />
           <Route
+            path="/team-workspace"
+            element={
+              <ProtectedRoute>
+                <TeamWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/workspaces"
+            element={
+              <ProtectedRoute>
+                <TeamWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin"
             element={
               <ProtectedRoute adminOnly>
@@ -179,6 +205,9 @@ export const AppRoutes: React.FC = () => {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/cookies" element={<CookiesPolicy />} />
+          <Route path="/cookie-policy" element={<CookiesPolicy />} />
+          <Route path="/security" element={<SecurityTrust />} />
+          <Route path="/trust" element={<SecurityTrust />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
@@ -194,6 +223,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
+      <Footer />
     </>
   );
 };

@@ -1,23 +1,21 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { PDFTool, ToolCategory } from '../../types/toolTypes';
 import { PremiumToolCard } from './PremiumToolCard';
-import { DeferredSection } from '../DeferredSection';
 import {
-  Flame,
   Star,
   Sparkles,
   HelpCircle,
   LayoutGrid,
-  Scissors,
   Layers,
   Minimize2,
   FileText,
-  FileType,
-  ScanText,
   Shield,
   Image as ImageIcon,
-  CheckCircle2,
+  ChevronUp,
+  ArrowRight,
+  X,
 } from 'lucide-react';
 
 interface PremiumToolGridProps {
@@ -40,7 +38,7 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: React.FC<{ className?
   { id: 'ai', label: 'AI Intelligence', icon: Sparkles },
 ];
 
-// Highlighted Popular Core PDF Tools Data
+// 6 Featured Popular Core PDF Tools Data
 const FEATURED_POPULAR: PDFTool[] = [
   {
     id: 'merge-pdf',
@@ -50,8 +48,7 @@ const FEATURED_POPULAR: PDFTool[] = [
     category: 'organize',
     path: '/merge',
     popular: true,
-    badge: 'Popular',
-    color: 'from-blue-500 to-indigo-600',
+    color: 'from-indigo-500 to-indigo-600',
   },
   {
     id: 'split-pdf',
@@ -61,7 +58,6 @@ const FEATURED_POPULAR: PDFTool[] = [
     category: 'organize',
     path: '/split',
     popular: true,
-    badge: 'Popular',
     color: 'from-amber-500 to-orange-600',
   },
   {
@@ -72,7 +68,6 @@ const FEATURED_POPULAR: PDFTool[] = [
     category: 'edit',
     path: '/compress',
     popular: true,
-    badge: 'Fast',
     color: 'from-emerald-500 to-teal-600',
   },
   {
@@ -83,7 +78,6 @@ const FEATURED_POPULAR: PDFTool[] = [
     category: 'convert',
     path: '/pdf-to-word',
     popular: true,
-    badge: 'Popular',
     color: 'from-blue-600 to-cyan-600',
   },
   {
@@ -94,7 +88,6 @@ const FEATURED_POPULAR: PDFTool[] = [
     category: 'convert',
     path: '/word-to-pdf',
     popular: true,
-    badge: 'Fast',
     color: 'from-sky-500 to-blue-700',
   },
   {
@@ -105,7 +98,6 @@ const FEATURED_POPULAR: PDFTool[] = [
     category: 'convert',
     path: '/ocr-pdf',
     popular: true,
-    badge: 'AI Powered',
     color: 'from-amber-500 to-red-600',
   },
 ];
@@ -119,153 +111,202 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
   favoriteIds,
   onToggleFavorite,
 }) => {
+  const [showAllTools, setShowAllTools] = useState(false);
+
   const favoriteTools = useMemo(() => {
     return tools.filter((t) => favoriteIds.includes(t.id));
   }, [tools, favoriteIds]);
 
+  const displayedFavorites = useMemo(() => {
+    return favoriteTools.slice(0, 4);
+  }, [favoriteTools]);
+
+  const isFiltering = Boolean(searchQuery || selectedCategory !== 'all');
+
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
-      {/* Starred Favorite Tools Section */}
-      {favoriteTools.length > 0 && !searchQuery && selectedCategory === 'all' && (
+    <section id="tools-section" className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-6">
+      {/* Compact Favorites Strip */}
+      {favoriteTools.length > 0 && !isFiltering && (
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-amber-950/30 via-[#141522] to-amber-950/20 border border-amber-500/30 rounded-[24px] p-6.5 shadow-2xl backdrop-blur-xl"
+          className="flex items-center gap-2.5 overflow-x-auto pb-1 pt-1 px-3.5 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] scrollbar-none"
         >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                <Star className="w-4.5 h-4.5 fill-current" />
-              </div>
-              <h2 className="text-base font-extrabold uppercase tracking-wider text-amber-300">
-                Your Starred Favorite Tools
-              </h2>
-            </div>
-            <span className="text-xs font-semibold text-slate-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-              {favoriteTools.length} starred
-            </span>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 shrink-0 pr-1">
+            <Star className="w-3.5 h-3.5 fill-current text-amber-400" />
+            <span>Favorites</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {favoriteTools.map((tool) => (
-              <PremiumToolCard
-                key={`fav-${tool.id}`}
-                tool={tool}
-                isFavorite={true}
-                onToggleFavorite={onToggleFavorite}
-              />
+
+          <div className="h-3.5 w-[1px] bg-white/10 shrink-0" />
+
+          <div className="flex items-center gap-2 scrollbar-none">
+            {displayedFavorites.map((tool) => (
+              <div
+                key={`fav-chip-${tool.id}`}
+                className="group inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-400/30 text-xs font-medium text-slate-300 hover:text-white transition-all shrink-0"
+              >
+                <Link to={tool.path} className="flex items-center gap-1.5">
+                  <span className="truncate max-w-[120px]">{tool.name}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => onToggleFavorite(tool.id)}
+                  className="text-slate-500 hover:text-amber-400 transition-colors cursor-pointer"
+                  aria-label={`Unstar ${tool.name}`}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
             ))}
           </div>
+
+          {favoriteTools.length > 4 && (
+            <span className="text-[11px] font-medium text-slate-500 shrink-0 pl-1">
+              +{favoriteTools.length - 4} more
+            </span>
+          )}
         </motion.div>
       )}
 
-      {/* Spotlight Popular PDF Tools Section */}
-      {!searchQuery && selectedCategory === 'all' && (
-        <DeferredSection fallbackHeight="min-h-[480px]">
-          <div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 pb-4 border-b border-white/10 gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-[11px] font-bold text-red-400 uppercase tracking-wider mb-2.5 shadow-md">
-                  <Flame className="w-3.5 h-3.5 text-red-400" />
-                  <span>Most Popular Workflows</span>
-                </div>
-                <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-                  Featured PDF Tools
-                </h2>
-              </div>
-              <p className="text-slate-400 text-sm max-w-md">
-                Fast, client-side PDF utilities engineered for zero server latency and maximum visual clarity.
+      {/* Featured PDF Tools */}
+      {!isFiltering && !showAllTools ? (
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 pb-3 border-b border-white/[0.06] gap-3">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Featured PDF Tools
+              </h2>
+              <p className="text-slate-400 text-xs sm:text-sm font-normal mt-1">
+                Everything you need for fast, private document workflows.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {FEATURED_POPULAR.map((tool) => (
-                <PremiumToolCard
-                  key={`featured-${tool.id}`}
-                  tool={tool}
-                  isFavorite={favoriteIds.includes(tool.id)}
-                  onToggleFavorite={onToggleFavorite}
-                />
-              ))}
-            </div>
+            <button
+              onClick={() => setShowAllTools(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0 self-start sm:self-auto group"
+            >
+              <span>View All PDF Tools</span>
+              <ArrowRight className="w-3.5 h-3.5 text-red-400 group-hover:translate-x-0.5 transition-transform" />
+            </button>
           </div>
-        </DeferredSection>
-      )}
 
-      {/* Category Navigation Bar */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-            Explore All Tools ({tools.length})
-          </h2>
-        </div>
-
-        {/* Categories Bar */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-4 scrollbar-none">
-          {CATEGORIES.map((cat) => {
-            const IconComp = cat.icon;
-            const isSelected = selectedCategory === cat.id;
-
-            return (
-              <button
-                key={cat.id}
-                onClick={() => onSelectCategory(cat.id)}
-                className={`inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-300 cursor-pointer ${
-                  isSelected
-                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-600/30 border border-red-400/50'
-                    : 'bg-[#12131F]/90 text-slate-400 hover:text-white hover:bg-[#181928] border border-white/10'
-                }`}
-              >
-                <IconComp className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Filtered Tools Grid */}
-      <AnimatePresence mode="wait">
-        {tools.length > 0 ? (
-          <motion.div
-            key={selectedCategory + searchQuery}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-          >
-            {tools.map((tool) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-6">
+            {FEATURED_POPULAR.map((tool) => (
               <PremiumToolCard
-                key={tool.id}
+                key={`featured-${tool.id}`}
                 tool={tool}
                 isFavorite={favoriteIds.includes(tool.id)}
                 onToggleFavorite={onToggleFavorite}
               />
             ))}
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#12131F] rounded-[24px] p-12 text-center border border-white/10 max-w-md mx-auto shadow-2xl backdrop-blur-xl"
-          >
-            <HelpCircle className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No PDF tools found</h3>
-            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
-              We couldn't find any tool matching "{searchQuery}". Try searching for merge, split, compress, or OCR.
-            </p>
+          </div>
+
+          <div className="text-center pt-2">
             <button
-              onClick={() => {
-                onSearchChange('');
-                onSelectCategory('all');
-              }}
-              className="px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl text-sm font-bold hover:from-red-500 hover:to-rose-500 transition-all shadow-lg shadow-red-600/25 cursor-pointer"
+              onClick={() => setShowAllTools(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-slate-200 text-xs sm:text-sm font-semibold border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group"
             >
-              Reset Search & Filters
+              <span>View All PDF Tools ({tools.length})</span>
+              <ArrowRight className="w-4 h-4 text-red-400 group-hover:translate-x-0.5 transition-transform" />
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      ) : (
+        /* Expanded Catalog / Filtered Tools View */
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                {isFiltering ? `Filtered Tools (${tools.length})` : `Complete Tool Suite (${tools.length})`}
+              </h2>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {CATEGORIES.map((cat) => {
+                const IconComp = cat.icon;
+                const isSelected = selectedCategory === cat.id;
+
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => onSelectCategory(cat.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                      isSelected
+                        ? 'bg-white/[0.1] text-white border border-white/20 shadow-sm'
+                        : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-white/[0.06]'
+                    }`}
+                  >
+                    <IconComp className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tools Grid */}
+          <AnimatePresence mode="wait">
+            {tools.length > 0 ? (
+              <div className="space-y-6">
+                <motion.div
+                  key={selectedCategory + searchQuery}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"
+                >
+                  {tools.map((tool) => (
+                    <PremiumToolCard
+                      key={tool.id}
+                      tool={tool}
+                      isFavorite={favoriteIds.includes(tool.id)}
+                      onToggleFavorite={onToggleFavorite}
+                    />
+                  ))}
+                </motion.div>
+
+                {/* Show Fewer Button when expanded via showAllTools and not active search */}
+                {!isFiltering && showAllTools && (
+                  <div className="text-center pt-2">
+                    <button
+                      onClick={() => setShowAllTools(false)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-slate-200 text-xs sm:text-sm font-semibold border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group"
+                    >
+                      <span>Show Featured Tools Only</span>
+                      <ChevronUp className="w-3.5 h-3.5 text-red-400 group-hover:-translate-y-0.5 transition-transform" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-[#0c0d14] rounded-2xl p-6 text-center border border-white/[0.08] max-w-md mx-auto shadow-sm my-4"
+              >
+                <HelpCircle className="w-7 h-7 text-slate-500 mx-auto mb-2" />
+                <h3 className="text-sm font-semibold text-white mb-1">No PDF tools found</h3>
+                <p className="text-xs text-slate-400 mb-4 leading-relaxed font-normal">
+                  No tools found matching "{searchQuery}". Try searching for merge, split, compress, or OCR.
+                </p>
+                <button
+                  onClick={() => {
+                    onSearchChange('');
+                    onSelectCategory('all');
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-medium transition-all shadow-sm cursor-pointer"
+                >
+                  Reset Search & Filters
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </section>
   );
 };
+
+

@@ -1,6 +1,6 @@
 {
   "name": "SmartPDF AI",
-  "description": "Enterprise AI-powered PDF platform with AI Document Chat, Assistant, OCR, Team Workspaces, Cloud Sync, and secure PDF tools.",
+  "description": "Privacy-focused browser-based WebAssembly PDF suite with enterprise Gemini AI document intelligence and serverless backend",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

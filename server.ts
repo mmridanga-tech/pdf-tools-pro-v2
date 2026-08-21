@@ -1,32 +1,17 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-
-import healthHandler from './api/health.ts';
-import chatHandler from './api/gemini/chat.ts';
-import assistantHandler from './api/gemini/assistant.ts';
-import analyzerHandler from './api/gemini/analyzer.ts';
-import wordConvertHandler from './api/convert/word.ts';
-import pdfToWordHandler from './api/convert/pdfToWord.ts';
-import compressHandler from './api/convert/compress.ts';
-import contentGenHandler from './api/admin/generate-content.ts';
+import { app } from './server/app';
 
 async function startServer() {
-  const app = express();
   const PORT = 3000;
 
-  app.use(express.json({ limit: '25mb' }));
+  // Fallback for unmatched /api routes
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ success: false, error: `Endpoint not found: ${req.path}` });
+  });
 
-  app.get('/api/health', healthHandler);
-  app.post('/api/gemini/chat', chatHandler);
-  app.post('/api/gemini/assistant', assistantHandler);
-  app.post('/api/gemini/analyzer', analyzerHandler);
-  app.post('/api/admin/generate-content', contentGenHandler);
-  app.all('/api/convert/word-to-pdf', wordConvertHandler);
-  app.all('/api/convert/pdf-to-word', pdfToWordHandler);
-  app.all('/api/convert/compress', compressHandler);
-
-  // Vite middleware setup
+  // Vite middleware for development vs static build for production
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -42,9 +27,11 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`SmartPDF Full-Stack Server running on http://localhost:${PORT}`);
+    console.log(`[SmartPDF AI] Server running on http://0.0.0.0:${PORT}`);
   });
 }
 
-startServer();
-
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});

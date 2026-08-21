@@ -56,10 +56,12 @@ export class DocxImageBuilder {
     const origHeight = Math.max(1, img.height || 200);
     const aspectRatio = origHeight / origWidth;
 
-    // Scale calculation - preserve strict aspect ratio
-    let targetWidthPt = Math.min(maxWidthPt, Math.round(origWidth * 0.85));
+    // Scale calculation - preserve strict aspect ratio and original size when fitting
+    let targetWidthPt = Math.round(origWidth);
     if (img.isChart) {
-      targetWidthPt = Math.min(maxWidthPt, Math.max(380, Math.round(origWidth * 0.95)));
+      targetWidthPt = Math.min(maxWidthPt, Math.max(380, origWidth));
+    } else if (origWidth > maxWidthPt) {
+      targetWidthPt = maxWidthPt;
     }
     const targetHeightPt = Math.round(targetWidthPt * aspectRatio);
 

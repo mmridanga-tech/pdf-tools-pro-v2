@@ -108,7 +108,7 @@ export class OCRService {
       canvas.height = viewport.height;
 
       if (context) {
-        await page.render({ canvasContext: context, viewport, canvas }).promise;
+        await (page.render({ canvasContext: context, viewport } as any)).promise;
       }
 
       if (onProgress) {

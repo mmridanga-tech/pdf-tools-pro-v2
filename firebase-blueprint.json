@@ -1,0 +1,289 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Persistent user account profile and entitlement plan details.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique Firebase user ID" },
+        "email": { "type": "string", "description": "User email address" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User access role" },
+        "plan": { "type": "string", "enum": ["free", "pro", "enterprise"], "description": "Server-authorized subscription plan" },
+        "subscriptionStatus": { "type": "string", "enum": ["active", "trialing", "past_due", "cancelled", "expired", "incomplete", "payment_failed"], "description": "Payment provider subscription state" },
+        "provider": { "type": "string", "enum": ["stripe", "razorpay", "none"], "description": "Payment gateway provider" },
+        "providerCustomerId": { "type": "string", "description": "Stripe/Razorpay customer ID" },
+        "providerSubscriptionId": { "type": "string", "description": "Stripe/Razorpay subscription or order ID" },
+        "currentPeriodStart": { "type": "string", "description": "Current billing period start timestamp/date" },
+        "currentPeriodEnd": { "type": "string", "description": "Current billing period end timestamp/date" },
+        "cancelAtPeriodEnd": { "type": "boolean", "description": "Whether subscription is scheduled for cancellation at period end" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "lastLoginAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "role", "plan"]
+    },
+    "PaymentWebhookEvent": {
+      "title": "Payment Webhook Log",
+      "description": "Processed payment webhook event log for idempotency verification.",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string" },
+        "provider": { "type": "string", "enum": ["stripe", "razorpay"] },
+        "processedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["eventId", "provider"]
+    },
+    "AiUsage": {
+      "title": "Daily AI Request Usage",
+      "description": "Daily request usage counter for atomic quota enforcement.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "date": { "type": "string", "description": "Format YYYY-MM-DD" },
+        "dailyCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "date", "dailyCount"]
+    },
+    "AiUsageLog": {
+      "title": "AI Execution Audit Log",
+      "description": "Audit record of AI request execution for analytics and security tracking.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "endpoint": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "durationMs": { "type": "number" },
+        "status": { "type": "string", "enum": ["success", "error"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "endpoint", "timestamp", "status"]
+    },
+    "RecentFile": {
+      "title": "Recent Document File Record",
+      "description": "User processed document metadata and tool history.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "size": { "type": "number" },
+        "toolId": { "type": "string" },
+        "toolName": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "status": { "type": "string", "enum": ["completed", "processed"] },
+        "folder": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "isFavorite": { "type": "boolean" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "uid", "name", "toolId", "timestamp", "status"]
+    },
+    "AiChat": {
+      "title": "Saved AI Document Chat",
+      "description": "Saved PDF conversation transcripts and citations.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "docName": { "type": "string" },
+        "pageCount": { "type": "number" },
+        "timestamp": { "type": "number" },
+        "messages": { "type": "array" },
+        "folder": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "isFavorite": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "uid", "title", "docName", "timestamp", "messages"]
+    },
+    "AiAnalysis": {
+      "title": "Saved AI Document Analysis",
+      "description": "Executive summaries, translations, key points, and quizzes.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "docName": { "type": "string" },
+        "actionType": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "folder": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "isFavorite": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "uid", "title", "docName", "actionType", "content", "timestamp"]
+    },
+    "AnalyzerReport": {
+      "title": "Saved Document Analyzer Report",
+      "description": "Comprehensive document audit, risk analysis, entity extraction, and action items.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "documentType": { "type": "string" },
+        "confidenceScore": { "type": "number" },
+        "executiveSummary": { "type": "string" },
+        "entities": { "type": "object" },
+        "risks": { "type": "array" },
+        "actionItems": { "type": "array" },
+        "timestamp": { "type": "number" },
+        "folder": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "isFavorite": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "uid", "title", "documentType", "confidenceScore", "executiveSummary", "timestamp"]
+    },
+    "Workspace": {
+      "title": "Team Workspace",
+      "description": "Collaborative enterprise team workspace container.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "ownerUid": { "type": "string" },
+        "plan": { "type": "string", "enum": ["free", "pro", "enterprise"] },
+        "status": { "type": "string", "enum": ["active", "archived"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "ownerUid", "status"]
+    },
+    "WorkspaceMember": {
+      "title": "Workspace Member Record",
+      "description": "Member assignment and role within a team workspace.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["owner", "admin", "member"] },
+        "joinedAt": { "type": "string" },
+        "invitedBy": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "pending"] }
+      },
+      "required": ["uid", "email", "role", "status"]
+    },
+    "WorkspaceInvitation": {
+      "title": "Workspace Invitation",
+      "description": "Pending or accepted workspace invitation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "email": { "type": "string" },
+        "invitedBy": { "type": "string" },
+        "invitedByName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "member"] },
+        "status": { "type": "string", "enum": ["pending", "accepted", "cancelled", "expired"] },
+        "createdAt": { "type": "string" },
+        "expiresAt": { "type": "number" }
+      },
+      "required": ["id", "workspaceId", "email", "invitedBy", "role", "status", "expiresAt"]
+    },
+    "WorkspaceSharedFile": {
+      "title": "Team Shared Document File",
+      "description": "Document shared with team workspace members.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "name": { "type": "string" },
+        "size": { "type": "number" },
+        "toolId": { "type": "string" },
+        "toolName": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "status": { "type": "string" },
+        "folder": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "sharedByUid": { "type": "string" },
+        "sharedByName": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "workspaceId", "name", "toolId", "timestamp", "sharedByUid"]
+    },
+    "WorkspaceAuditLog": {
+      "title": "Team Workspace Audit Log",
+      "description": "Immutable security and activity audit entry for workspace events.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "actorUid": { "type": "string" },
+        "actorName": { "type": "string" },
+        "action": { "type": "string" },
+        "target": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "details": { "type": "string" }
+      },
+      "required": ["id", "workspaceId", "actorUid", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User account documents stored per UID."
+    },
+    "/users/{uid}/recentFiles/{fileId}": {
+      "schema": { "$ref": "#/entities/RecentFile" },
+      "description": "User document processing history."
+    },
+    "/users/{uid}/aiChats/{chatId}": {
+      "schema": { "$ref": "#/entities/AiChat" },
+      "description": "User saved AI Document Chat sessions."
+    },
+    "/users/{uid}/aiAnalysis/{analysisId}": {
+      "schema": { "$ref": "#/entities/AiAnalysis" },
+      "description": "User saved AI document analysis snippets and summaries."
+    },
+    "/users/{uid}/analyzerReports/{reportId}": {
+      "schema": { "$ref": "#/entities/AnalyzerReport" },
+      "description": "User saved Document Analyzer comprehensive audit reports."
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": { "$ref": "#/entities/Workspace" },
+      "description": "Collaborative enterprise team workspace."
+    },
+    "/workspaces/{workspaceId}/members/{uid}": {
+      "schema": { "$ref": "#/entities/WorkspaceMember" },
+      "description": "Workspace member membership record."
+    },
+    "/workspaces/{workspaceId}/invitations/{inviteId}": {
+      "schema": { "$ref": "#/entities/WorkspaceInvitation" },
+      "description": "Workspace member invitation records."
+    },
+    "/workspaces/{workspaceId}/sharedFiles/{fileId}": {
+      "schema": { "$ref": "#/entities/WorkspaceSharedFile" },
+      "description": "Shared workspace documents."
+    },
+    "/workspaces/{workspaceId}/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/WorkspaceAuditLog" },
+      "description": "Workspace security and audit activity logs."
+    },
+    "/paymentWebhookEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/PaymentWebhookEvent" },
+      "description": "Processed webhook events for idempotency tracking."
+    },
+    "/aiUsage/{docId}": {
+      "schema": { "$ref": "#/entities/AiUsage" },
+      "description": "Daily usage counters keyed by {uid}_{date}."
+    },
+    "/aiUsageLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AiUsageLog" },
+      "description": "Server audit logs for AI execution."
+    }
+  }
+}

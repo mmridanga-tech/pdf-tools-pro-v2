@@ -24,7 +24,8 @@ export class PowerPointConverterService {
         tracker.update('loading', 15, 'Unpacking PowerPoint PPTX container...');
 
         const zip = new JSZip();
-        const zipData = await zip.loadAsync(inputFile);
+        const arrayBuffer = await inputFile.arrayBuffer();
+        const zipData = await zip.loadAsync(arrayBuffer);
 
         tracker.update('analyzing', 35, 'Parsing slide structure and vector text elements...');
 
@@ -120,7 +121,7 @@ export class PowerPointConverterService {
 
         tracker.update('rendering', 90, 'Serializing presentation PDF stream...');
         const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-        return new Blob([pdfBytes], { type: 'application/pdf' });
+        return new Blob([pdfBytes as any], { type: 'application/pdf' });
       },
       options
     );

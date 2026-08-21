@@ -185,7 +185,7 @@ export class PDFCompressionService {
       useObjectStreams: true,
       addDefaultPage: false,
     });
-    const libBlob = new Blob([pdfBytesLib], { type: 'application/pdf' });
+    const libBlob = new Blob([pdfBytesLib as any], { type: 'application/pdf' });
 
     let finalBlob = libBlob;
     let pageCount = 1;
@@ -236,7 +236,7 @@ export class PDFCompressionService {
         const context = canvas.getContext('2d');
 
         if (context) {
-          await page.render({ canvasContext: context, viewport, canvas }).promise;
+          await (page.render({ canvasContext: context, viewport } as any)).promise;
         }
 
         const jpegUrl = canvas.toDataURL('image/jpeg', quality);
