@@ -30,12 +30,14 @@ export const UnlockPDFOnline: React.FC = () => {
     try {
       startProcessing('Stripping owner restrictions and decrypting document streams...');
       
-      const { PDFDocument } = await import('pdf-lib');
-      const arrayBuffer = await selectedFile.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-
-      const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-      const unlockedBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const { PDFService } = await import('../../services/pdfService');
+      const unlockedBlob = await PDFService.unlockPDF(
+        selectedFile,
+        password,
+        (pct, msg) => {
+          if (msg) startProcessing(msg);
+        }
+      );
 
       setResultBlob(unlockedBlob);
       setSuccess('PDF unlocked successfully! Passwords and restrictions removed.');

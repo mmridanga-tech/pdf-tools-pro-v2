@@ -51,20 +51,6 @@ export async function authenticateRequest(req: any, res: any): Promise<Authentic
       role: (decodedToken.role as any) || (isInitialAdmin ? 'admin' : 'user'),
     };
   } catch (err: any) {
-    // If running in development / sandbox mode without live Firebase Admin credentials,
-    // support development testing gracefully while logging security telemetry
-    const isDev = process.env.NODE_ENV !== 'production';
-    if (isDev && token.startsWith('mock_token_')) {
-      const parts = token.split('_');
-      const uid = parts[2] || 'dev_user_123';
-      const email = parts[3] || 'dev@smartpdf.ai';
-      return {
-        uid,
-        email,
-        role: email.includes('admin') || email === 'mmridanga@gmail.com' ? 'admin' : 'user',
-      };
-    }
-
     usageTracker.recordSecurityEvent({
       id: `sec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       type: 'auth_failure',

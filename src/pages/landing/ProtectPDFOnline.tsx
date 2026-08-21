@@ -35,12 +35,23 @@ export const ProtectPDFOnline: React.FC = () => {
     try {
       startProcessing('Applying 256-bit AES encryption and setting permission flags...');
       
-      const { PDFDocument } = await import('pdf-lib');
-      const arrayBuffer = await selectedFile.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-
-      const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-      const encryptedBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const { PDFService } = await import('../../services/pdfService');
+      const encryptedBlob = await PDFService.protectPDF(
+        selectedFile,
+        {
+          userPassword: password,
+          ownerPassword: password,
+          permissions: {
+            printing: true,
+            copying: false,
+            editing: false,
+            annotating: true,
+          },
+        },
+        (pct, msg) => {
+          if (msg) startProcessing(msg);
+        }
+      );
 
       setResultBlob(encryptedBlob);
       setSuccess('PDF document encrypted with 256-bit AES protection successfully!');

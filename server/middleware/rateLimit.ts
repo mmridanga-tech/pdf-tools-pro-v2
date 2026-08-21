@@ -6,7 +6,7 @@ export async function checkRateAndQuota(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const user = req.user || {
+  const user = (req as any).user || {
     uid: 'anonymous',
     email: 'anon@smartpdf.ai',
     role: 'user',
@@ -26,9 +26,10 @@ export async function checkRateAndQuota(
 
   if (!burstCheck.allowed) {
     usageTracker.recordRateLimitEvent({
+      id: `rl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       uid: user.uid,
       ipHash,
-      reason: 'BURST_LIMIT_EXCEEDED',
+      reason: 'per_minute_burst',
       timestamp: Date.now(),
       endpoint: req.originalUrl || req.path,
     });

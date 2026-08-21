@@ -1,11 +1,17 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
+  sendEmailVerification as firebaseSendEmailVerification,
+  updateProfile as firebaseUpdateProfile,
   User as FirebaseUser,
+  getIdToken,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
@@ -19,9 +25,22 @@ const firebaseConfig = {
   measurementId: 'G-SCDQ6X3ZC3',
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
-export { signInWithPopup, firebaseSignOut, onAuthStateChanged };
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+export {
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  firebaseSignOut,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  firebaseSendEmailVerification,
+  firebaseUpdateProfile,
+  getIdToken,
+};
 export type { FirebaseUser };
+

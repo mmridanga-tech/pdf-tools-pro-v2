@@ -9,39 +9,39 @@ import { TelemetryDashboard } from './components/TelemetryDashboard';
 import { AdminSeoGenerator } from './components/AdminSeoGenerator';
 import { PricingModal } from './components/PricingModal';
 import { AuthModal } from './components/AuthModal';
-import { getStoredAuthToken, getStoredUserEmail, api } from './services/apiClient';
-import { ShieldCheck, Heart, Sparkles, Cpu, Lock } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
+import { api } from './services/apiClient';
+import { ShieldCheck, Sparkles, Cpu } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeTool, setActiveTool] = useState<ToolId | null>(null);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [chatInitialContext, setChatInitialContext] = useState<string>('');
+  const { user, openAuthModal } = useAuth();
 
   const [userSession, setUserSession] = useState<UserSession>({
-    uid: 'admin_user',
-    email: getStoredUserEmail(),
-    role: getStoredUserEmail().includes('admin') ? 'admin' : 'user',
-    plan: 'pro',
-    token: getStoredAuthToken(),
-    dailyAiLimit: 200,
-    dailyAiUsed: 14,
+    uid: user?.id || 'guest_user',
+    email: user?.email || '',
+    role: user?.role || 'user',
+    plan: user?.plan || 'free',
+    token: '',
+    dailyAiLimit: 25,
+    dailyAiUsed: 0,
   });
 
   useEffect(() => {
-    // Attempt billing status sync
-    api.getBillingStatus()
-      .then((res) => {
-        if (res?.success) {
-          setUserSession((prev) => ({
-            ...prev,
-            plan: res.plan || prev.plan,
-            dailyAiLimit: res.entitlement?.dailyAiLimit || prev.dailyAiLimit,
-          }));
-        }
-      })
-      .catch(() => {});
-  }, []);
+    if (user) {
+      setUserSession({
+        uid: user.id,
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+        token: '',
+        dailyAiLimit: user.plan === 'pro' ? 200 : user.plan === 'enterprise' ? 10000 : 25,
+        dailyAiUsed: 0,
+      });
+    }
+  }, [user]);
 
   const handlePlanUpdated = (newPlan: 'free' | 'pro' | 'enterprise') => {
     const limits = { free: 25, pro: 200, enterprise: 10000 };
@@ -65,7 +65,7 @@ export const App: React.FC = () => {
         onSelectTool={setActiveTool}
         userSession={userSession}
         onOpenPricing={() => setIsPricingOpen(true)}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={() => openAuthModal('login')}
       />
 
       {/* Main Content Area */}
@@ -140,13 +140,9 @@ export const App: React.FC = () => {
         onPlanUpdated={handlePlanUpdated}
       />
 
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        userSession={userSession}
-        onUpdateSession={setUserSession}
-      />
+      <AuthModal />
     </div>
   );
 };
+
 export default App;

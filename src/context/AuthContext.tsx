@@ -3,8 +3,13 @@ import {
   auth,
   googleProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   firebaseSignOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
+  firebaseSendEmailVerification,
+  firebaseUpdateProfile,
   FirebaseUser,
 } from '../lib/firebase';
 
@@ -25,11 +30,12 @@ export interface UserProfile {
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password?: string) => Promise<void>;
   googleLogin: () => Promise<void>;
   register: (name: string, email: string, password?: string) => Promise<void>;
-  logout: () => Promise<void> | void;
-  updateProfile: (data: Partial<UserProfile>) => void;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<void> | void;
   sendPasswordReset: (email: string) => Promise<void>;
   sendEmailVerification: () => Promise<void>;
   upgradePlan: (plan: 'pro' | 'enterprise') => void;
@@ -40,39 +46,32 @@ interface AuthContextType {
   authModalMode: 'login' | 'register' | 'forgot';
 }
 
-const STORAGE_USER_KEY = 'smartpdf_user_session';
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_USER_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot'>('login');
 
   const refreshBillingStatus = async () => {
     try {
-      const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        const testToken = localStorage.getItem('mock_dev_token');
-        if (testToken) headers['Authorization'] = `Bearer ${testToken}`;
-      }
+      if (!auth.currentUser) return;
+      const token = await auth.currentUser.getIdToken();
+      if (!token) return;
 
-      const res = await fetch('/api/billing/status', { headers });
+      const res = await fetch('/api/billing/status', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
       if (res.ok) {
         const data = await res.json();
-        if (data.plan && user) {
-          setUser((prev) => (prev ? { ...prev, plan: data.plan } : prev));
+        const serverPlan = data?.plan || data?.data?.plan;
+        if (serverPlan) {
+          setUser((prev) => (prev ? { ...prev, plan: serverPlan } : prev));
         }
       }
     } catch (err) {
@@ -83,73 +82,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sync Firebase Auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
+      setIsLoading(true);
       if (fbUser) {
+        const isInitialAdmin =
+          fbUser.email === 'mmridanga@gmail.com' ||
+          Boolean(fbUser.email && fbUser.email.includes('admin@smartpdf.ai'));
+
+        const isGoogle = fbUser.providerData?.some((p) => p.providerId === 'google.com');
+
         const newUserProfile: UserProfile = {
-          id: `google_${fbUser.uid}`,
-          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Google User',
+          id: fbUser.uid,
+          name: fbUser.displayName || fbUser.email?.split('@')[0] || (isGoogle ? 'Google User' : 'User'),
           email: fbUser.email || '',
           avatar:
             fbUser.photoURL ||
-            `https://api.dicebear.com/7.x/avataaars/svg?seed=${fbUser.email || fbUser.uid}`,
+            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fbUser.email || fbUser.uid)}`,
           plan: 'free',
-          emailVerified: fbUser.emailVerified ?? true,
-          createdAt: new Date().toISOString().split('T')[0],
-          role: fbUser.email && fbUser.email.includes('admin') ? 'admin' : 'user',
-          company: 'Google Account',
-          provider: 'google',
+          emailVerified: fbUser.emailVerified,
+          createdAt: fbUser.metadata?.creationTime
+            ? new Date(fbUser.metadata.creationTime).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0],
+          role: isInitialAdmin ? 'admin' : 'user',
+          company: isGoogle ? 'Google Account' : undefined,
+          provider: isGoogle ? 'google' : 'email',
         };
+
         setUser(newUserProfile);
-        setTimeout(refreshBillingStatus, 300);
+        setIsLoading(false);
+
+        // Sync billing status
+        try {
+          const token = await fbUser.getIdToken();
+          if (token) {
+            const res = await fetch('/api/billing/status', {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json',
+              },
+            });
+            if (res.ok) {
+              const bData = await res.json();
+              const activePlan = bData?.plan || bData?.data?.plan;
+              if (activePlan) {
+                setUser((prev) => (prev ? { ...prev, plan: activePlan } : prev));
+              }
+            }
+          }
+        } catch {
+          // Ignore billing background sync notice
+        }
+      } else {
+        setUser(null);
+        setIsLoading(false);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(STORAGE_USER_KEY);
+  const login = async (email: string, password?: string): Promise<void> => {
+    if (!email || !password) {
+      throw new Error('Please enter both your email address and password.');
     }
-  }, [user]);
-
-  const login = async (email: string) => {
-    await new Promise((r) => setTimeout(r, 500));
-    const newUser: UserProfile = {
-      id: 'usr_' + Math.random().toString(36).substring(2, 8),
-      name: email.split('@')[0].replace('.', ' '),
-      email,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-      plan: 'pro',
-      emailVerified: true,
-      createdAt: new Date().toISOString().split('T')[0],
-      role: email.includes('admin') ? 'admin' : 'user',
-      provider: 'email',
-    };
-    setUser(newUser);
-    setAuthModalOpen(false);
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      setAuthModalOpen(false);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        throw new Error('Invalid email or password. Please check your credentials.');
+      } else if (code === 'auth/invalid-email') {
+        throw new Error('Please enter a valid email address.');
+      } else if (code === 'auth/user-disabled') {
+        throw new Error('This user account has been disabled. Please contact support.');
+      } else if (code === 'auth/too-many-requests') {
+        throw new Error('Too many failed login attempts. Please try again in a few minutes or reset your password.');
+      }
+      throw new Error(err?.message || 'Failed to sign in with email and password.');
+    }
   };
 
   const googleLogin = async (): Promise<void> => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const fbUser = result.user;
-      const newUserProfile: UserProfile = {
-        id: `google_${fbUser.uid}`,
-        name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Google User',
-        email: fbUser.email || '',
-        avatar:
-          fbUser.photoURL ||
-          `https://api.dicebear.com/7.x/avataaars/svg?seed=${fbUser.email || fbUser.uid}`,
-        plan: 'pro',
-        emailVerified: fbUser.emailVerified ?? true,
-        createdAt: new Date().toISOString().split('T')[0],
-        role: fbUser.email && fbUser.email.includes('admin') ? 'admin' : 'user',
-        company: 'Google Account',
-        provider: 'google',
-      };
-      setUser(newUserProfile);
+      await signInWithPopup(auth, googleProvider);
       setAuthModalOpen(false);
     } catch (err: any) {
       if (err?.code === 'auth/popup-closed-by-user') {
@@ -163,51 +178,87 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string) => {
-    await new Promise((r) => setTimeout(r, 800));
-    const newUser: UserProfile = {
-      id: 'usr_' + Math.random().toString(36).substring(2, 8),
-      name,
-      email,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
-      plan: 'free',
-      emailVerified: false,
-      createdAt: new Date().toISOString().split('T')[0],
-      role: 'user',
-    };
-    setUser(newUser);
-    setAuthModalOpen(false);
+  const register = async (name: string, email: string, password?: string): Promise<void> => {
+    if (!email || !password) {
+      throw new Error('Please enter an email address and a secure password.');
+    }
+    if (password.length < 6) {
+      throw new Error('Password must be at least 6 characters long.');
+    }
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      if (credential.user && name.trim()) {
+        await firebaseUpdateProfile(credential.user, { displayName: name.trim() });
+      }
+      setAuthModalOpen(false);
+    } catch (err: any) {
+      const code = err?.code;
+      if (code === 'auth/email-already-in-use') {
+        throw new Error('An account with this email address already exists. Please sign in.');
+      } else if (code === 'auth/weak-password') {
+        throw new Error('Password is too weak. Please use at least 6 characters.');
+      } else if (code === 'auth/invalid-email') {
+        throw new Error('Please enter a valid email address.');
+      }
+      throw new Error(err?.message || 'Failed to create account.');
+    }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       await firebaseSignOut(auth);
-    } catch {
-      // Ignore signout errors
+    } catch (err) {
+      console.warn('Firebase sign out notice:', err);
     }
     setUser(null);
   };
 
-  const updateProfile = (data: Partial<UserProfile>) => {
+  const updateProfile = async (data: Partial<UserProfile>): Promise<void> => {
+    if (auth.currentUser && data.name) {
+      try {
+        await firebaseUpdateProfile(auth.currentUser, { displayName: data.name });
+      } catch (err) {
+        console.warn('Failed to update Firebase user profile:', err);
+      }
+    }
     if (user) {
-      setUser({ ...user, ...data });
+      setUser((prev) => (prev ? { ...prev, ...data } : null));
     }
   };
 
-  const sendPasswordReset = async (_email: string) => {
-    await new Promise((r) => setTimeout(r, 500));
+  const sendPasswordReset = async (email: string): Promise<void> => {
+    if (!email) {
+      throw new Error('Please provide an email address to receive password reset instructions.');
+    }
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch (err: any) {
+      if (err?.code === 'auth/user-not-found') {
+        throw new Error('No user found with this email address.');
+      } else if (err?.code === 'auth/invalid-email') {
+        throw new Error('Please enter a valid email address.');
+      }
+      throw new Error(err?.message || 'Failed to send password reset email.');
+    }
   };
 
-  const sendEmailVerification = async () => {
-    await new Promise((r) => setTimeout(r, 500));
-    if (user) {
-      setUser({ ...user, emailVerified: true });
+  const sendEmailVerification = async (): Promise<void> => {
+    if (!auth.currentUser) {
+      throw new Error('No authenticated user session found.');
+    }
+    try {
+      await firebaseSendEmailVerification(auth.currentUser);
+    } catch (err: any) {
+      if (err?.code === 'auth/too-many-requests') {
+        throw new Error('Too many verification requests. Please wait a moment before trying again.');
+      }
+      throw new Error(err?.message || 'Failed to send email verification.');
     }
   };
 
   const upgradePlan = (plan: 'pro' | 'enterprise') => {
     if (user) {
-      setUser({ ...user, plan });
+      setUser((prev) => (prev ? { ...prev, plan } : null));
     }
   };
 
@@ -225,6 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isAuthenticated: !!user,
+        isLoading,
         login,
         googleLogin,
         register,

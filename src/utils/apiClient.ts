@@ -55,19 +55,6 @@ export async function postApiJson<T>(url: string, bodyData: any, options: ApiOpt
       } catch (err) {
         console.warn('Failed to retrieve Firebase Auth ID token:', err);
       }
-    } else {
-      // Check if session exists in localStorage for dev mock token fallback
-      try {
-        const stored = localStorage.getItem('smartpdf_user_session');
-        if (stored) {
-          const userObj = JSON.parse(stored);
-          if (userObj?.id) {
-            headersObj['Authorization'] = `Bearer dev_mock_token_${userObj.id}`;
-          }
-        }
-      } catch {
-        // Ignore parse errors
-      }
     }
   }
 

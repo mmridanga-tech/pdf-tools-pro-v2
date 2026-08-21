@@ -5,30 +5,25 @@ import {
   WorkspaceTelemetryData,
   SeoArticlePackage,
 } from '../types';
+import { auth } from '../lib/firebase';
 
-export function getStoredAuthToken(): string {
-  const token = localStorage.getItem('smartpdf_auth_token');
-  if (token) return token;
-  // Default session token for instant zero-friction preview & dev
-  const defaultToken = 'mock_token_admin_admin@smartpdf.ai';
-  localStorage.setItem('smartpdf_auth_token', defaultToken);
-  return defaultToken;
-}
-
-export function setStoredAuthToken(token: string) {
-  localStorage.setItem('smartpdf_auth_token', token);
+export async function getAuthToken(): Promise<string | null> {
+  if (auth.currentUser) {
+    try {
+      return await auth.currentUser.getIdToken();
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 export function getStoredUserEmail(): string {
-  return localStorage.getItem('smartpdf_user_email') || 'admin@smartpdf.ai';
-}
-
-export function setStoredUserEmail(email: string) {
-  localStorage.setItem('smartpdf_user_email', email);
+  return auth.currentUser?.email || '';
 }
 
 async function request(endpoint: string, options: RequestInit = {}) {
-  const token = getStoredAuthToken();
+  const token = await getAuthToken();
   const headers = new Headers(options.headers || {});
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');

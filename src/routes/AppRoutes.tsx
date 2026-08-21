@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Footer } from '../components/Footer';
+import { AuthModal } from '../components/AuthModal';
 
 const Home = lazy(() => import('../pages/Home').then((m) => ({ default: m.Home })));
 const MergePDF = lazy(() => import('../pages/MergePDF').then((m) => ({ default: m.MergePDF })));
@@ -116,9 +117,9 @@ export const AppRoutes: React.FC = () => {
           <Route path="/watermark" element={<WatermarkPDF />} />
           <Route path="/page-numbers" element={<PageNumbersPDF />} />
           <Route path="/ocr-pdf" element={<OcrPDF />} />
-          <Route path="/protect-pdf" element={<ProtectPDFOnline />} />
+          <Route path="/protect-pdf" element={<ProtectPDF />} />
           <Route path="/protect-pdf-online" element={<ProtectPDFOnline />} />
-          <Route path="/unlock-pdf" element={<UnlockPDFOnline />} />
+          <Route path="/unlock-pdf" element={<UnlockPDF />} />
           <Route path="/unlock-pdf-online" element={<UnlockPDFOnline />} />
           <Route path="/pdf-security" element={<SecurityPDF />} />
 
@@ -224,6 +225,7 @@ export const AppRoutes: React.FC = () => {
         </Routes>
       </Suspense>
       <Footer />
+      <AuthModal />
     </>
   );
 };
