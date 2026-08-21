@@ -1,4 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
+import { authenticateRequest } from '../middleware/auth';
+import { getUserEntitlement } from '../services/entitlement';
+import { checkRateAndQuota } from '../middleware/rateLimiter';
+import { usageTracker } from '../services/usageTracker';
 
 function getRequestBody(req: any) {
   if (!req.body) return {};
@@ -33,14 +37,14 @@ function handleServerError(res: any, endpoint: string, err: any) {
   res.setHeader('Content-Type', 'application/json');
   return res.status(statusCode).json({
     success: false,
-    error: msg,
+    error: statusCode === 500 ? 'Internal AI processing error. Please try again later.' : msg,
   });
 }
 
 function getGenAI() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is missing.');
+    throw new Error('GEMINI_API_KEY environment variable is missing on server.');
   }
   return new GoogleGenAI({
     apiKey,
@@ -55,7 +59,7 @@ function getGenAI() {
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -65,6 +69,19 @@ export default async function handler(req: any, res: any) {
     res.setHeader('Content-Type', 'application/json');
     return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }
+
+  // 1. Authenticate Request
+  const user = await authenticateRequest(req, res);
+  if (!user) return; // Auth middleware already responded with 401 JSON
+
+  // 2. Resolve Server-Side Entitlements from Firestore
+  const entitlement = await getUserEntitlement(user.uid, user.email);
+
+  // 3. Enforce Rate Limits & Persistent Daily Quota
+  const allowed = await checkRateAndQuota(req, res, user.uid, '/api/gemini/analyzer', entitlement);
+  if (!allowed) return; // Rate limiter already responded with 429 JSON
+
+  const startTime = Date.now();
 
   try {
     const body = getRequestBody(req);
@@ -112,7 +129,8 @@ You MUST respond with valid JSON adhering strictly to this JSON structure:
 Ensure documentType is classified into EXACTLY ONE of: Invoice, Resume, Contract, Agreement, Bank Statement, Aadhaar, PAN, Passport, Report, Medical Record, or Unknown.
 Identify compliance and operational risks such as expired document dates, missing required signatures, missing execution dates, incomplete mandatory fields, or mismatched calculations.`;
 
-    const userPrompt = `Analyze this document thoroughly and produce the JSON analysis report:\n\n${textContext.substring(0, 35000)}`;
+    const maxChars = entitlement.maxContextChars || 35000;
+    const userPrompt = `Analyze this document thoroughly and produce the JSON analysis report:\n\n${textContext.substring(0, maxChars)}`;
 
     const aiResponse = await ai.models.generateContent({
       model: 'gemini-3.6-flash',
@@ -133,9 +151,43 @@ Identify compliance and operational risks such as expired document dates, missin
       analysisData = JSON.parse(cleaned);
     }
 
+    // Extract token metrics if available from Gemini response
+    const usageMeta = (aiResponse as any)?.usageMetadata;
+    const promptTokens = usageMeta?.promptTokenCount || Math.round(userPrompt.length / 4);
+    const responseTokens = usageMeta?.candidatesTokenCount || Math.round(rawText.length / 4);
+    const totalTokens = usageMeta?.totalTokenCount || promptTokens + responseTokens;
+
+    // Log successful usage execution with full token and observability telemetry
+    await usageTracker.logExecution({
+      uid: user.uid,
+      workspaceId: body?.workspaceId,
+      endpoint: '/api/gemini/analyzer',
+      timestamp: startTime,
+      durationMs: Date.now() - startTime,
+      status: 'success',
+      httpStatus: 200,
+      model: 'gemini-3.6-flash',
+      tokenUsage: {
+        promptTokens,
+        responseTokens,
+        totalTokens,
+      },
+    });
+
     res.setHeader('Content-Type', 'application/json');
     return res.status(200).json({ success: true, data: analysisData });
   } catch (err: any) {
+    const durationMs = Date.now() - startTime;
+    await usageTracker.logExecution({
+      uid: user.uid,
+      endpoint: '/api/gemini/analyzer',
+      timestamp: startTime,
+      durationMs,
+      status: 'error',
+      httpStatus: 500,
+      model: 'gemini-3.6-flash',
+      errorCategory: 'gemini_error',
+    });
     return handleServerError(res, '/api/gemini/analyzer', err);
   }
 }

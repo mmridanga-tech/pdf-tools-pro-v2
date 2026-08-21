@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /settings
+Disallow: /workspace
+Disallow: /cloud-storage
+Disallow: /team
+Disallow: /team-workspace
+Disallow: /workspaces
+
+Sitemap: https://smartpdfai.tech/sitemap.xml
