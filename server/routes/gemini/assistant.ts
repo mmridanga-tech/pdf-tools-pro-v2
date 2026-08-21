@@ -1,178 +1,114 @@
+import { Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { authenticateRequest } from '../../middleware/auth';
 import { getUserEntitlement } from '../../services/entitlement';
-import { checkRateAndQuota } from '../../middleware/rateLimiter';
+import { checkRateAndQuota } from '../../middleware/rateLimit';
 import { usageTracker } from '../../services/usageTracker';
 
-function getRequestBody(req: any) {
-  if (!req.body) return {};
-  if (typeof req.body === 'object') return req.body;
-  if (typeof req.body === 'string') {
-    try {
-      return JSON.parse(req.body);
-    } catch {
-      return {};
-    }
+let aiClient: GoogleGenAI | null = null;
+function getAI(): GoogleGenAI {
+  if (!aiClient) {
+    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
-  return {};
+  return aiClient;
 }
 
-function handleServerError(res: any, endpoint: string, err: any) {
-  console.error(`Backend Error in ${endpoint}:`, err);
-  const msg = err?.message || String(err) || 'Internal AI Server Error';
-  let statusCode = 500;
-
-  if (msg.includes('missing') || msg.includes('API_KEY') || msg.includes('401') || msg.includes('UNAUTHENTICATED')) {
-    statusCode = 401;
-  } else if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota')) {
-    statusCode = 429;
-  } else if (msg.includes('400') || msg.includes('INVALID_ARGUMENT')) {
-    statusCode = 400;
-  } else if (msg.includes('403') || msg.includes('PERMISSION_DENIED')) {
-    statusCode = 403;
-  } else if (msg.includes('404') || msg.includes('NOT_FOUND')) {
-    statusCode = 404;
-  }
-
-  res.setHeader('Content-Type', 'application/json');
-  return res.status(statusCode).json({
-    success: false,
-    error: statusCode === 500 ? 'Internal AI processing error. Please try again later.' : msg,
-  });
-}
-
-function getGenAI() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is missing on server.');
-  }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      },
-    },
-  });
-}
-
-export default async function assistantHandler(req: any, res: any) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(405).json({ success: false, error: 'Method Not Allowed' });
-  }
-
-  // 1. Authenticate Request
-  const user = await authenticateRequest(req, res);
-  if (!user) return;
-
-  // 2. Entitlements
-  const entitlement = await getUserEntitlement(user.uid, user.email);
-
-  // 3. Quota & Rate Limit
-  const allowed = await checkRateAndQuota(req, res, user.uid, '/api/gemini/assistant', entitlement);
-  if (!allowed) return;
-
+export default async function assistantHandler(req: Request, res: Response): Promise<void> {
   const startTime = Date.now();
+  const user = req.user || { uid: 'anonymous', email: 'anon@smartpdf.ai', role: 'user' };
+
+  const entitlement = await getUserEntitlement(user.uid, user.email);
+  const quotaCheck = await usageTracker.checkAndIncrementDailyQuota(user.uid, entitlement.dailyAiLimit);
+
+  if (!quotaCheck.allowed) {
+    res.status(429).json({
+      error: 'Daily Quota Exceeded',
+      message: `You have reached your daily limit of ${entitlement.dailyAiLimit} operations on your ${entitlement.plan} plan.`,
+      currentUsage: quotaCheck.currentCount,
+      limit: entitlement.dailyAiLimit,
+      plan: entitlement.plan,
+    });
+    return;
+  }
+
+  const { task, documentText, options = {} } = req.body || {};
+
+  if (!task || !documentText) {
+    res.status(400).json({ error: 'Validation Error', message: 'Parameters "task" and "documentText" are required.' });
+    return;
+  }
+
+  const truncated = documentText.substring(0, entitlement.maxContextChars);
 
   try {
-    const body = getRequestBody(req);
-    const { action = 'summarize', text = '', prompt = '', context = '' } = body;
+    const ai = getAI();
+    let prompt = '';
 
-    if (!text && !prompt && !context) {
-      res.setHeader('Content-Type', 'application/json');
-      return res.status(400).json({
-        success: false,
-        error: 'At least one of text, prompt, or context is required for AI Assistant.',
-      });
-    }
-
-    const ai = getGenAI();
-
-    let systemInstruction = `You are SmartPDF Pro Assistant, an expert document intelligence engine.`;
-    let userPrompt = '';
-
-    switch (action) {
+    switch (task) {
       case 'summarize':
-        userPrompt = `Please summarize the following document content clearly and concisely with bullet points and page citations:\n\n${text || context}`;
+        prompt = `Generate a comprehensive executive summary of the following document. Include key takeaways, primary findings, and actionable action items in structured markdown:\n\n${truncated}`;
         break;
-      case 'translate':
-        userPrompt = `Translate the following text to ${body.targetLanguage || 'English'}:\n\n${text || context}`;
+      case 'extract_tables':
+        prompt = `Extract all tabular and numerical data from the following document. Format each table cleanly as Markdown tables with proper column headers:\n\n${truncated}`;
         break;
-      case 'explain':
-        userPrompt = `Explain the following excerpt in simple, clear terms for a general audience:\n\n${text || context}`;
+      case 'key_points':
+        prompt = `Extract the top 10 most critical bullet points and insights from this document:\n\n${truncated}`;
         break;
-      case 'action_items':
-        userPrompt = `Extract all action items, tasks, deadlines, and responsible parties from this content:\n\n${text || context}`;
+      case 'compliance_check':
+        prompt = `Analyze the following document for potential legal, compliance, contract obligations, expiry terms, and risk clauses:\n\n${truncated}`;
         break;
-      case 'custom':
+      case 'rewrite':
+        prompt = `Rewrite and polish the following document content into a professional, concise executive tone:\n\n${truncated}`;
+        break;
       default:
-        userPrompt = `${prompt}\n\nContext:\n${text || context}`;
+        prompt = `Perform the requested task (${task}) on the document:\n\n${truncated}`;
         break;
     }
 
-    const maxChars = entitlement.maxContextChars || 40000;
-    const boundedPrompt = userPrompt.substring(0, maxChars);
-
-    const aiResponse = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: boundedPrompt,
-      config: {
-        systemInstruction,
-        temperature: 0.2,
-      },
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
     });
 
-    const replyText = aiResponse.text || 'No response generated.';
+    const result = response.text || '';
+    const latencyMs = Date.now() - startTime;
 
-    const usageMeta = (aiResponse as any)?.usageMetadata;
-    const promptTokens = usageMeta?.promptTokenCount || Math.round(boundedPrompt.length / 4);
-    const responseTokens = usageMeta?.candidatesTokenCount || Math.round(replyText.length / 4);
-    const totalTokens = usageMeta?.totalTokenCount || promptTokens + responseTokens;
-
-    await usageTracker.logExecution({
+    await usageTracker.recordRequestLog({
       uid: user.uid,
-      workspaceId: body?.workspaceId,
       endpoint: '/api/gemini/assistant',
-      timestamp: startTime,
-      durationMs: Date.now() - startTime,
-      status: 'success',
-      httpStatus: 200,
-      model: 'gemini-3.6-flash',
-      tokenUsage: {
-        promptTokens,
-        responseTokens,
-        totalTokens,
-      },
+      model: 'gemini-2.5-flash',
+      promptChars: prompt.length,
+      responseChars: result.length,
+      latencyMs,
+      success: true,
     });
 
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(200).json({
-      success: true,
-      data: {
-        result: replyText,
-        action,
+    res.status(200).json({
+      task,
+      result,
+      usage: {
+        dailyUsed: quotaCheck.currentCount,
+        dailyLimit: entitlement.dailyAiLimit,
+        plan: entitlement.plan,
+        latencyMs,
       },
     });
   } catch (err: any) {
-    await usageTracker.logExecution({
+    const latencyMs = Date.now() - startTime;
+    await usageTracker.recordRequestLog({
       uid: user.uid,
       endpoint: '/api/gemini/assistant',
-      timestamp: startTime,
-      durationMs: Date.now() - startTime,
-      status: 'error',
-      httpStatus: 500,
-      model: 'gemini-3.6-flash',
-      errorCategory: 'gemini_error',
+      model: 'gemini-2.5-flash',
+      promptChars: (task + documentText).length,
+      responseChars: 0,
+      latencyMs,
+      success: false,
+      error: err.message,
     });
-    return handleServerError(res, '/api/gemini/assistant', err);
+
+    res.status(500).json({
+      error: 'Assistant Task Failed',
+      message: err.message || 'Error executing assistant task',
+    });
   }
 }

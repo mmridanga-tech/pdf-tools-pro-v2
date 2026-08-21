@@ -1,94 +1,44 @@
+import { Request, Response } from 'express';
 import crypto from 'crypto';
 import { updateUserSubscription, checkAndRecordWebhookEvent } from '../../services/firestore';
 
-export default async function razorpayWebhookHandler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    console.warn('Razorpay webhook received but RAZORPAY_WEBHOOK_SECRET is not configured.');
-    return res.status(500).json({ error: 'Razorpay webhook secret is not configured.' });
-  }
-
+export default async function razorpayWebhookHandler(req: Request, res: Response): Promise<void> {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
   const signature = req.headers['x-razorpay-signature'] as string;
-  if (!signature) {
-    return res.status(400).json({ error: 'Missing x-razorpay-signature header' });
-  }
 
-  const rawPayload = (req as any).rawBody
-    ? (req as any).rawBody.toString('utf8')
-    : JSON.stringify(req.body);
+  if (secret && signature && req.rawBody) {
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(req.rawBody)
+      .digest('hex');
 
-  const expectedSignature = crypto
-    .createHmac('sha256', webhookSecret)
-    .update(rawPayload)
-    .digest('hex');
-
-  const isSignatureValid = crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
-
-  if (!isSignatureValid) {
-    console.error('Razorpay webhook signature verification failed.');
-    return res.status(400).json({ error: 'Invalid webhook signature' });
-  }
-
-  const eventPayload = req.body || {};
-  const event = eventPayload.event;
-  const eventId = eventPayload.account_id ? `${eventPayload.account_id}_${Date.now()}` : `rzp_${Date.now()}`;
-
-  const isNewEvent = await checkAndRecordWebhookEvent(eventId, 'razorpay');
-  if (!isNewEvent) {
-    console.log(`Razorpay webhook event ${eventId} already processed. Skipping.`);
-    return res.status(200).json({ received: true, duplicate: true });
-  }
-
-  try {
-    const payload = eventPayload.payload || {};
-
-    if (event === 'order.paid' || event === 'payment.captured') {
-      const entity = payload.payment?.entity || payload.order?.entity || {};
-      const notes = entity.notes || {};
-      const firebaseUid = notes.firebaseUid;
-      const plan = (notes.plan as 'pro' | 'enterprise') || 'pro';
-
-      if (firebaseUid) {
-        await updateUserSubscription(firebaseUid, {
-          plan,
-          subscriptionStatus: 'active',
-          provider: 'razorpay',
-          providerCustomerId: entity.customer_id || entity.email || firebaseUid,
-          providerSubscriptionId: entity.order_id || entity.id,
-          currentPeriodStart: Date.now(),
-          currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000,
-          cancelAtPeriodEnd: false,
-        });
-        console.log(`Successfully activated ${plan} subscription for user ${firebaseUid} via Razorpay.`);
-      }
-    } else if (event === 'subscription.halted' || event === 'subscription.cancelled') {
-      const subEntity = payload.subscription?.entity || {};
-      const notes = subEntity.notes || {};
-      const firebaseUid = notes.firebaseUid;
-
-      if (firebaseUid) {
-        await updateUserSubscription(firebaseUid, {
-          plan: 'free',
-          subscriptionStatus: event === 'subscription.cancelled' ? 'cancelled' : 'payment_failed',
-          provider: 'razorpay',
-          providerSubscriptionId: subEntity.id,
-          currentPeriodEnd: Date.now(),
-          cancelAtPeriodEnd: true,
-        });
-        console.log(`Updated user ${firebaseUid} Razorpay subscription status to ${event}.`);
-      }
+    if (expectedSignature !== signature) {
+      res.status(400).json({ error: 'Invalid signature' });
+      return;
     }
-
-    return res.status(200).json({ received: true });
-  } catch (err: any) {
-    console.error('Error processing Razorpay webhook:', err?.message || err);
-    return res.status(500).json({ error: 'Internal server error processing Razorpay webhook.' });
   }
+
+  const event = req.body;
+  if (!event || !event.event) {
+    res.status(400).json({ error: 'Invalid payload' });
+    return;
+  }
+
+  const eventId = event.payload?.payment?.entity?.id || `rzp_${Date.now()}`;
+  const isNew = await checkAndRecordWebhookEvent('razorpay', eventId, event.event, event.payload);
+  if (!isNew) {
+    res.status(200).json({ status: 'ok', note: 'Already processed' });
+    return;
+  }
+
+  if (event.event === 'order.paid' || event.event === 'payment.captured') {
+    const notes = event.payload?.payment?.entity?.notes || {};
+    const uid = notes.uid;
+    const plan = notes.plan || 'pro';
+    if (uid) {
+      await updateUserSubscription(uid, plan, 'razorpay', eventId);
+    }
+  }
+
+  res.status(200).json({ status: 'ok' });
 }

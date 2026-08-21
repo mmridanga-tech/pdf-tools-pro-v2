@@ -1,49 +1,31 @@
+import { Request, Response } from 'express';
 import { telemetryStore } from '../services/usageTracker';
 
-export default async function healthHandler(req: any, res: any) {
+export default async function healthHandler(req: Request, res: Response): Promise<void> {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  const geminiConfigured = Boolean(process.env.GEMINI_API_KEY);
+  const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
+  const razorpayConfigured = Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
+  const firebaseConfigured = Boolean(process.env.FIREBASE_PROJECT_ID || process.env.FIREBASE_CONFIG || process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
 
-  const geminiConfigured = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length > 5);
-  const firebaseConfigured = Boolean(process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID);
-
-  const metrics = telemetryStore.getSystemMetrics();
-
-  res.setHeader('Content-Type', 'application/json');
-  return res.status(200).json({
-    success: true,
-    data: {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      version: '2.4.0-prod',
-      uptimeSeconds: metrics.uptimeSeconds,
-      services: {
-        api: {
-          status: 'operational',
-          avgLatencyMs: metrics.avgLatencyMs,
-          errorRatePercent: Math.round((100 - metrics.successRate) * 10) / 10,
-          totalRequestsHandled: metrics.totalRequests,
-        },
-        firebase: {
-          status: firebaseConfigured ? 'healthy' : 'operational',
-        },
-        firestore: {
-          status: 'healthy',
-        },
-        gemini: {
-          status: geminiConfigured ? 'operational' : 'missing_key_warning',
-          model: 'gemini-3.6-flash',
-        },
-      },
-      systemLoad: {
-        memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        responseTimeMs: 4,
-      },
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.round(process.uptime()),
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    services: {
+      geminiAi: geminiConfigured ? 'configured' : 'missing_key',
+      firestore: firebaseConfigured ? 'configured' : 'local_fallback',
+      stripe: stripeConfigured ? 'configured' : 'not_configured',
+      razorpay: razorpayConfigured ? 'configured' : 'not_configured',
     },
+    systemMetrics: {
+      memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      nodeVersion: process.version,
+    },
+    telemetry: telemetryStore.alertThresholds,
   });
 }

@@ -13,7 +13,6 @@ export interface UserEntitlement {
 
 export async function getUserEntitlement(uid: string, email: string): Promise<UserEntitlement> {
   const user = await getOrCreateUserDoc(uid, email);
-
   const plan = user.plan || 'free';
   const role = user.role || 'user';
 
@@ -56,7 +55,6 @@ export async function getUserEntitlement(uid: string, email: string): Promise<Us
     };
   }
 
-  // Free Tier
   return {
     uid,
     email,
