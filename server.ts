@@ -1,13 +1,17 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { createExpressApp } from './server/app';
+import { app } from './server/app';
 
 async function startServer() {
-  const app = createExpressApp();
   const PORT = 3000;
 
-  // Vite middleware for development vs static files in production
+  // Fallback for unmatched /api routes
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ success: false, error: `Endpoint not found: ${req.path}` });
+  });
+
+  // Vite middleware for development vs static build for production
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -17,14 +21,17 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`SmartPDF AI Server running on http://localhost:${PORT}`);
+    console.log(`[SmartPDF AI] Server running on http://0.0.0.0:${PORT}`);
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});

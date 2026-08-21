@@ -1,8 +1,6 @@
 {
   "name": "SmartPDF AI",
-  "description": "Enterprise-grade intelligent PDF intelligence workstation with Gemini AI document chat, executive summarization, structured data extraction, OCR, batch conversion, and full-stack API architecture.",
+  "description": "Privacy-focused browser-based WebAssembly PDF suite with enterprise Gemini AI document intelligence and serverless backend",
   "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,0 +1,69 @@
+{
+  "name": "SmartPDF AI - Enterprise PDF & Document Productivity Suite",
+  "short_name": "SmartPDF AI",
+  "description": "Enterprise browser-based PDF and AI processing suite for merging, splitting, compressing, converting, and chatting with documents securely.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0A0A0B",
+  "background_color": "#0A0A0B",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Merge PDF",
+      "short_name": "Merge",
+      "description": "Combine PDF files",
+      "url": "/merge-pdf"
+    },
+    {
+      "name": "Compress PDF",
+      "short_name": "Compress",
+      "description": "Reduce PDF file size",
+      "url": "/compress-pdf"
+    },
+    {
+      "name": "AI PDF Chat",
+      "short_name": "AI Chat",
+      "description": "Chat with documents using Gemini AI",
+      "url": "/ai-chat"
+    },
+    {
+      "name": "Image to PDF",
+      "short_name": "Img -> PDF",
+      "description": "Convert images to PDF",
+      "url": "/jpg-to-pdf"
+    },
+    {
+      "name": "PDF to Image",
+      "short_name": "PDF -> Img",
+      "description": "Extract PDF pages to images",
+      "url": "/pdf-to-jpg"
+    }
+  ]
+}

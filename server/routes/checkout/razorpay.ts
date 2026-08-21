@@ -1,50 +1,69 @@
-import { Request, Response } from 'express';
 import Razorpay from 'razorpay';
 import { authenticateRequest } from '../../middleware/auth';
 
-let razorpayClient: Razorpay | null = null;
-function getRazorpay(): Razorpay | null {
-  if (!razorpayClient && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-    razorpayClient = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
+export default async function razorpayCheckoutHandler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
-  return razorpayClient;
-}
 
-export default async function razorpayCheckoutHandler(req: Request, res: Response): Promise<void> {
-  const user = req.user || { uid: 'anonymous', email: 'anon@smartpdf.ai' };
-  const { plan = 'pro', currency = 'INR' } = req.body || {};
+  // 1. Authenticate Firebase ID Token
+  const authUser = await authenticateRequest(req, res);
+  if (!authUser) {
+    return; // Response handled by authenticateRequest
+  }
 
-  const razorpay = getRazorpay();
-  if (!razorpay) {
-    res.status(200).json({
-      orderId: `order_demo_${Date.now()}`,
-      amount: plan === 'enterprise' ? 399900 : 149900,
-      currency: 'INR',
-      keyId: process.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-      mode: 'demo',
+  // 2. Resolve requested plan against server-side allowlist
+  const { plan } = req.body || {};
+  const allowedPlans: Array<'pro' | 'enterprise'> = ['pro', 'enterprise'];
+
+  if (!plan || !allowedPlans.includes(plan)) {
+    return res.status(400).json({ error: 'Invalid plan requested. Allowed plans are "pro" and "enterprise".' });
+  }
+
+  // 3. Verify Razorpay credentials
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    return res.status(503).json({
+      success: false,
+      error: 'Razorpay payment gateway is not configured. Missing credentials in server environment.',
+      provider: 'razorpay',
     });
-    return;
   }
 
   try {
-    const amount = plan === 'enterprise' ? 399900 : 149900;
-    const order = await razorpay.orders.create({
-      amount,
-      currency,
-      receipt: `rcpt_${user.uid.slice(0, 8)}_${Date.now()}`,
-      notes: { uid: user.uid, plan },
+    const razorpay = new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
     });
 
-    res.status(200).json({
+    const amount = plan === 'enterprise' ? 399900 : 119900;
+    const receipt = `rcpt_${authUser.uid.substring(0, 8)}_${Date.now()}`;
+
+    const order = await razorpay.orders.create({
+      amount,
+      currency: 'INR',
+      receipt,
+      notes: {
+        firebaseUid: authUser.uid,
+        plan: plan,
+      },
+    });
+
+    return res.json({
+      success: true,
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      keyId: process.env.RAZORPAY_KEY_ID,
+      keyId: keyId,
+      provider: 'razorpay',
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Razorpay Order Creation Failed', message: err.message });
+    console.error('Razorpay checkout order error:', err?.message || err);
+    return res.status(500).json({
+      error: 'Failed to initialize Razorpay checkout order.',
+      message: err?.message || 'Server payment provider error',
+    });
   }
 }
