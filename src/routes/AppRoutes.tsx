@@ -2,6 +2,7 @@ import React, { useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { ProtectedRoute } from './ProtectedRoute';
+import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { AuthModal } from '../components/AuthModal';
 
@@ -94,6 +95,7 @@ export const AppRoutes: React.FC = () => {
   return (
     <>
       <ScrollToTop />
+      <Navbar />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<Home />} />
