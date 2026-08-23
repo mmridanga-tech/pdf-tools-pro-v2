@@ -8,20 +8,56 @@ import { ConversionManager } from '../core/ConversionManager';
 
 export class PDFService {
   /**
+   * Helper to safely copy standard metadata between PDF documents
+   */
+  private static copyMetadata(sourcePdf: any, targetPdf: any): void {
+    try {
+      const title = sourcePdf.getTitle();
+      if (title) targetPdf.setTitle(title);
+      const author = sourcePdf.getAuthor();
+      if (author) targetPdf.setAuthor(author);
+      const subject = sourcePdf.getSubject();
+      if (subject) targetPdf.setSubject(subject);
+      const keywords = sourcePdf.getKeywords();
+      if (keywords) targetPdf.setKeywords(keywords);
+      const creator = sourcePdf.getCreator();
+      if (creator) targetPdf.setCreator(creator);
+      const producer = sourcePdf.getProducer();
+      if (producer) targetPdf.setProducer(producer);
+    } catch {
+      // Non-critical if metadata extraction fails
+    }
+  }
+
+  /**
    * Get total number of pages in a PDF file
    */
   static async getPageCount(file: File): Promise<number> {
-    const { PDFDocument } = await import('pdf-lib');
-    const arrayBuffer = await file.arrayBuffer();
-    const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-    return pdfDoc.getPageCount();
+    if (!file) throw new Error('No PDF file provided.');
+    try {
+      const { PDFDocument } = await import('pdf-lib');
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+      return pdfDoc.getPageCount();
+    } catch (err: any) {
+      const msg = err?.message?.toLowerCase() || '';
+      if (msg.includes('encrypted') || msg.includes('password')) {
+        throw new Error('This PDF file is password protected. Please unlock it first.');
+      }
+      throw new Error('Could not parse PDF pages. The file may be damaged or invalid.');
+    }
   }
 
   /**
    * Merge multiple PDF files into one
    */
-  static async mergePDFs(files: File[], onProgress?: (percent: number) => void): Promise<Blob> {
-    if (files.length === 0) throw new Error('No files selected for merging.');
+  static async mergePDFs(
+    files: File[],
+    onProgress?: (percent: number, statusMsg?: string) => void
+  ): Promise<Blob> {
+    if (!files || files.length === 0) {
+      throw new Error('No files selected for merging. Please select at least one PDF file.');
+    }
 
     const conversionManager = ConversionManager.getInstance();
 
@@ -32,22 +68,45 @@ export class PDFService {
         const { PDFDocument } = await import('pdf-lib');
         const mergedPdf = await PDFDocument.create();
         let totalProcessed = 0;
+        let firstDocCopied = false;
+
+        tracker.update('processing', 5, `Preparing to merge ${files.length} document(s)...`);
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           const arrayBuffer = await file.arrayBuffer();
-          const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-          const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+          let pdfDoc;
+          try {
+            pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+          } catch (err: any) {
+            const errLower = err?.message?.toLowerCase() || '';
+            if (errLower.includes('encrypted') || errLower.includes('password')) {
+              throw new Error(`File "${file.name}" is password protected. Please unlock it before merging.`);
+            }
+            throw new Error(`Failed to load "${file.name}". The file may be corrupt.`);
+          }
 
-          copiedPages.forEach((page) => mergedPdf.addPage(page));
+          if (!firstDocCopied) {
+            this.copyMetadata(pdfDoc, mergedPdf);
+            firstDocCopied = true;
+          }
+
+          const pageIndices = pdfDoc.getPageIndices();
+          if (pageIndices.length > 0) {
+            const copiedPages = await mergedPdf.copyPages(pdfDoc, pageIndices);
+            copiedPages.forEach((page) => mergedPdf.addPage(page));
+          }
 
           totalProcessed++;
-          const pct = Math.round((totalProcessed / files.length) * 100);
-          if (onProgress) onProgress(pct);
-          tracker.update('processing', pct, `Merging document ${totalProcessed} of ${files.length}...`);
+          const pct = Math.round(10 + (totalProcessed / files.length) * 75);
+          const msg = `Merged document ${totalProcessed} of ${files.length} ("${file.name}")...`;
+          if (onProgress) onProgress(pct, msg);
+          tracker.update('processing', pct, msg);
         }
 
+        tracker.update('rendering', 88, 'Serializing unified PDF document...');
         const pdfBytes = await mergedPdf.save({ useObjectStreams: true });
+        tracker.update('assembling', 100, 'Merge completed successfully!');
         return new Blob([pdfBytes], { type: 'application/pdf' });
       },
       { onProgress }
@@ -57,33 +116,62 @@ export class PDFService {
   /**
    * Split a PDF by page ranges (e.g. "1-3, 5")
    */
-  static async splitPDF(file: File, rangeStr: string): Promise<Blob> {
+  static async splitPDF(
+    file: File,
+    rangeStr: string,
+    onProgress?: (percent: number, statusMsg?: string) => void
+  ): Promise<Blob> {
+    if (!file) throw new Error('No PDF file provided for splitting.');
     const conversionManager = ConversionManager.getInstance();
 
     return conversionManager.executeConversion(
       file,
       'pdf',
       async (inputFile, tracker) => {
-        tracker.update('loading', 20, 'Loading PDF for page splitting...');
+        const progressBridge = (pct: number, msg: string) => {
+          if (onProgress) onProgress(pct, msg);
+          tracker.update('processing', pct, msg);
+        };
+
+        progressBridge(15, 'Loading PDF document for page splitting...');
         const { PDFDocument } = await import('pdf-lib');
         const arrayBuffer = await inputFile.arrayBuffer();
-        const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-        const totalPages = sourcePdf.getPageCount();
 
-        const selectedIndices = parsePageRange(rangeStr, totalPages);
-        if (selectedIndices.length === 0) {
-          throw new Error('No valid pages selected for splitting.');
+        let sourcePdf;
+        try {
+          sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        } catch (err: any) {
+          const errLower = err?.message?.toLowerCase() || '';
+          if (errLower.includes('encrypted') || errLower.includes('password')) {
+            throw new Error('This PDF file is password protected. Please unlock it before splitting.');
+          }
+          throw new Error('The selected PDF file is corrupted or unreadable.');
         }
 
-        tracker.update('processing', 50, `Splitting ${selectedIndices.length} page(s)...`);
+        const totalPages = sourcePdf.getPageCount();
+        if (totalPages === 0) {
+          throw new Error('The source PDF document contains no pages.');
+        }
+
+        const selectedIndices = parsePageRange(rangeStr, totalPages);
+        if (!selectedIndices || selectedIndices.length === 0) {
+          throw new Error(`No valid pages found in range "${rangeStr}". Document has ${totalPages} page(s).`);
+        }
+
+        progressBridge(45, `Extracting ${selectedIndices.length} split page(s)...`);
         const newPdf = await PDFDocument.create();
+        this.copyMetadata(sourcePdf, newPdf);
+
         const copiedPages = await newPdf.copyPages(sourcePdf, selectedIndices);
         copiedPages.forEach((page) => newPdf.addPage(page));
 
-        tracker.update('rendering', 85, 'Compiling split PDF document...');
+        progressBridge(85, 'Compiling and saving split PDF document...');
         const pdfBytes = await newPdf.save({ useObjectStreams: true });
+
+        progressBridge(100, 'PDF splitting completed!');
         return new Blob([pdfBytes], { type: 'application/pdf' });
-      }
+      },
+      { onProgress }
     );
   }
 
@@ -92,33 +180,58 @@ export class PDFService {
    */
   static async rotatePDF(
     file: File,
-    pageRotations: { [pageIndex: number]: number }
+    pageRotations: { [pageIndex: number]: number },
+    onProgress?: (percent: number, statusMsg?: string) => void
   ): Promise<Blob> {
+    if (!file) throw new Error('No PDF file provided for rotation.');
     const conversionManager = ConversionManager.getInstance();
 
     return conversionManager.executeConversion(
       file,
       'pdf',
       async (inputFile, tracker) => {
-        tracker.update('loading', 20, 'Loading PDF document...');
+        const progressBridge = (pct: number, msg: string) => {
+          if (onProgress) onProgress(pct, msg);
+          tracker.update('processing', pct, msg);
+        };
+
+        progressBridge(15, 'Loading PDF document for page rotation...');
         const { PDFDocument, degrees } = await import('pdf-lib');
         const arrayBuffer = await inputFile.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-        const pages = pdfDoc.getPages();
 
-        tracker.update('processing', 50, 'Applying page rotation angles...');
+        let pdfDoc;
+        try {
+          pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        } catch (err: any) {
+          const errLower = err?.message?.toLowerCase() || '';
+          if (errLower.includes('encrypted') || errLower.includes('password')) {
+            throw new Error('This PDF file is password protected. Please unlock it before rotating.');
+          }
+          throw new Error('The selected PDF file is corrupted or unreadable.');
+        }
+
+        const pages = pdfDoc.getPages();
+        if (pages.length === 0) {
+          throw new Error('The PDF document contains no pages to rotate.');
+        }
+
+        progressBridge(50, 'Applying rotation angles to PDF pages...');
         pages.forEach((page, idx) => {
           const addAngle = pageRotations[idx] || 0;
           if (addAngle !== 0) {
-            const currentRotation = page.getRotation().angle;
-            page.setRotation(degrees((currentRotation + addAngle) % 360));
+            const currentRotation = page.getRotation()?.angle || 0;
+            const totalAngle = ((currentRotation + addAngle) % 360 + 360) % 360;
+            page.setRotation(degrees(totalAngle));
           }
         });
 
-        tracker.update('rendering', 85, 'Saving rotated PDF stream...');
+        progressBridge(85, 'Saving rotated PDF stream...');
         const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+
+        progressBridge(100, 'PDF rotation complete!');
         return new Blob([pdfBytes], { type: 'application/pdf' });
-      }
+      },
+      { onProgress }
     );
   }
 
@@ -237,99 +350,183 @@ export class PDFService {
   /**
    * Add text watermark to PDF
    */
-  static async addWatermark(file: File, options: WatermarkOptions): Promise<Blob> {
+  static async addWatermark(
+    file: File,
+    options: WatermarkOptions,
+    onProgress?: (percent: number, statusMsg?: string) => void
+  ): Promise<Blob> {
+    if (!file) throw new Error('No PDF file provided for watermarking.');
     const conversionManager = ConversionManager.getInstance();
 
     return conversionManager.executeConversion(
       file,
       'pdf',
       async (inputFile, tracker) => {
-        tracker.update('loading', 20, 'Loading PDF document...');
+        const progressBridge = (pct: number, msg: string) => {
+          if (onProgress) onProgress(pct, msg);
+          tracker.update('processing', pct, msg);
+        };
+
+        progressBridge(15, 'Loading PDF document for watermarking...');
         const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
         const arrayBuffer = await inputFile.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+
+        let pdfDoc;
+        try {
+          pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        } catch (err: any) {
+          const errLower = err?.message?.toLowerCase() || '';
+          if (errLower.includes('encrypted') || errLower.includes('password')) {
+            throw new Error('This PDF file is password protected. Please unlock it before adding a watermark.');
+          }
+          throw new Error('The selected PDF file is corrupted or unreadable.');
+        }
+
         const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
         const pages = pdfDoc.getPages();
+        if (pages.length === 0) {
+          throw new Error('The PDF document contains no pages.');
+        }
 
-        tracker.update('processing', 50, 'Stamping text watermark on document pages...');
-        const hex = options.color.replace('#', '');
-        const r = parseInt(hex.substring(0, 2), 16) / 255 || 0.5;
-        const g = parseInt(hex.substring(2, 4), 16) / 255 || 0.5;
-        const b = parseInt(hex.substring(4, 6), 16) / 255 || 0.5;
+        progressBridge(45, 'Stamping text watermark on document pages...');
+        const watermarkText = options.text || 'CONFIDENTIAL';
+        const fontSize = options.fontSize || 48;
+        const rotAngle = options.rotation !== undefined ? options.rotation : 45;
+        const opacity = Math.max(0.01, Math.min(1.0, options.opacity !== undefined ? options.opacity : 0.3));
+
+        // Parse color hex
+        const cleanHex = (options.color || '#ff0000').replace(/^#/, '');
+        let r = 0.8, g = 0.1, b = 0.1;
+        if (cleanHex.length === 6) {
+          r = parseInt(cleanHex.substring(0, 2), 16) / 255 || 0;
+          g = parseInt(cleanHex.substring(2, 4), 16) / 255 || 0;
+          b = parseInt(cleanHex.substring(4, 6), 16) / 255 || 0;
+        } else if (cleanHex.length === 3) {
+          r = parseInt(cleanHex[0] + cleanHex[0], 16) / 255 || 0;
+          g = parseInt(cleanHex[1] + cleanHex[1], 16) / 255 || 0;
+          b = parseInt(cleanHex[2] + cleanHex[2], 16) / 255 || 0;
+        }
+
+        const textWidth = font.widthOfTextAtSize(watermarkText, fontSize);
+        const textHeight = font.heightAtSize(fontSize);
+        const thetaRad = (rotAngle * Math.PI) / 180;
 
         pages.forEach((page) => {
           const { width, height } = page.getSize();
-          const textWidth = font.widthOfTextAtSize(options.text, options.fontSize);
-          const textHeight = font.heightAtSize(options.fontSize);
+          // Calculate center offset with rotation
+          const x = width / 2 - (textWidth / 2) * Math.cos(thetaRad) + (textHeight / 2) * Math.sin(thetaRad);
+          const y = height / 2 - (textWidth / 2) * Math.sin(thetaRad) - (textHeight / 2) * Math.cos(thetaRad);
 
-          page.drawText(options.text, {
-            x: width / 2 - textWidth / 2,
-            y: height / 2 - textHeight / 2,
-            size: options.fontSize,
-            font: font,
+          page.drawText(watermarkText, {
+            x,
+            y,
+            size: fontSize,
+            font,
             color: rgb(r, g, b),
-            opacity: options.opacity,
-            rotate: degrees(options.rotation || 45),
+            opacity,
+            rotate: degrees(rotAngle),
           });
         });
 
-        tracker.update('rendering', 85, 'Saving watermarked PDF...');
+        progressBridge(85, 'Saving watermarked PDF...');
         const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+
+        progressBridge(100, 'Watermark applied successfully!');
         return new Blob([pdfBytes], { type: 'application/pdf' });
-      }
+      },
+      { onProgress }
     );
   }
 
   /**
    * Add page numbers to PDF
    */
-  static async addPageNumbers(file: File, options: PageNumberOptions): Promise<Blob> {
+  static async addPageNumbers(
+    file: File,
+    options: PageNumberOptions,
+    onProgress?: (percent: number, statusMsg?: string) => void
+  ): Promise<Blob> {
+    if (!file) throw new Error('No PDF file provided for adding page numbers.');
     const conversionManager = ConversionManager.getInstance();
 
     return conversionManager.executeConversion(
       file,
       'pdf',
       async (inputFile, tracker) => {
-        tracker.update('loading', 20, 'Loading PDF document...');
+        const progressBridge = (pct: number, msg: string) => {
+          if (onProgress) onProgress(pct, msg);
+          tracker.update('processing', pct, msg);
+        };
+
+        progressBridge(15, 'Loading PDF document for page numbering...');
         const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
         const arrayBuffer = await inputFile.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+
+        let pdfDoc;
+        try {
+          pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        } catch (err: any) {
+          const errLower = err?.message?.toLowerCase() || '';
+          if (errLower.includes('encrypted') || errLower.includes('password')) {
+            throw new Error('This PDF file is password protected. Please unlock it before adding page numbers.');
+          }
+          throw new Error('The selected PDF file is corrupted or unreadable.');
+        }
+
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         const pages = pdfDoc.getPages();
         const totalPages = pages.length;
+        if (totalPages === 0) {
+          throw new Error('The PDF document contains no pages.');
+        }
 
-        tracker.update('processing', 50, 'Inserting dynamic page numbers...');
+        progressBridge(45, 'Inserting dynamic page numbers...');
+        const startFrom = options.startFrom !== undefined ? options.startFrom : 1;
+        const fontSize = 10;
+        const margin = 25;
+
         pages.forEach((page, idx) => {
-          const pageNum = options.startFrom + idx;
+          const pageNum = startFrom + idx;
           const text =
             options.format === 'page-of-total'
               ? `Page ${pageNum} of ${totalPages}`
               : `${pageNum}`;
 
           const { width, height } = page.getSize();
-          const fontSize = 10;
           const textWidth = font.widthOfTextAtSize(text, fontSize);
+          const textHeight = font.heightAtSize(fontSize);
 
           let x = width / 2 - textWidth / 2;
-          let y = 20;
+          let y = margin;
 
-          if (options.position.includes('left')) x = 30;
-          if (options.position.includes('right')) x = width - textWidth - 30;
-          if (options.position.includes('top')) y = height - 30;
+          if (options.position.includes('left')) {
+            x = margin;
+          } else if (options.position.includes('right')) {
+            x = width - textWidth - margin;
+          }
+
+          if (options.position.includes('top')) {
+            y = height - margin - textHeight;
+          } else {
+            y = margin;
+          }
 
           page.drawText(text, {
             x,
             y,
             size: fontSize,
             font,
-            color: rgb(0.3, 0.3, 0.3),
+            color: rgb(0.2, 0.2, 0.2),
           });
         });
 
-        tracker.update('rendering', 85, 'Saving numbered PDF...');
+        progressBridge(85, 'Saving numbered PDF...');
         const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+
+        progressBridge(100, 'Page numbering complete!');
         return new Blob([pdfBytes], { type: 'application/pdf' });
-      }
+      },
+      { onProgress }
     );
   }
 
@@ -479,6 +676,7 @@ export class PDFService {
     pageIndicesToDelete: number[],
     onProgress?: (percent: number, statusMsg?: string) => void
   ): Promise<Blob> {
+    if (!file) throw new Error('No PDF file provided for page deletion.');
     const conversionManager = ConversionManager.getInstance();
 
     return conversionManager.executeConversion(
@@ -493,30 +691,50 @@ export class PDFService {
         progressBridge(10, 'Loading PDF document...');
         const { PDFDocument } = await import('pdf-lib');
         const arrayBuffer = await inputFile.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-        const totalPages = pdfDoc.getPageCount();
 
-        if (pageIndicesToDelete.length === 0) {
+        let sourcePdf;
+        try {
+          sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        } catch (err: any) {
+          const errLower = err?.message?.toLowerCase() || '';
+          if (errLower.includes('encrypted') || errLower.includes('password')) {
+            throw new Error('This PDF file is password protected. Please unlock it before deleting pages.');
+          }
+          throw new Error('The selected PDF file appears to be corrupted or invalid.');
+        }
+
+        const totalPages = sourcePdf.getPageCount();
+
+        if (!pageIndicesToDelete || pageIndicesToDelete.length === 0) {
           throw new Error('No pages selected for deletion.');
         }
 
-        if (pageIndicesToDelete.length >= totalPages) {
+        const toDeleteSet = new Set(
+          pageIndicesToDelete.filter((idx) => idx >= 0 && idx < totalPages)
+        );
+
+        if (toDeleteSet.size === 0) {
+          throw new Error('Selected page indices are out of range for this document.');
+        }
+
+        if (toDeleteSet.size >= totalPages) {
           throw new Error('Cannot delete all pages from a PDF. At least one page must remain in the document.');
         }
 
-        progressBridge(40, `Removing ${pageIndicesToDelete.length} selected pages...`);
+        progressBridge(40, `Removing ${toDeleteSet.size} selected page(s)...`);
 
-        // Sort indices in descending order so deleting higher indices does not alter lower indices
-        const sortedIndices = [...new Set(pageIndicesToDelete)]
-          .filter((idx) => idx >= 0 && idx < totalPages)
-          .sort((a, b) => b - a);
+        const remainingIndices = Array.from({ length: totalPages }, (_, i) => i).filter(
+          (i) => !toDeleteSet.has(i)
+        );
 
-        for (const pageIdx of sortedIndices) {
-          pdfDoc.removePage(pageIdx);
-        }
+        const newPdf = await PDFDocument.create();
+        this.copyMetadata(sourcePdf, newPdf);
+
+        const copiedPages = await newPdf.copyPages(sourcePdf, remainingIndices);
+        copiedPages.forEach((page) => newPdf.addPage(page));
 
         progressBridge(80, 'Optimizing PDF document streams...');
-        const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+        const pdfBytes = await newPdf.save({ useObjectStreams: true });
 
         progressBridge(100, 'Page deletion complete!');
         return new Blob([pdfBytes], { type: 'application/pdf' });
@@ -572,22 +790,7 @@ export class PDFService {
         progressBridge(40, `Extracting ${validIndices.length} page(s)...`);
 
         const newPdf = await PDFDocument.create();
-
-        // Preserve metadata if present
-        try {
-          const title = sourcePdf.getTitle();
-          if (title) newPdf.setTitle(title);
-          const author = sourcePdf.getAuthor();
-          if (author) newPdf.setAuthor(author);
-          const subject = sourcePdf.getSubject();
-          if (subject) newPdf.setSubject(subject);
-          const creator = sourcePdf.getCreator();
-          if (creator) newPdf.setCreator(creator);
-          const producer = sourcePdf.getProducer();
-          if (producer) newPdf.setProducer(producer);
-        } catch {
-          // Ignore metadata copying issues
-        }
+        this.copyMetadata(sourcePdf, newPdf);
 
         const copiedPages = await newPdf.copyPages(sourcePdf, validIndices);
         copiedPages.forEach((page) => newPdf.addPage(page));
@@ -610,6 +813,7 @@ export class PDFService {
     newPageOrderIndices: number[],
     onProgress?: (percent: number, statusMsg?: string) => void
   ): Promise<Blob> {
+    if (!file) throw new Error('No PDF file provided for rearranging pages.');
     const conversionManager = ConversionManager.getInstance();
 
     return conversionManager.executeConversion(
@@ -641,27 +845,16 @@ export class PDFService {
           throw new Error('No page order provided.');
         }
 
-        progressBridge(40, `Re-ordering ${newPageOrderIndices.length} page(s)...`);
-
-        const newPdf = await PDFDocument.create();
-
-        // Copy metadata
-        try {
-          const title = sourcePdf.getTitle();
-          if (title) newPdf.setTitle(title);
-          const author = sourcePdf.getAuthor();
-          if (author) newPdf.setAuthor(author);
-          const subject = sourcePdf.getSubject();
-          if (subject) newPdf.setSubject(subject);
-          const creator = sourcePdf.getCreator();
-          if (creator) newPdf.setCreator(creator);
-          const producer = sourcePdf.getProducer();
-          if (producer) newPdf.setProducer(producer);
-        } catch {
-          // Ignore metadata copying issues
+        const validIndices = newPageOrderIndices.filter((idx) => idx >= 0 && idx < totalPages);
+        if (validIndices.length === 0) {
+          throw new Error('Selected page order indices are out of range for this document.');
         }
 
-        const validIndices = newPageOrderIndices.filter((idx) => idx >= 0 && idx < totalPages);
+        progressBridge(40, `Re-ordering ${validIndices.length} page(s)...`);
+
+        const newPdf = await PDFDocument.create();
+        this.copyMetadata(sourcePdf, newPdf);
+
         const copiedPages = await newPdf.copyPages(sourcePdf, validIndices);
         copiedPages.forEach((page) => newPdf.addPage(page));
 
@@ -684,6 +877,7 @@ export class PDFService {
     placement: 'after' | 'end' = 'after',
     onProgress?: (percent: number, statusMsg?: string) => void
   ): Promise<Blob> {
+    if (!file) throw new Error('No PDF file provided for duplicating pages.');
     const conversionManager = ConversionManager.getInstance();
 
     return conversionManager.executeConversion(
@@ -746,22 +940,7 @@ export class PDFService {
         }
 
         const newPdf = await PDFDocument.create();
-
-        // Preserve metadata
-        try {
-          const title = sourcePdf.getTitle();
-          if (title) newPdf.setTitle(title);
-          const author = sourcePdf.getAuthor();
-          if (author) newPdf.setAuthor(author);
-          const subject = sourcePdf.getSubject();
-          if (subject) newPdf.setSubject(subject);
-          const creator = sourcePdf.getCreator();
-          if (creator) newPdf.setCreator(creator);
-          const producer = sourcePdf.getProducer();
-          if (producer) newPdf.setProducer(producer);
-        } catch {
-          // Ignore metadata copying issues
-        }
+        this.copyMetadata(sourcePdf, newPdf);
 
         progressBridge(60, `Assembling document with ${targetIndices.length} total pages...`);
         const copiedPages = await newPdf.copyPages(sourcePdf, targetIndices);
