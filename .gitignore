@@ -8,3 +8,6 @@ coverage/
 *.zip
 .env*
 !.env.example
+.vercel/
+dist/
+*.zip

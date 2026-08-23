@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../../api/index.ts"],
-  "sourcesContent": ["// @ts-ignore\nimport app from '../dist/app.mjs';\n\nexport default app;\n"],
-  "mappings": "AACA,OAAO,SAAS;AAEhB,IAAO,gBAAQ;",
-  "names": []
-}
