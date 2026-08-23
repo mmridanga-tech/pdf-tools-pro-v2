@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Zap,
   Globe,
+  BookOpen,
   Menu,
   X,
   User,
@@ -101,6 +102,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const isSeoActive =
     activeTool === 'admin-seo' || location.pathname.startsWith('/admin');
+
+  const isBlogActive =
+    location.pathname === '/blog' || location.pathname.startsWith('/blog/');
 
   return (
     <>
@@ -197,6 +201,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Globe className="w-3.5 h-3.5 text-slate-400" />
               <span>SEO Studio</span>
+            </Link>
+
+            <Link
+              to="/blog"
+              id="nav-blog"
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                isBlogActive
+                  ? 'bg-red-600 text-white shadow-sm font-semibold shadow-red-600/30'
+                  : 'text-slate-300 hover:text-red-400 hover:bg-white/[0.05]'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+              <span>Blog</span>
             </Link>
           </nav>
 
@@ -338,6 +355,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Globe className="w-4 h-4 text-slate-400" />
               <span>SEO Studio</span>
+            </Link>
+
+            <Link
+              to="/blog"
+              id="mobile-nav-blog"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+              }}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition ${
+                isBlogActive
+                  ? 'bg-red-600 text-white font-semibold'
+                  : 'text-slate-300 hover:bg-white/[0.05]'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-slate-400" />
+              <span>Blog</span>
             </Link>
 
             {/* Mobile Status Indicator */}
