@@ -36,7 +36,6 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: React.FC<{ className?
   { id: 'convert', label: 'Convert PDF', icon: FileText },
   { id: 'edit', label: 'Edit & Compress', icon: Minimize2 },
   { id: 'security', label: 'Security & Protect', icon: Shield },
-  { id: 'image', label: 'Image Utilities', icon: ImageIcon },
   { id: 'ai', label: 'AI Intelligence', icon: Sparkles },
 ];
 
