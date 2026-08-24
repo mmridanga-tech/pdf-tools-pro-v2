@@ -121,7 +121,7 @@ export const Footer: React.FC = React.memo(() => {
                 </Link>
               </li>
               <li>
-                <Link to="/analyzer" className="text-slate-400 hover:text-white transition-colors block">
+                <Link to="/document-analyzer" className="text-slate-400 hover:text-white transition-colors block">
                   Doc Analyzer
                 </Link>
               </li>

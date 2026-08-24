@@ -5,7 +5,7 @@ import {
   WorkspaceTelemetryData,
   SeoArticlePackage,
 } from '../types';
-import { auth } from '../lib/firebase';
+import { auth, signInAnonymously } from '../lib/firebase';
 
 export async function getAuthToken(): Promise<string | null> {
   if (auth.currentUser) {
@@ -14,6 +14,16 @@ export async function getAuthToken(): Promise<string | null> {
     } catch {
       return null;
     }
+  }
+
+  // If no user is logged in, attempt anonymous sign-in so requests have valid Firebase tokens
+  try {
+    const cred = await signInAnonymously(auth);
+    if (cred.user) {
+      return await cred.user.getIdToken();
+    }
+  } catch (err) {
+    console.debug('Guest anonymous auth notice:', err);
   }
   return null;
 }

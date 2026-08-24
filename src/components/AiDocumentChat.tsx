@@ -213,14 +213,31 @@ export const AiDocumentChat: React.FC<AiDocumentChatProps> = ({
                   <ListOrdered className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   <span className="truncate">Key Points</span>
                 </button>
-                <button
-                  onClick={() => handleSendMessage(`Translate the document content into ${targetLang}.`, 'translate')}
-                  disabled={isLoading}
-                  className="p-2 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200/80 text-left text-[11px] font-medium text-slate-700 flex items-center gap-1.5 transition cursor-pointer"
-                >
-                  <Languages className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                  <span className="truncate">Translate</span>
-                </button>
+                <div className="flex items-center gap-1 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl p-1">
+                  <button
+                    onClick={() => handleSendMessage(`Translate the document content into ${targetLang}.`, 'translate')}
+                    disabled={isLoading}
+                    className="flex-1 p-1 text-left text-[11px] font-medium text-slate-700 hover:text-indigo-700 flex items-center gap-1.5 transition cursor-pointer truncate"
+                  >
+                    <Languages className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                    <span className="truncate">Translate</span>
+                  </button>
+                  <select
+                    value={targetLang}
+                    onChange={(e) => setTargetLang(e.target.value)}
+                    className="text-[10px] bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 text-slate-700 font-medium focus:outline-none"
+                  >
+                    <option value="Bengali">বাংলা (Bengali)</option>
+                    <option value="Spanish">Spanish</option>
+                    <option value="French">French</option>
+                    <option value="German">German</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Chinese">Chinese</option>
+                    <option value="Japanese">Japanese</option>
+                    <option value="Arabic">Arabic</option>
+                    <option value="Portuguese">Portuguese</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

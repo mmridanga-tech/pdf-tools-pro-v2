@@ -85,9 +85,24 @@ export default async function assistantHandler(req: any, res: any) {
 
   try {
     const body = getRequestBody(req);
-    const { action = 'summarize', text = '', prompt = '', context = '' } = body;
+    const action = body.action || 'summarize';
+    const rawText =
+      body.text ||
+      body.textContext ||
+      body.context ||
+      body.documentText ||
+      body.content ||
+      body.input ||
+      body.inputText ||
+      body.pdfContext ||
+      '';
+    const prompt = body.prompt || body.message || body.query || body.instruction || '';
+    const targetLanguage =
+      body.options?.targetLanguage || body.targetLanguage || body.options?.language || body.language || 'English';
+    const rewriteStyle =
+      body.options?.style || body.style || body.options?.rewriteStyle || body.rewriteStyle || 'Professional & Executive';
 
-    if (!text && !prompt && !context) {
+    if (!rawText.trim() && !prompt.trim()) {
       res.setHeader('Content-Type', 'application/json');
       return res.status(400).json({
         success: false,
@@ -96,26 +111,57 @@ export default async function assistantHandler(req: any, res: any) {
     }
 
     const ai = getGenAI();
+    const textToProcess = rawText.trim() || prompt.trim();
 
-    let systemInstruction = `You are SmartPDF Pro Assistant, an expert document intelligence engine.`;
+    let systemInstruction = `You are SmartPDF Pro Assistant, an expert document intelligence engine powered by Gemini. Provide well-structured, clear, professional responses formatted with Markdown.`;
     let userPrompt = '';
 
     switch (action) {
       case 'summarize':
-        userPrompt = `Please summarize the following document content clearly and concisely with bullet points and page citations:\n\n${text || context}`;
+        userPrompt = `Provide a comprehensive Executive Summary of the following document content. Organize with main objectives, major findings, key takeaways, and action items in bullet points:\n\n${textToProcess}`;
+        break;
+      case 'rewrite':
+        userPrompt = `Rewrite and polish the following content using a ${rewriteStyle} tone. Enhance clarity, flow, and vocabulary while preserving the original facts and meaning:\n\n${textToProcess}`;
         break;
       case 'translate':
-        userPrompt = `Translate the following text to ${body.targetLanguage || 'English'}:\n\n${text || context}`;
+        userPrompt = `Translate the following text accurately into ${targetLanguage}. Maintain original paragraph formatting, technical terms, and headings:\n\n${textToProcess}`;
+        break;
+      case 'grammar':
+        userPrompt = `Proofread the following content. Correct all spelling, grammar, punctuation, and structural flaws. Provide the corrected text followed by a brief summary of key improvements made:\n\n${textToProcess}`;
         break;
       case 'explain':
-        userPrompt = `Explain the following excerpt in simple, clear terms for a general audience:\n\n${text || context}`;
+        userPrompt = `Explain and simplify the following complex content, formulas, or terminology in plain, easy-to-understand language with illustrative examples:\n\n${textToProcess}`;
+        break;
+      case 'extract-tables':
+      case 'extractTables':
+        userPrompt = `Extract all data, numbers, matrices, and tabular information from this document. Present them as cleanly formatted Markdown tables with clear column headers, followed by a CSV representation:\n\n${textToProcess}`;
+        break;
+      case 'key-points':
+      case 'keyPoints':
+      case 'key_points':
+        userPrompt = `Extract the top 10 crucial findings, arguments, statistics, and conclusions from the document as a bulleted list:\n\n${textToProcess}`;
+        break;
+      case 'study-notes':
+      case 'studyNotes':
+      case 'study_notes':
+        userPrompt = `Generate structured, high-yield study revision notes from this content. Include hierarchical section headings, key definitions, important formulas/concepts, and a summary review quiz:\n\n${textToProcess}`;
+        break;
+      case 'faq':
+        userPrompt = `Generate a comprehensive FAQ (Frequently Asked Questions) list with clear, accurate answers directly derived from this document:\n\n${textToProcess}`;
+        break;
+      case 'flashcards':
+        userPrompt = `Generate a set of high-yield study flashcards from this text in the format: **Front (Question/Concept)** and **Back (Answer/Explanation)**:\n\n${textToProcess}`;
         break;
       case 'action_items':
-        userPrompt = `Extract all action items, tasks, deadlines, and responsible parties from this content:\n\n${text || context}`;
+      case 'actionItems':
+      case 'action-items':
+        userPrompt = `Extract all action items, deliverables, tasks, deadlines, and assigned parties from this content:\n\n${textToProcess}`;
         break;
       case 'custom':
       default:
-        userPrompt = `${prompt}\n\nContext:\n${text || context}`;
+        userPrompt = prompt
+          ? `${prompt}\n\nDocument Context:\n${rawText}`
+          : `Analyze the following document:\n\n${textToProcess}`;
         break;
     }
 

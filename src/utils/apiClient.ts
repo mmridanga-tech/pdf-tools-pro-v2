@@ -1,4 +1,4 @@
-import { auth } from '../lib/firebase';
+import { auth, signInAnonymously } from '../lib/firebase';
 
 interface ApiOptions extends RequestInit {
   timeoutMs?: number;
@@ -8,6 +8,26 @@ export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+async function resolveAuthToken(): Promise<string | null> {
+  if (auth.currentUser) {
+    try {
+      return await auth.currentUser.getIdToken();
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    const cred = await signInAnonymously(auth);
+    if (cred.user) {
+      return await cred.user.getIdToken();
+    }
+  } catch (err) {
+    console.debug('Guest anonymous auth notice:', err);
+  }
+  return null;
 }
 
 /**
@@ -46,15 +66,13 @@ export async function postApiJson<T>(url: string, bodyData: any, options: ApiOpt
 
   // Attach Firebase ID token if missing from headers
   if (!headersObj['Authorization'] && !headersObj['authorization']) {
-    if (auth.currentUser) {
-      try {
-        const idToken = await auth.currentUser.getIdToken();
-        if (idToken) {
-          headersObj['Authorization'] = `Bearer ${idToken}`;
-        }
-      } catch (err) {
-        console.warn('Failed to retrieve Firebase Auth ID token:', err);
+    try {
+      const idToken = await resolveAuthToken();
+      if (idToken) {
+        headersObj['Authorization'] = `Bearer ${idToken}`;
       }
+    } catch (err) {
+      console.warn('Failed to retrieve Firebase Auth ID token:', err);
     }
   }
 

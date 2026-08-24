@@ -154,6 +154,8 @@ export const AppRoutes: React.FC = () => {
           <Route path="/ai-chat" element={<PdfChat />} />
           <Route path="/ai-assistant" element={<AiAssistant />} />
           <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
+          <Route path="/analyzer" element={<DocumentAnalyzer />} />
+          <Route path="/doc-analyzer" element={<DocumentAnalyzer />} />
           <Route
             path="/team"
             element={

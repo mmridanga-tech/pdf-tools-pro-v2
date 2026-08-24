@@ -805,6 +805,7 @@ export const PdfChat: React.FC = () => {
                     onChange={(e) => setSelectedLanguage(e.target.value)}
                     className="w-full p-3 bg-slate-900 border border-slate-800 rounded-2xl text-xs text-white focus:outline-none focus:border-purple-500 cursor-pointer"
                   >
+                    <option value="Bengali">Bengali (বাংলা)</option>
                     <option value="Spanish">Spanish (Español)</option>
                     <option value="French">French (Français)</option>
                     <option value="German">German (Deutsch)</option>

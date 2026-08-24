@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { PDFTool, ToolCategory } from '../../types/toolTypes';
 import { PremiumToolCard } from './PremiumToolCard';
+import { PDF_TOOLS } from '../../utils/toolsData';
 import {
   Star,
   Sparkles,
@@ -16,6 +17,7 @@ import {
   ChevronUp,
   ArrowRight,
   X,
+  Filter,
 } from 'lucide-react';
 
 interface PremiumToolGridProps {
@@ -33,74 +35,15 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: React.FC<{ className?
   { id: 'organize', label: 'Organize & Split', icon: Layers },
   { id: 'convert', label: 'Convert PDF', icon: FileText },
   { id: 'edit', label: 'Edit & Compress', icon: Minimize2 },
-  { id: 'security', label: 'Security', icon: Shield },
+  { id: 'security', label: 'Security & Protect', icon: Shield },
   { id: 'image', label: 'Image Utilities', icon: ImageIcon },
   { id: 'ai', label: 'AI Intelligence', icon: Sparkles },
 ];
 
 // 6 Featured Popular Core PDF Tools Data
-const FEATURED_POPULAR: PDFTool[] = [
-  {
-    id: 'merge-pdf',
-    name: 'Merge PDF',
-    description: 'Combine multiple PDF files into one unified document easily in seconds.',
-    icon: 'Layers',
-    category: 'organize',
-    path: '/merge',
-    popular: true,
-    color: 'from-indigo-500 to-indigo-600',
-  },
-  {
-    id: 'split-pdf',
-    name: 'Split PDF',
-    description: 'Separate one PDF page range or extract all pages into independent files.',
-    icon: 'Scissors',
-    category: 'organize',
-    path: '/split',
-    popular: true,
-    color: 'from-amber-500 to-orange-600',
-  },
-  {
-    id: 'compress-pdf',
-    name: 'Compress PDF',
-    description: 'Reduce file size of your PDF while maintaining optimal visual quality.',
-    icon: 'Minimize2',
-    category: 'edit',
-    path: '/compress',
-    popular: true,
-    color: 'from-emerald-500 to-teal-600',
-  },
-  {
-    id: 'pdf-to-word',
-    name: 'PDF to Word',
-    description: 'Convert PDF files into editable DOCX Word documents seamlessly.',
-    icon: 'FileText',
-    category: 'convert',
-    path: '/pdf-to-word',
-    popular: true,
-    color: 'from-blue-600 to-cyan-600',
-  },
-  {
-    id: 'word-to-pdf',
-    name: 'Word to PDF',
-    description: 'Convert Microsoft Word DOC and DOCX files to PDF documents quickly.',
-    icon: 'FileType',
-    category: 'convert',
-    path: '/word-to-pdf',
-    popular: true,
-    color: 'from-sky-500 to-blue-700',
-  },
-  {
-    id: 'ocr-pdf',
-    name: 'OCR PDF',
-    description: 'Extract and convert scanned PDF pages into selectable, searchable text.',
-    icon: 'ScanText',
-    category: 'convert',
-    path: '/ocr-pdf',
-    popular: true,
-    color: 'from-amber-500 to-red-600',
-  },
-];
+const FEATURED_POPULAR: PDFTool[] = PDF_TOOLS.filter((t) =>
+  ['merge-pdf', 'split-pdf', 'compress-pdf', 'pdf-to-word', 'ai-chat', 'ocr-pdf'].includes(t.id)
+);
 
 export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
   tools,
@@ -114,55 +57,137 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
   const [showAllTools, setShowAllTools] = useState(false);
 
   const favoriteTools = useMemo(() => {
-    return tools.filter((t) => favoriteIds.includes(t.id));
-  }, [tools, favoriteIds]);
+    return PDF_TOOLS.filter((t) => favoriteIds.includes(t.id));
+  }, [favoriteIds]);
 
   const displayedFavorites = useMemo(() => {
-    return favoriteTools.slice(0, 4);
+    return favoriteTools.slice(0, 6);
   }, [favoriteTools]);
 
   const isFiltering = Boolean(searchQuery || selectedCategory !== 'all');
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: PDF_TOOLS.length };
+    PDF_TOOLS.forEach((tool) => {
+      counts[tool.category] = (counts[tool.category] || 0) + 1;
+    });
+    return counts;
+  }, []);
+
   return (
-    <section id="tools-section" className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-6">
-      {/* Compact Favorites Strip */}
+    <section id="tools-section" className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-8">
+      {/* Category Navigation Bar & Filter Strip */}
+      <div className="space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+              <span>PDF & AI Tool Suite</span>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                {tools.length} Tools
+              </span>
+            </h2>
+            <p className="text-slate-400 text-xs sm:text-sm font-normal mt-1">
+              Select a tool to begin processing your documents directly in your browser.
+            </p>
+          </div>
+
+          {/* Quick Toggle for Featured vs All */}
+          {!isFiltering && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAllTools(false)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  !showAllTools
+                    ? 'bg-red-600/20 text-red-300 border border-red-500/30'
+                    : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 border border-white/[0.06]'
+                }`}
+              >
+                Featured (6)
+              </button>
+              <button
+                onClick={() => setShowAllTools(true)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  showAllTools
+                    ? 'bg-red-600/20 text-red-300 border border-red-500/30'
+                    : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 border border-white/[0.06]'
+                }`}
+              >
+                All Tools ({PDF_TOOLS.length})
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Category Pills Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {CATEGORIES.map((cat) => {
+            const IconComp = cat.icon;
+            const isSelected = selectedCategory === cat.id;
+            const count = categoryCounts[cat.id] || 0;
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => onSelectCategory(cat.id)}
+                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                  isSelected
+                    ? 'bg-red-600 text-white shadow-md shadow-red-600/20 font-semibold'
+                    : 'bg-[#0c0d14] text-slate-400 hover:text-slate-100 hover:bg-[#141622] border border-white/[0.07]'
+                }`}
+              >
+                <IconComp className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                <span>{cat.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                    isSelected ? 'bg-black/30 text-white' : 'bg-white/[0.06] text-slate-400'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Pinned / Favorites Strip */}
       {favoriteTools.length > 0 && !isFiltering && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2.5 overflow-x-auto pb-1 pt-1 px-3.5 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] scrollbar-none"
+          className="flex items-center gap-3 overflow-x-auto pb-1 pt-1 px-4 py-2.5 rounded-2xl bg-[#0c0d14] border border-white/[0.07] scrollbar-none"
         >
           <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 shrink-0 pr-1">
-            <Star className="w-3.5 h-3.5 fill-current text-amber-400" />
-            <span>Favorites</span>
+            <Star className="w-4 h-4 fill-current text-amber-400" />
+            <span>Pinned Tools</span>
           </div>
 
-          <div className="h-3.5 w-[1px] bg-white/10 shrink-0" />
+          <div className="h-4 w-[1px] bg-white/10 shrink-0" />
 
           <div className="flex items-center gap-2 scrollbar-none">
             {displayedFavorites.map((tool) => (
               <div
                 key={`fav-chip-${tool.id}`}
-                className="group inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-400/30 text-xs font-medium text-slate-300 hover:text-white transition-all shrink-0"
+                className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-400/30 text-xs font-medium text-slate-300 hover:text-white transition-all shrink-0"
               >
                 <Link to={tool.path} className="flex items-center gap-1.5">
-                  <span className="truncate max-w-[120px]">{tool.name}</span>
+                  <span className="truncate max-w-[140px] font-semibold">{tool.name}</span>
                 </Link>
                 <button
                   type="button"
                   onClick={() => onToggleFavorite(tool.id)}
                   className="text-slate-500 hover:text-amber-400 transition-colors cursor-pointer"
-                  aria-label={`Unstar ${tool.name}`}
+                  aria-label={`Unpin ${tool.name}`}
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
           </div>
 
-          {favoriteTools.length > 4 && (
+          {favoriteTools.length > 6 && (
             <span className="text-[11px] font-medium text-slate-500 shrink-0 pl-1">
-              +{favoriteTools.length - 4} more
+              +{favoriteTools.length - 6} more
             </span>
           )}
         </motion.div>
@@ -170,27 +195,8 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
 
       {/* Featured PDF Tools */}
       {!isFiltering && !showAllTools ? (
-        <div>
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 pb-3 border-b border-white/[0.06] gap-3">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Featured PDF Tools
-              </h2>
-              <p className="text-slate-400 text-xs sm:text-sm font-normal mt-1">
-                Everything you need for fast, private document workflows.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowAllTools(true)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0 self-start sm:self-auto group"
-            >
-              <span>View All PDF Tools</span>
-              <ArrowRight className="w-3.5 h-3.5 text-red-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-6">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {FEATURED_POPULAR.map((tool) => (
               <PremiumToolCard
                 key={`featured-${tool.id}`}
@@ -201,51 +207,19 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
             ))}
           </div>
 
-          <div className="text-center pt-2">
+          <div className="text-center pt-4">
             <button
               onClick={() => setShowAllTools(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-slate-200 text-xs sm:text-sm font-semibold border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs sm:text-sm font-semibold border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group shadow-sm"
             >
-              <span>View All PDF Tools ({tools.length})</span>
-              <ArrowRight className="w-4 h-4 text-red-400 group-hover:translate-x-0.5 transition-transform" />
+              <span>Explore All {PDF_TOOLS.length} PDF & AI Tools</span>
+              <ArrowRight className="w-4 h-4 text-red-400 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
       ) : (
         /* Expanded Catalog / Filtered Tools View */
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                {isFiltering ? `Filtered Tools (${tools.length})` : `Complete Tool Suite (${tools.length})`}
-              </h2>
-            </div>
-
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {CATEGORIES.map((cat) => {
-                const IconComp = cat.icon;
-                const isSelected = selectedCategory === cat.id;
-
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => onSelectCategory(cat.id)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
-                      isSelected
-                        ? 'bg-white/[0.1] text-white border border-white/20 shadow-sm'
-                        : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-white/[0.06]'
-                    }`}
-                  >
-                    <IconComp className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                    <span>{cat.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Tools Grid */}
+        <div className="space-y-6">
           <AnimatePresence mode="wait">
             {tools.length > 0 ? (
               <div className="space-y-6">
@@ -269,13 +243,13 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
 
                 {/* Show Fewer Button when expanded via showAllTools and not active search */}
                 {!isFiltering && showAllTools && (
-                  <div className="text-center pt-2">
+                  <div className="text-center pt-4">
                     <button
                       onClick={() => setShowAllTools(false)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-slate-200 text-xs sm:text-sm font-semibold border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs sm:text-sm font-semibold border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group"
                     >
-                      <span>Show Featured Tools Only</span>
-                      <ChevronUp className="w-3.5 h-3.5 text-red-400 group-hover:-translate-y-0.5 transition-transform" />
+                      <span>Show Featured Popular Tools</span>
+                      <ChevronUp className="w-4 h-4 text-red-400 group-hover:-translate-y-0.5 transition-transform" />
                     </button>
                   </div>
                 )}
@@ -284,21 +258,21 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-[#0c0d14] rounded-2xl p-6 text-center border border-white/[0.08] max-w-md mx-auto shadow-sm my-4"
+                className="bg-[#0c0d14] rounded-3xl p-8 text-center border border-white/[0.08] max-w-md mx-auto shadow-xl my-6"
               >
-                <HelpCircle className="w-7 h-7 text-slate-500 mx-auto mb-2" />
-                <h3 className="text-sm font-semibold text-white mb-1">No PDF tools found</h3>
-                <p className="text-xs text-slate-400 mb-4 leading-relaxed font-normal">
-                  No tools found matching "{searchQuery}". Try searching for merge, split, compress, or OCR.
+                <HelpCircle className="w-9 h-9 text-slate-500 mx-auto mb-3" />
+                <h3 className="text-base font-semibold text-white mb-1.5">No matching PDF tools found</h3>
+                <p className="text-xs text-slate-400 mb-5 leading-relaxed font-normal">
+                  No tools found matching "{searchQuery}". Try searching for compress, merge, split, word, or ocr.
                 </p>
                 <button
                   onClick={() => {
                     onSearchChange('');
                     onSelectCategory('all');
                   }}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-medium transition-all shadow-sm cursor-pointer"
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold transition-all shadow-md cursor-pointer"
                 >
-                  Reset Search & Filters
+                  Reset Search & All Filters
                 </button>
               </motion.div>
             )}
@@ -308,5 +282,6 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
     </section>
   );
 };
+
 
 

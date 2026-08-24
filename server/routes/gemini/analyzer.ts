@@ -85,9 +85,16 @@ export default async function analyzerHandler(req: any, res: any) {
 
   try {
     const body = getRequestBody(req);
-    const { textContext } = body;
+    const textContext =
+      body.textContext ||
+      body.text ||
+      body.content ||
+      body.context ||
+      body.documentText ||
+      body.pdfContext ||
+      '';
 
-    if (!textContext) {
+    if (!textContext.trim()) {
       res.setHeader('Content-Type', 'application/json');
       return res.status(400).json({ success: false, error: 'Text content is required for document analysis.' });
     }

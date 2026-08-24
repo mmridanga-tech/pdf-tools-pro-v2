@@ -178,7 +178,10 @@ export const AiAssistant: React.FC = () => {
     try {
       const data = await postApiJson<{ result: string; action: string }>('/api/gemini/assistant', {
         action: activeAction,
+        text: pdfTextContent,
         textContext: pdfTextContent,
+        context: pdfTextContent,
+        targetLanguage,
         options: {
           targetLanguage,
           style: rewriteStyle,
@@ -359,6 +362,7 @@ export const AiAssistant: React.FC = () => {
                   onChange={(e) => setTargetLanguage(e.target.value)}
                   className="w-full py-2.5 px-3 bg-[#18181d] border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-red-500"
                 >
+                  <option value="Bengali">Bengali (বাংলা)</option>
                   <option value="Spanish">Spanish (Español)</option>
                   <option value="French">French (Français)</option>
                   <option value="German">German (Deutsch)</option>
@@ -367,6 +371,9 @@ export const AiAssistant: React.FC = () => {
                   <option value="Hindi">Hindi (हिन्दी)</option>
                   <option value="Arabic">Arabic (العربية)</option>
                   <option value="Portuguese">Portuguese (Português)</option>
+                  <option value="Italian">Italian (Italiano)</option>
+                  <option value="Korean">Korean (한국어)</option>
+                  <option value="Russian">Russian (Русский)</option>
                 </select>
               </div>
             )}

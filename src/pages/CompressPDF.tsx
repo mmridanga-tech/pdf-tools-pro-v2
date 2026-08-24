@@ -87,11 +87,29 @@ export const CompressPDF: React.FC = () => {
   const handleLevelChange = (newLevel: CompressionLevel) => {
     setCompressionLevel(newLevel);
     setQueue((prev) =>
-      prev.map((item) => ({
-        ...item,
-        level: newLevel,
-        estimatedSize: PDFCompressionService.estimateCompressedSize(item.size, newLevel),
-      }))
+      prev.map((item) =>
+        item.status === 'completed' || item.status === 'compressing'
+          ? item
+          : {
+              ...item,
+              level: newLevel,
+              estimatedSize: PDFCompressionService.estimateCompressedSize(item.size, newLevel),
+            }
+      )
+    );
+  };
+
+  const handleItemLevelChange = (id: string, newLevel: CompressionLevel) => {
+    setQueue((prev) =>
+      prev.map((item) =>
+        item.id === id && item.status !== 'compressing' && item.status !== 'completed'
+          ? {
+              ...item,
+              level: newLevel,
+              estimatedSize: PDFCompressionService.estimateCompressedSize(item.size, newLevel),
+            }
+          : item
+      )
     );
   };
 
@@ -615,17 +633,84 @@ export const CompressPDF: React.FC = () => {
                 <div className="space-y-3">
                   {queue.map((item, index) => {
                     return (
-                      <PremiumFileCard
-                        key={item.id}
-                        name={item.name}
-                        size={item.size}
-                        status={item.status === 'compressing' ? 'processing' : item.status === 'cancelled' ? 'error' : item.status}
-                        statusMsg={item.statusMsg}
-                        index={index}
-                        totalFiles={queue.length}
-                        onRemove={() => handleRemoveItem(item.id)}
-                        onDownload={item.status === 'completed' ? () => downloadPDF(item) : undefined}
-                      />
+                      <div key={item.id} className="space-y-2">
+                        <PremiumFileCard
+                          name={item.name}
+                          size={item.size}
+                          status={
+                            item.status === 'compressing'
+                              ? 'processing'
+                              : item.status === 'cancelled'
+                              ? 'cancelled'
+                              : item.status
+                          }
+                          statusMsg={item.statusMsg}
+                          index={index}
+                          totalFiles={queue.length}
+                          onRemove={() => handleRemoveItem(item.id)}
+                          onDownload={item.status === 'completed' ? () => downloadPDF(item) : undefined}
+                        />
+
+                        {/* Individual Item Action Strip */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-white/[0.02] border border-white/5 rounded-xl text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 font-medium">Preset:</span>
+                            {item.status === 'completed' || item.status === 'compressing' ? (
+                              <span className="px-2 py-0.5 rounded-md bg-white/[0.06] text-slate-300 font-semibold uppercase text-[10px]">
+                                {item.level}
+                              </span>
+                            ) : (
+                              <select
+                                value={item.level}
+                                onChange={(e) =>
+                                  handleItemLevelChange(item.id, e.target.value as CompressionLevel)
+                                }
+                                className="bg-[#181824] border border-white/10 rounded-lg px-2 py-1 text-slate-200 text-xs focus:outline-none focus:border-red-500 cursor-pointer"
+                              >
+                                <option value="less">Low (Best Quality)</option>
+                                <option value="recommended">Medium (Recommended)</option>
+                                <option value="extreme">High (Smallest Size)</option>
+                              </select>
+                            )}
+
+                            {item.status === 'completed' && item.compressedSize && (
+                              <span className="text-emerald-400 font-mono font-bold ml-2">
+                                {formatBytes(item.compressedSize)} (
+                                {item.savingsPercentage && item.savingsPercentage > 0
+                                  ? `-${item.savingsPercentage}%`
+                                  : '0% saved'}
+                                )
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {item.status === 'compressing' && (
+                              <button
+                                type="button"
+                                onClick={() => handleCancelItem(item.id)}
+                                className="px-3 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-semibold cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            )}
+
+                            {(item.status === 'pending' ||
+                              item.status === 'error' ||
+                              item.status === 'cancelled') && (
+                              <button
+                                type="button"
+                                onClick={() => compressSingleItem(item.id)}
+                                disabled={isProcessingBatch}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                              >
+                                <Minimize2 className="w-3 h-3" />
+                                <span>Compress File</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>

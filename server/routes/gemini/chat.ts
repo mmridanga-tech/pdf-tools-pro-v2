@@ -85,7 +85,16 @@ export default async function chatHandler(req: any, res: any) {
 
   try {
     const body = getRequestBody(req);
-    const { message, pdfContext, history, mode = 'chat', targetLanguage = 'English' } = body;
+    const message = body.message || body.prompt || body.query || body.text || '';
+    const pdfContext =
+      body.pdfContext ||
+      body.textContext ||
+      body.context ||
+      body.documentText ||
+      body.content ||
+      body.text ||
+      '';
+    const { history, mode = 'chat', targetLanguage = 'English' } = body;
 
     if (!message && mode !== 'summarize' && mode !== 'extractTables' && mode !== 'extractKeyPoints') {
       res.setHeader('Content-Type', 'application/json');
