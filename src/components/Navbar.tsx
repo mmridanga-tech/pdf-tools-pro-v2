@@ -3,18 +3,18 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   FileText,
   Sparkles,
-  BarChart3,
   ShieldCheck,
   Zap,
-  Globe,
   BookOpen,
   Menu,
   X,
   User,
   ChevronDown,
+  ChevronRight,
   Scissors,
   Minimize2,
   Lock,
+  Unlock,
   RotateCw,
   FileSpreadsheet,
   Image,
@@ -23,6 +23,11 @@ import {
   Activity,
   LogOut,
   Sliders,
+  Trash2,
+  FileOutput,
+  ArrowUpDown,
+  FileCheck,
+  Headphones,
   CheckCircle2,
 } from 'lucide-react';
 import { ToolId, UserSession, SystemHealthData } from '../types';
@@ -38,26 +43,68 @@ interface NavbarProps {
   onOpenAuth?: () => void;
 }
 
-interface QuickToolItem {
-  id: ToolId;
+interface DropdownTool {
   name: string;
-  category: string;
+  path: string;
+  toolId?: ToolId;
   icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  badge?: string;
   isAi?: boolean;
 }
 
-const QUICK_TOOLS: QuickToolItem[] = [
-  { id: 'ai-chat', name: 'Chat with PDF', category: 'AI', icon: Sparkles, isAi: true },
-  { id: 'ai-analyzer', name: 'Risk Analyzer', category: 'AI', icon: ShieldCheck, isAi: true },
-  { id: 'merge', name: 'Merge PDF', category: 'Organize', icon: FileText },
-  { id: 'split', name: 'Split PDF', category: 'Organize', icon: Scissors },
-  { id: 'compress', name: 'Compress PDF', category: 'Convert', icon: Minimize2 },
-  { id: 'pdf-to-word', name: 'PDF to Word', category: 'Convert', icon: FileSpreadsheet },
-  { id: 'images-to-pdf', name: 'Images to PDF', category: 'Convert', icon: Image },
-  { id: 'ocr', name: 'OCR Extract', category: 'Convert', icon: ScanText },
-  { id: 'watermark', name: 'Watermark', category: 'Security', icon: Stamp },
-  { id: 'protect', name: 'Protect PDF', category: 'Security', icon: Lock },
-  { id: 'rotate', name: 'Rotate Pages', category: 'Organize', icon: RotateCw },
+interface ToolCategoryGroup {
+  title: string;
+  color: string;
+  items: DropdownTool[];
+}
+
+const TOOL_CATEGORIES: ToolCategoryGroup[] = [
+  {
+    title: 'Organize & Edit',
+    color: 'text-indigo-400 border-indigo-500/20 bg-indigo-500/10',
+    items: [
+      { name: 'Merge PDF', path: '/merge', toolId: 'merge', icon: FileText, description: 'Combine multiple PDFs in custom order', badge: 'Popular' },
+      { name: 'Split PDF', path: '/split', toolId: 'split', icon: Scissors, description: 'Separate pages or extract ranges' },
+      { name: 'Rotate PDF', path: '/rotate', toolId: 'rotate', icon: RotateCw, description: 'Rotate 90°, 180° or 270°' },
+      { name: 'Delete Pages', path: '/delete-pages', icon: Trash2, description: 'Remove unwanted pages cleanly' },
+      { name: 'Extract Pages', path: '/extract-pages', icon: FileOutput, description: 'Export chosen pages to new PDF' },
+      { name: 'Page Numbers', path: '/page-numbers', icon: Sliders, description: 'Add header & footer pagination' },
+    ],
+  },
+  {
+    title: 'Convert & Optimize',
+    color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10',
+    items: [
+      { name: 'Compress PDF', path: '/compress', toolId: 'compress', icon: Minimize2, description: 'Reduce size while preserving quality', badge: 'Popular' },
+      { name: 'PDF to Word', path: '/pdf-to-word', toolId: 'pdf-to-word', icon: FileSpreadsheet, description: 'Convert PDF to editable DOCX', badge: 'Fast' },
+      { name: 'Word to PDF', path: '/word-to-pdf', icon: FileText, description: 'Convert DOC & DOCX to PDF' },
+      { name: 'Images to PDF', path: '/image-to-pdf', toolId: 'images-to-pdf', icon: Image, description: 'Convert JPG, PNG, WebP to PDF' },
+      { name: 'PDF to Images', path: '/pdf-to-image', icon: Image, description: 'Extract pages to high-res JPG/PNG' },
+      { name: 'OCR Text Extract', path: '/ocr-pdf', toolId: 'ocr', icon: ScanText, description: 'Extract selectable text from scan', badge: 'AI' },
+    ],
+  },
+  {
+    title: 'Security & Privacy',
+    color: 'text-amber-400 border-amber-500/20 bg-amber-500/10',
+    items: [
+      { name: 'Protect PDF', path: '/protect-pdf', toolId: 'protect', icon: Lock, description: 'Lock with AES-256 password', badge: 'AES-256' },
+      { name: 'Unlock PDF', path: '/unlock-pdf', icon: Unlock, description: 'Remove forgotten permission locks' },
+      { name: 'Watermark PDF', path: '/watermark', toolId: 'watermark', icon: Stamp, description: 'Add custom security stamp' },
+    ],
+  },
+  {
+    title: 'AI Intelligence',
+    color: 'text-rose-400 border-rose-500/20 bg-rose-500/10',
+    items: [
+      { name: 'Chat with PDF', path: '/ai-chat', toolId: 'ai-chat', icon: Sparkles, description: 'Interactive Q&A with page citations', badge: 'Gemini', isAi: true },
+      { name: 'Doc Analyzer', path: '/document-analyzer', toolId: 'ai-analyzer', icon: ShieldCheck, description: 'Legal, risk & compliance audit', badge: 'Audit', isAi: true },
+      { name: 'PDF Diff Compare', path: '/diff-compare', icon: ArrowUpDown, description: 'Compare revisions side-by-side', isAi: true },
+      { name: 'Resume ATS Review', path: '/resume-reviewer', icon: FileCheck, description: 'ATS score, format & keyword check', isAi: true },
+      { name: 'Smart PII Redact', path: '/pii-redaction', icon: ShieldCheck, description: 'Auto-redact sensitive personal info', isAi: true },
+      { name: 'Audio Podcast', path: '/audio-podcast', icon: Headphones, description: 'Convert document into audio recap', isAi: true },
+    ],
+  },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -131,26 +178,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     navigate('/');
   };
 
-  const handleToolSelect = (id: ToolId | null) => {
+  const handleToolNavigate = (path: string, toolId?: ToolId | null) => {
     setIsToolsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    if (onSelectTool) {
-      onSelectTool(id);
+    if (onSelectTool && toolId !== undefined) {
+      onSelectTool(toolId);
     }
-    if (id === null) {
-      navigate('/');
-    } else if (id === 'ai-chat') {
-      navigate('/ai-chat');
-    } else if (id === 'ai-analyzer') {
-      navigate('/document-analyzer');
-    } else if (id === 'telemetry') {
-      navigate('/team');
-    } else if (id === 'admin-seo') {
-      navigate('/admin/content-generator');
-    } else {
-      navigate('/');
-    }
+    navigate(path);
   };
+
+  const [mobileToolsExpanded, setMobileToolsExpanded] = useState(false);
 
   const handleOpenPricing = () => {
     if (propOnOpenPricing) {
@@ -270,40 +307,81 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
               </button>
 
-              {/* Tools Dropdown Panel */}
+              {/* Tools Mega Dropdown Panel */}
               {isToolsDropdownOpen && (
-                <div className="absolute left-0 top-full mt-2 w-80 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl p-3 shadow-2xl z-50 text-slate-200 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-slate-800 text-[11px] font-semibold text-slate-400">
-                    <span>POPULAR UTILITIES</span>
+                <div className="absolute -left-12 top-full mt-2 w-[720px] bg-[#0F172A]/95 backdrop-blur-2xl border border-slate-800 rounded-2xl p-4 shadow-2xl z-50 text-slate-200 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/80">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">
+                        All PDF Utilities & AI Tools
+                      </span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        100% In-Browser WASM
+                      </span>
+                    </div>
                     <button
-                      onClick={() => handleToolSelect(null)}
-                      className="text-indigo-400 hover:text-indigo-300 transition cursor-pointer"
+                      onClick={() => handleToolNavigate('/')}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 transition cursor-pointer font-semibold flex items-center gap-1"
                     >
-                      View All (11)
+                      <span>Explore Home Grid</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-1 max-h-72 overflow-y-auto pr-1">
-                    {QUICK_TOOLS.map((tool) => {
-                      const IconComp = tool.icon;
-                      return (
-                        <button
-                          key={tool.id}
-                          onClick={() => handleToolSelect(tool.id)}
-                          className="flex items-center gap-2 p-2 rounded-xl text-left hover:bg-slate-800/80 text-xs text-slate-300 hover:text-white transition group cursor-pointer"
-                        >
-                          <div
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
-                              tool.isAi
-                                ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
-                                : 'bg-slate-800 border-slate-700 text-slate-400 group-hover:text-white'
-                            }`}
-                          >
-                            <IconComp className="w-3.5 h-3.5" />
-                          </div>
-                          <span className="truncate font-medium">{tool.name}</span>
-                        </button>
-                      );
-                    })}
+
+                  <div className="grid grid-cols-4 gap-3 max-h-[420px] overflow-y-auto pr-1">
+                    {TOOL_CATEGORIES.map((cat, idx) => (
+                      <div key={idx} className="space-y-1.5">
+                        <div className="px-2 py-1 flex items-center gap-1.5">
+                          <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${cat.color}`}>
+                            {cat.title}
+                          </span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {cat.items.map((tool, tIdx) => {
+                            const IconComp = tool.icon;
+                            return (
+                              <Link
+                                key={tIdx}
+                                to={tool.path}
+                                onClick={() => handleToolNavigate(tool.path, tool.toolId)}
+                                className="w-full flex flex-col p-2 rounded-xl text-left hover:bg-slate-800/80 transition-all group border border-transparent hover:border-slate-700/60 cursor-pointer"
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <div
+                                    className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 border ${
+                                      tool.isAi
+                                        ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500/20'
+                                        : 'bg-slate-800 border-slate-700 text-slate-400 group-hover:text-white group-hover:bg-slate-700'
+                                    }`}
+                                  >
+                                    <IconComp className="w-3.5 h-3.5" />
+                                  </div>
+                                  <span className="truncate font-semibold text-xs text-slate-300 group-hover:text-white">
+                                    {tool.name}
+                                  </span>
+                                  {tool.badge && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 ml-auto shrink-0">
+                                      {tool.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-slate-500 group-hover:text-slate-400 line-clamp-1 mt-0.5 pl-7">
+                                  {tool.description}
+                                </span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 px-2">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Client-side WASM engine — Zero server file uploads
+                    </span>
+                    <span className="text-slate-500 font-mono">21+ Tools Available</span>
                   </div>
                 </div>
               )}
@@ -469,19 +547,63 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
           <div className="lg:hidden border-t border-slate-800/90 bg-[#0B0F19]/95 backdrop-blur-xl px-4 py-4 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
-            {/* Quick Mobile Tools Link */}
-            <button
-              onClick={() => handleToolSelect(null)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
-                isAllToolsActive ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <FileText className="w-4 h-4 text-indigo-400" />
-                <span>All PDF Tools</span>
-              </div>
-              <span className="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">11 tools</span>
-            </button>
+            {/* Quick Mobile Tools Link & Accordion */}
+            <div className="rounded-xl overflow-hidden bg-slate-900/60 border border-slate-800/80">
+              <button
+                onClick={() => setMobileToolsExpanded((prev) => !prev)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-semibold transition text-left cursor-pointer ${
+                  isAllToolsActive || mobileToolsExpanded ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <FileText className="w-4 h-4 text-indigo-400" />
+                  <span>All PDF Tools & Utilities</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">21 tools</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${mobileToolsExpanded ? 'rotate-180 text-indigo-400' : ''}`} />
+                </div>
+              </button>
+
+              {mobileToolsExpanded && (
+                <div className="p-3 space-y-3 bg-slate-950/60 border-t border-slate-800/60 max-h-80 overflow-y-auto">
+                  {TOOL_CATEGORIES.map((cat, cIdx) => (
+                    <div key={cIdx} className="space-y-1">
+                      <p className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded inline-block border ${cat.color}`}>
+                        {cat.title}
+                      </p>
+                      <div className="grid grid-cols-2 gap-1 pt-1">
+                        {cat.items.map((tool, tIdx) => {
+                          const IconComp = tool.icon;
+                          return (
+                            <Link
+                              key={tIdx}
+                              to={tool.path}
+                              onClick={() => {
+                                handleToolNavigate(tool.path, tool.toolId);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className="flex items-center gap-2 p-2 rounded-lg bg-slate-900/80 border border-slate-800 hover:border-indigo-500/40 text-xs text-slate-300 hover:text-white"
+                            >
+                              <IconComp className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                              <span className="truncate font-medium">{tool.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => handleToolNavigate('/')}
+                      className="w-full py-2 text-center text-xs font-semibold text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-lg"
+                    >
+                      View Home Tool Grid
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* AI Document Chat */}
             <Link

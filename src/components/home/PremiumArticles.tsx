@@ -116,6 +116,3 @@ export const PremiumArticles: React.FC<PremiumArticlesProps> = React.memo(({ art
 PremiumArticles.displayName = 'PremiumArticles';
 
 
-PremiumArticles.displayName = 'PremiumArticles';
-
-

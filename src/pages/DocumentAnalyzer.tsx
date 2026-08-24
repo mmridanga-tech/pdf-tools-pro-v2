@@ -521,7 +521,7 @@ export const DocumentAnalyzer: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-gradient-to-r from-red-950/40 via-slate-900 to-slate-950 border border-red-500/20 p-6 rounded-2xl shadow-xl">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold mb-2">
-            <Sparkles className="w-3.5 h-3.5" /> SmartPDF AI v1.2 Enterprise
+            <Sparkles className="w-3.5 h-3.5" /> Gemini AI & WASM Security
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
             <FileSearch className="w-7 h-7 text-red-500" /> Enterprise Document Analyzer
