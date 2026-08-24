@@ -336,40 +336,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-              <span>Analyzer</span>
+              <span>Doc Analyzer</span>
             </Link>
 
-            {/* Telemetry & Workspace */}
-            <Link
-              to="/team"
-              id="nav-telemetry"
-              onClick={() => onSelectTool && onSelectTool('telemetry')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                isTelemetryActive
-                  ? 'bg-indigo-600 text-white shadow-sm font-semibold shadow-indigo-600/30'
-                  : 'text-slate-300 hover:text-indigo-400 hover:bg-slate-800/60'
-              }`}
+            {/* Pricing */}
+            <button
+              id="nav-pricing"
+              onClick={handleOpenPricing}
+              className="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-300 hover:text-indigo-400 hover:bg-slate-800/60 cursor-pointer"
             >
-              <BarChart3 className="w-3.5 h-3.5 text-slate-400" />
-              <span>Telemetry</span>
-            </Link>
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>Pricing</span>
+            </button>
 
-            {/* SEO Studio */}
-            <Link
-              to="/admin/content-generator"
-              id="nav-admin-seo"
-              onClick={() => onSelectTool && onSelectTool('admin-seo')}
-              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                isSeoActive
-                  ? 'bg-indigo-600 text-white shadow-sm font-semibold shadow-indigo-600/30'
-                  : 'text-slate-300 hover:text-indigo-400 hover:bg-slate-800/60'
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5 text-slate-400" />
-              <span>SEO Studio</span>
-            </Link>
-
-            {/* Blog */}
+            {/* Blog & Guides */}
             <Link
               to="/blog"
               id="nav-blog"
@@ -533,35 +513,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Enterprise Risk Analyzer</span>
             </Link>
 
-            {/* Telemetry */}
-            <Link
-              to="/team"
+            {/* Pricing */}
+            <button
               onClick={() => {
-                if (onSelectTool) onSelectTool('telemetry');
                 setIsMobileMenuOpen(false);
+                handleOpenPricing();
               }}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
-                isTelemetryActive ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800/60'
-              }`}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 transition text-left cursor-pointer"
             >
-              <BarChart3 className="w-4 h-4 text-slate-400" />
-              <span>Telemetry & Team</span>
-            </Link>
-
-            {/* SEO Studio */}
-            <Link
-              to="/admin/content-generator"
-              onClick={() => {
-                if (onSelectTool) onSelectTool('admin-seo');
-                setIsMobileMenuOpen(false);
-              }}
-              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition ${
-                isSeoActive ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800/60'
-              }`}
-            >
-              <Globe className="w-4 h-4 text-slate-400" />
-              <span>SEO Studio</span>
-            </Link>
+              <div className="flex items-center gap-2.5">
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>Pricing Plans</span>
+              </div>
+              <span className="text-xs text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
+                Pro
+              </span>
+            </button>
 
             {/* Blog */}
             <Link
