@@ -5,6 +5,7 @@ import healthHandler from './routes/health';
 import chatHandler from './routes/gemini/chat';
 import assistantHandler from './routes/gemini/assistant';
 import analyzerHandler from './routes/gemini/analyzer';
+import advancedAiHandler from './routes/gemini/advanced';
 import contentGenHandler from './routes/admin/generate-content';
 import wordConvertHandler from './routes/convert/word';
 import compressHandler from './routes/convert/compress';
@@ -49,6 +50,7 @@ export function createExpressApp(): express.Application {
   app.all('/api/gemini/chat', chatHandler);
   app.all('/api/gemini/assistant', assistantHandler);
   app.all('/api/gemini/analyzer', analyzerHandler);
+  app.all('/api/gemini/advanced', advancedAiHandler);
   app.all('/api/admin/generate-content', contentGenHandler);
   app.all('/api/convert/word', wordConvertHandler);
   app.all('/api/convert/compress', compressHandler);

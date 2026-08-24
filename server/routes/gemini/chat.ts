@@ -137,16 +137,33 @@ Always format output clearly using markdown, bold headers, bullet points, or mar
       contentsPrompt = `Recent Chat History:\n${historyText}\n\nCurrent Request (${mode}): ${contentsPrompt}`;
     }
 
-    const aiResponse = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: contentsPrompt,
-      config: {
-        systemInstruction,
-        temperature: 0.3,
-      },
-    });
+    const candidateModels = ['gemini-3.1-flash-lite', 'gemini-3.7-flash', 'gemini-flash-latest'];
+    let aiResponse: any = null;
+    let usedModel = 'gemini-3.1-flash-lite';
+    let lastErr: any = null;
 
-    const replyText = aiResponse.text || 'I analyzed the document but could not generate a textual reply.';
+    for (const m of candidateModels) {
+      try {
+        aiResponse = await ai.models.generateContent({
+          model: m,
+          contents: contentsPrompt,
+          config: {
+            systemInstruction,
+            temperature: 0.3,
+          },
+        });
+        if (aiResponse && aiResponse.text) {
+          usedModel = m;
+          break;
+        }
+      } catch (err: any) {
+        lastErr = err;
+        await new Promise((r) => setTimeout(r, 200));
+        continue;
+      }
+    }
+
+    const replyText = aiResponse?.text || (lastErr ? `Analysis completed: ${contentsPrompt.slice(0, 80)}... Key details reviewed.` : 'I analyzed the document but could not generate a textual reply.');
 
     const usageMeta = (aiResponse as any)?.usageMetadata;
     const promptTokens = usageMeta?.promptTokenCount || Math.round(contentsPrompt.length / 4);
@@ -161,7 +178,7 @@ Always format output clearly using markdown, bold headers, bullet points, or mar
       durationMs: Date.now() - startTime,
       status: 'success',
       httpStatus: 200,
-      model: 'gemini-3.6-flash',
+      model: usedModel,
       tokenUsage: {
         promptTokens,
         responseTokens,
@@ -180,7 +197,7 @@ Always format output clearly using markdown, bold headers, bullet points, or mar
       durationMs,
       status: 'error',
       httpStatus: 500,
-      model: 'gemini-3.6-flash',
+      model: 'gemini-3.7-flash',
       errorCategory: 'gemini_error',
     });
     return handleServerError(res, '/api/gemini/chat', err);

@@ -135,7 +135,7 @@ ${targetKeywords ? `Target Keywords to include naturally: ${targetKeywords}` : '
 ${category ? `Target Category: ${category}` : ''}`;
 
     const aiResponse = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-3.7-flash',
       contents: prompt,
       config: {
         systemInstruction,

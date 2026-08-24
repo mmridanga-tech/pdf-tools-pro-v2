@@ -17,7 +17,7 @@ import {
   ChevronUp,
   ArrowRight,
   X,
-  Filter,
+  Zap,
 } from 'lucide-react';
 
 interface PremiumToolGridProps {
@@ -42,8 +42,8 @@ const CATEGORIES: { id: ToolCategory; label: string; icon: React.FC<{ className?
 
 // 6 Featured Popular Core PDF Tools Data
 const FEATURED_POPULAR: PDFTool[] = PDF_TOOLS.filter((t) =>
-  ['merge-pdf', 'split-pdf', 'compress-pdf', 'pdf-to-word', 'ai-chat', 'ocr-pdf'].includes(t.id)
-);
+  ['merge-pdf', 'split-pdf', 'compress-pdf', 'pdf-to-word', 'ai-chat', 'ocr-pdf', 'ai-assistant', 'protect-pdf'].includes(t.id)
+).slice(0, 6);
 
 export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
   tools,
@@ -75,41 +75,47 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
   }, []);
 
   return (
-    <section id="tools-section" className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-8">
+    <section id="tools-section" className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-7">
       {/* Category Navigation Bar & Filter Strip */}
       <div className="space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold">
+                <Zap className="w-3 h-3 text-red-400" />
+                Browser-Native Architecture
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
               <span>PDF & AI Tool Suite</span>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
-                {tools.length} Tools
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/[0.06] text-slate-300 border border-white/[0.1]">
+                {tools.length} Tools Available
               </span>
             </h2>
             <p className="text-slate-400 text-xs sm:text-sm font-normal mt-1">
-              Select a tool to begin processing your documents directly in your browser.
+              Select a dedicated tool below to begin instant, zero-upload processing in your browser.
             </p>
           </div>
 
           {/* Quick Toggle for Featured vs All */}
           {!isFiltering && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-[#0c0d14] p-1 rounded-2xl border border-white/[0.08]">
               <button
                 onClick={() => setShowAllTools(false)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   !showAllTools
-                    ? 'bg-red-600/20 text-red-300 border border-red-500/30'
-                    : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 border border-white/[0.06]'
+                    ? 'bg-red-600 text-white shadow-md shadow-red-600/25'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Featured (6)
               </button>
               <button
                 onClick={() => setShowAllTools(true)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   showAllTools
-                    ? 'bg-red-600/20 text-red-300 border border-red-500/30'
-                    : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 border border-white/[0.06]'
+                    ? 'bg-red-600 text-white shadow-md shadow-red-600/25'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 All Tools ({PDF_TOOLS.length})
@@ -129,16 +135,16 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   isSelected
-                    ? 'bg-red-600 text-white shadow-md shadow-red-600/20 font-semibold'
-                    : 'bg-[#0c0d14] text-slate-400 hover:text-slate-100 hover:bg-[#141622] border border-white/[0.07]'
+                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 font-semibold scale-[1.02]'
+                    : 'bg-[#0d0f17] text-slate-400 hover:text-slate-100 hover:bg-[#141724] border border-white/[0.08]'
                 }`}
               >
                 <IconComp className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
                 <span>{cat.label}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                  className={`text-[10.5px] px-1.5 py-0.5 rounded-md font-semibold ${
                     isSelected ? 'bg-black/30 text-white' : 'bg-white/[0.06] text-slate-400'
                   }`}
                 >
@@ -155,7 +161,7 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 overflow-x-auto pb-1 pt-1 px-4 py-2.5 rounded-2xl bg-[#0c0d14] border border-white/[0.07] scrollbar-none"
+          className="flex items-center gap-3 overflow-x-auto pb-1 pt-1 px-4 py-2.5 rounded-2xl bg-[#0c0d14] border border-white/[0.08] shadow-sm scrollbar-none"
         >
           <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 shrink-0 pr-1">
             <Star className="w-4 h-4 fill-current text-amber-400" />
@@ -168,7 +174,7 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
             {displayedFavorites.map((tool) => (
               <div
                 key={`fav-chip-${tool.id}`}
-                className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-400/30 text-xs font-medium text-slate-300 hover:text-white transition-all shrink-0"
+                className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-400/30 text-xs font-medium text-slate-300 hover:text-white transition-all shrink-0"
               >
                 <Link to={tool.path} className="flex items-center gap-1.5">
                   <span className="truncate max-w-[140px] font-semibold">{tool.name}</span>
@@ -196,7 +202,7 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
       {/* Featured PDF Tools */}
       {!isFiltering && !showAllTools ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5 sm:gap-5.5">
             {FEATURED_POPULAR.map((tool) => (
               <PremiumToolCard
                 key={`featured-${tool.id}`}
@@ -207,10 +213,10 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
             ))}
           </div>
 
-          <div className="text-center pt-4">
+          <div className="text-center pt-3">
             <button
               onClick={() => setShowAllTools(true)}
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs sm:text-sm font-semibold border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group shadow-sm"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-100 text-xs sm:text-sm font-bold border border-white/[0.1] hover:border-white/20 transition-all cursor-pointer group shadow-sm hover:scale-[1.02]"
             >
               <span>Explore All {PDF_TOOLS.length} PDF & AI Tools</span>
               <ArrowRight className="w-4 h-4 text-red-400 group-hover:translate-x-1 transition-transform" />
@@ -229,7 +235,7 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.15 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4.5 sm:gap-5"
                 >
                   {tools.map((tool) => (
                     <PremiumToolCard
@@ -243,10 +249,10 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
 
                 {/* Show Fewer Button when expanded via showAllTools and not active search */}
                 {!isFiltering && showAllTools && (
-                  <div className="text-center pt-4">
+                  <div className="text-center pt-3">
                     <button
                       onClick={() => setShowAllTools(false)}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs sm:text-sm font-semibold border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer group"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-100 text-xs sm:text-sm font-bold border border-white/[0.1] hover:border-white/20 transition-all cursor-pointer group"
                     >
                       <span>Show Featured Popular Tools</span>
                       <ChevronUp className="w-4 h-4 text-red-400 group-hover:-translate-y-0.5 transition-transform" />
@@ -258,7 +264,7 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-[#0c0d14] rounded-3xl p-8 text-center border border-white/[0.08] max-w-md mx-auto shadow-xl my-6"
+                className="bg-[#0d0f17] rounded-3xl p-8 text-center border border-white/[0.08] max-w-md mx-auto shadow-xl my-6"
               >
                 <HelpCircle className="w-9 h-9 text-slate-500 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-white mb-1.5">No matching PDF tools found</h3>
@@ -282,6 +288,3 @@ export const PremiumToolGrid: React.FC<PremiumToolGridProps> = ({
     </section>
   );
 };
-
-
-

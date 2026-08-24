@@ -107,6 +107,23 @@ export const api = {
     return res.data;
   },
 
+  // Gemini Advanced AI Suite (Diff, Resume, PII, Flashcards, Audio, Invoice Extractor)
+  async geminiAdvanced(params: {
+    action: 'diff_compare' | 'resume_review' | 'pii_scanner' | 'flashcards_quiz' | 'audio_summary' | 'invoice_form_extractor';
+    textContext?: string;
+    doc1Text?: string;
+    doc2Text?: string;
+    jobDescription?: string;
+    prompt?: string;
+    targetLanguage?: string;
+  }): Promise<any> {
+    const res = await request('/api/gemini/advanced', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+    return res.data;
+  },
+
   // Billing & Subscriptions
   async getBillingStatus() {
     return await request('/api/billing/status');

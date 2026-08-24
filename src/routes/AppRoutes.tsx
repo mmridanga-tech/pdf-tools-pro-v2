@@ -39,6 +39,12 @@ const Dashboard = lazy(() => import('../pages/Dashboard').then((m) => ({ default
 const PdfChat = lazy(() => import('../pages/PdfChat').then((m) => ({ default: m.PdfChat })));
 const AiAssistant = lazy(() => import('../pages/AiAssistant').then((m) => ({ default: m.AiAssistant })));
 const DocumentAnalyzer = lazy(() => import('../pages/DocumentAnalyzer').then((m) => ({ default: m.DocumentAnalyzer })));
+const PdfDiffCompare = lazy(() => import('../pages/PdfDiffCompare').then((m) => ({ default: m.PdfDiffCompare })));
+const ResumeReviewer = lazy(() => import('../pages/ResumeReviewer').then((m) => ({ default: m.ResumeReviewer })));
+const SmartPiiRedaction = lazy(() => import('../pages/SmartPiiRedaction').then((m) => ({ default: m.SmartPiiRedaction })));
+const FlashcardQuizStudio = lazy(() => import('../pages/FlashcardQuizStudio').then((m) => ({ default: m.FlashcardQuizStudio })));
+const AudioPdfPodcast = lazy(() => import('../pages/AudioPdfPodcast').then((m) => ({ default: m.AudioPdfPodcast })));
+const InvoiceFormProcessor = lazy(() => import('../pages/InvoiceFormProcessor').then((m) => ({ default: m.InvoiceFormProcessor })));
 const TeamWorkspace = lazy(() => import('../pages/TeamWorkspace').then((m) => ({ default: m.TeamWorkspace })));
 const AdminPanel = lazy(() => import('../pages/AdminPanel').then((m) => ({ default: m.AdminPanel })));
 const AdminContentGenerator = lazy(() => import('../pages/AdminContentGenerator').then((m) => ({ default: m.AdminContentGenerator })));
@@ -156,6 +162,20 @@ export const AppRoutes: React.FC = () => {
           <Route path="/document-analyzer" element={<DocumentAnalyzer />} />
           <Route path="/analyzer" element={<DocumentAnalyzer />} />
           <Route path="/doc-analyzer" element={<DocumentAnalyzer />} />
+          
+          {/* New 6 AI Feature Tools */}
+          <Route path="/diff-compare" element={<PdfDiffCompare />} />
+          <Route path="/pdf-diff" element={<PdfDiffCompare />} />
+          <Route path="/resume-reviewer" element={<ResumeReviewer />} />
+          <Route path="/cv-reviewer" element={<ResumeReviewer />} />
+          <Route path="/pii-redaction" element={<SmartPiiRedaction />} />
+          <Route path="/redact-pdf" element={<SmartPiiRedaction />} />
+          <Route path="/flashcard-quiz" element={<FlashcardQuizStudio />} />
+          <Route path="/quiz-generator" element={<FlashcardQuizStudio />} />
+          <Route path="/audio-podcast" element={<AudioPdfPodcast />} />
+          <Route path="/pdf-to-audio" element={<AudioPdfPodcast />} />
+          <Route path="/invoice-processor" element={<InvoiceFormProcessor />} />
+          <Route path="/form-extractor" element={<InvoiceFormProcessor />} />
           <Route
             path="/team"
             element={

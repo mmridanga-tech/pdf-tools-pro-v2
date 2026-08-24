@@ -37,7 +37,7 @@ export default async function healthHandler(req: any, res: any) {
         },
         gemini: {
           status: geminiConfigured ? 'operational' : 'missing_key_warning',
-          model: 'gemini-3.6-flash',
+          model: 'gemini-3.7-flash',
         },
       },
       systemLoad: {
