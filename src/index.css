@@ -1,7 +1,151 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+
   body {
-    @apply antialiased bg-slate-50 text-slate-900 selection:bg-indigo-500 selection:text-white;
+    @apply antialiased bg-[#08090d] text-slate-100 selection:bg-red-500/30 selection:text-white transition-colors duration-200;
+  }
+
+  html.light body {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
   }
 }
+
+/* Light Theme Precision Overrides - Non-breaking and High Contrast */
+html.light {
+  /* Surface backgrounds */
+  header {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  footer {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #475569 !important;
+  }
+
+  /* Main background resets */
+  .bg-\[\#08090d\],
+  .bg-\[\#0B0F19\],
+  .bg-\[\#070A11\],
+  .bg-\[\#0b0f19\],
+  .bg-\[\#0f172a\],
+  .bg-slate-950 {
+    background-color: #f8fafc !important;
+  }
+
+  /* Card and Panel Backgrounds */
+  .bg-slate-900,
+  .bg-slate-900\/90,
+  .bg-slate-900\/80,
+  .bg-slate-900\/60,
+  .bg-slate-900\/50,
+  .bg-slate-900\/40,
+  .bg-\[\#0F172A\]\/95,
+  .bg-\[\#0B0F19\]\/95,
+  .bg-\[\#0B0F19\]\/90 {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Inner card and secondary controls */
+  .bg-slate-800,
+  .bg-slate-800\/80,
+  .bg-slate-800\/60,
+  .bg-slate-800\/50,
+  .bg-slate-800\/40 {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  /* Hover states for secondary cards */
+  .hover\:bg-slate-800:hover,
+  .hover\:bg-slate-800\/80:hover,
+  .hover\:bg-slate-800\/60:hover {
+    background-color: #e2e8f0 !important;
+  }
+
+  .hover\:bg-slate-900:hover {
+    background-color: #f8fafc !important;
+  }
+
+  /* Borders */
+  .border-slate-800,
+  .border-slate-800\/90,
+  .border-slate-800\/80,
+  .border-slate-800\/60,
+  .border-slate-700,
+  .border-slate-700\/80,
+  .border-slate-700\/60 {
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Text contrasts */
+  .text-white:not(button:not([class*="bg-slate"]):not([class*="bg-transparent"]) *):not(a[class*="bg-red"] *):not(a[class*="bg-indigo"] *):not([class*="bg-gradient"] *):not([class*="from-"]):not([class*="bg-indigo-600"] *):not([class*="bg-red-600"] *):not([class*="bg-amber-500"] *):not([class*="bg-emerald-600"] *) {
+    color: #0f172a !important;
+  }
+
+  .text-slate-100,
+  .text-slate-200 {
+    color: #1e293b !important;
+  }
+
+  .text-slate-300,
+  .text-slate-400 {
+    color: #475569 !important;
+  }
+
+  .text-slate-500 {
+    color: #64748b !important;
+  }
+
+  /* Inputs and forms */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
+  textarea,
+  select {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  /* Retain bright text for branded CTA buttons */
+  .bg-gradient-to-r,
+  .bg-indigo-600,
+  .bg-red-600,
+  .bg-emerald-600,
+  .bg-amber-500,
+  .bg-rose-600 {
+    color: #ffffff;
+  }
+
+  .bg-gradient-to-r span,
+  .bg-indigo-600 span,
+  .bg-red-600 span,
+  .bg-emerald-600 span,
+  .bg-amber-500 span,
+  .bg-rose-600 span {
+    color: #ffffff !important;
+  }
+
+  /* Dropdowns and popovers */
+  .shadow-2xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+

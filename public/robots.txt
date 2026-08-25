@@ -2,11 +2,29 @@ User-agent: *
 Allow: /
 Disallow: /dashboard
 Disallow: /admin
+Disallow: /admin-panel
 Disallow: /settings
-Disallow: /workspace
+Disallow: /team-workspace
+Disallow: /workspaces
 Disallow: /cloud-storage
-Disallow: /team
+
+User-agent: Googlebot
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /admin-panel
+Disallow: /settings
+Disallow: /team-workspace
+Disallow: /workspaces
+
+User-agent: Bingbot
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /admin-panel
+Disallow: /settings
 Disallow: /team-workspace
 Disallow: /workspaces
 
 Sitemap: https://smartpdfai.tech/sitemap.xml
+

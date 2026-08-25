@@ -57,7 +57,7 @@ const isFileAccepted = (file: File, acceptString: string): boolean => {
   return false;
 };
 
-export const PremiumUploadZone: React.FC<PremiumUploadZoneProps> = React.memo(({
+export const PremiumUploadZone: React.FC<PremiumUploadZoneProps> = ({
   accept = '.pdf',
   multiple = false,
   maxSizeMB = 100,
@@ -248,4 +248,4 @@ export const PremiumUploadZone: React.FC<PremiumUploadZoneProps> = React.memo(({
       )}
     </div>
   );
-});
+};

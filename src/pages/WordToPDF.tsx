@@ -404,6 +404,7 @@ export const WordToPDF: React.FC = () => {
                       statusMsg={item.statusMsg}
                       index={index}
                       totalFiles={queue.length}
+                      onConvert={() => convertSingleItem(item.id)}
                       onRemove={() => handleRemoveItem(item.id)}
                       onDownload={item.status === 'completed' ? () => downloadPDF(item) : undefined}
                     />

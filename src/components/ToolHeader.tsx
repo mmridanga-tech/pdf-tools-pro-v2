@@ -36,6 +36,10 @@ export const ToolHeader: React.FC<ToolHeaderProps> = ({
               {badge}
             </span>
           )}
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            100% Client-Side WASM (No Upload)
+          </span>
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white bg-slate-900/80 hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-800 transition-all focus:outline-none focus:ring-2 focus:ring-red-500/50"

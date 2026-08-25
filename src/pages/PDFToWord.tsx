@@ -432,6 +432,7 @@ export const PDFToWord: React.FC = () => {
                           size={item.size}
                           status={item.status}
                           statusMsg={item.statusMsg}
+                          onConvert={() => convertSingleItem(item.id)}
                           onRemove={() => handleRemoveItem(item.id)}
                         />
 

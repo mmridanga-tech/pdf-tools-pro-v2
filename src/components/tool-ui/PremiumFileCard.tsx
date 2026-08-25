@@ -30,6 +30,7 @@ export interface PremiumFileCardProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onDownload?: () => void;
+  onConvert?: () => void;
   fileType?: string;
   className?: string;
 }
@@ -47,6 +48,7 @@ export const PremiumFileCard: React.FC<PremiumFileCardProps> = React.memo(({
   onMoveUp,
   onMoveDown,
   onDownload,
+  onConvert,
   fileType,
   className = '',
 }) => {
@@ -117,8 +119,20 @@ export const PremiumFileCard: React.FC<PremiumFileCardProps> = React.memo(({
         </div>
       </div>
 
-      {/* Right: Actions (Download, Reorder, Replace, Remove) */}
+      {/* Right: Actions (Convert, Download, Reorder, Replace, Remove) */}
       <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+        {onConvert && (status === 'pending' || status === 'ready' || status === 'error') && (
+          <button
+            type="button"
+            onClick={onConvert}
+            className="p-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 border border-red-500/30 transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold px-3 shadow-sm"
+            title="Convert this file"
+          >
+            <FileType className="w-3.5 h-3.5" />
+            <span>Convert</span>
+          </button>
+        )}
+
         {onDownload && status === 'completed' && (
           <button
             type="button"

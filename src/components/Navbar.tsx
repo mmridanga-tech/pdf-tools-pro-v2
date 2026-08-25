@@ -29,10 +29,13 @@ import {
   FileCheck,
   Headphones,
   CheckCircle2,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { ToolId, UserSession, SystemHealthData } from '../types';
 import { api } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { PricingModal } from './PricingModal';
 
 interface NavbarProps {
@@ -124,6 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   const { user, openAuthModal, upgradePlan, logout } = useAuth();
+  const { theme, isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -454,6 +458,24 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>WASM & Gemini Active</span>
             </div>
 
+            {/* Dark / Light Mode Toggle Button */}
+            <button
+              id="theme-toggle-button"
+              onClick={toggleTheme}
+              className="p-2 sm:px-2.5 sm:py-2 rounded-xl border border-slate-800 bg-slate-900/90 hover:bg-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition-all duration-200 cursor-pointer shadow-sm flex items-center gap-1.5"
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDark ? (
+                <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-90 duration-300" />
+              ) : (
+                <Moon className="w-4 h-4 text-indigo-500 animate-in spin-in-90 duration-300" />
+              )}
+              <span className="text-xs font-semibold hidden md:inline">
+                {isDark ? 'Light' : 'Dark'}
+              </span>
+            </button>
+
             {/* Upgrade / Pro Plan CTA */}
             <button
               id="pricing-button"
@@ -663,6 +685,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               <BookOpen className="w-4 h-4 text-slate-400" />
               <span>Guides & Blog</span>
             </Link>
+
+            {/* Mobile Theme Toggle */}
+            <button
+              onClick={() => {
+                toggleTheme();
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/60 transition text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                {isDark ? (
+                  <Sun className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <Moon className="w-4 h-4 text-indigo-400" />
+                )}
+                <span>Theme Mode</span>
+              </div>
+              <span className="text-xs text-slate-400 font-medium px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700">
+                {isDark ? 'Dark (Switch to Light)' : 'Light (Switch to Dark)'}
+              </span>
+            </button>
 
             {/* Mobile Footer Status & CTA */}
             <div className="pt-4 mt-3 border-t border-slate-800 space-y-3">

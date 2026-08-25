@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { FeatureFlagProvider } from './context/FeatureFlagContext';
@@ -26,17 +27,19 @@ if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <ErrorBoundary>
-        <AuthProvider>
-          <ToastProvider>
-            <FeatureFlagProvider>
-              <BrowserRouter>
-                <AppRoutes />
-                <ToastContainer />
-                <CookieConsent />
-              </BrowserRouter>
-            </FeatureFlagProvider>
-          </ToastProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <FeatureFlagProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                  <ToastContainer />
+                  <CookieConsent />
+                </BrowserRouter>
+              </FeatureFlagProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </ErrorBoundary>
     </React.StrictMode>
   );

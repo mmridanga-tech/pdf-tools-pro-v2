@@ -24,15 +24,15 @@ import {
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { auth } from '../lib/firebase';
 import { SEO } from '../components/SEO';
 
 export const Settings: React.FC = () => {
   const { showToast, info, error: toastError } = useToast();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-
-  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
   const [language, setLanguage] = useState('en');
   const [notifications, setNotifications] = useState({
     emailUpdates: true,
@@ -198,29 +198,30 @@ export const Settings: React.FC = () => {
             <h2 className="text-base font-extrabold text-white">Appearance & Theme</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {(['dark', 'light', 'system'] as const).map((mode) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {(['dark', 'light'] as const).map((mode) => (
               <button
                 key={mode}
-                onClick={() => setTheme(mode)}
+                onClick={() => {
+                  setTheme(mode);
+                  showToast(`Theme updated to ${mode} mode`, 'info');
+                }}
                 className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                   theme === mode
-                    ? 'bg-red-500/10 border-red-500/40 text-white'
+                    ? 'bg-indigo-500/10 border-indigo-500/40 text-white'
                     : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  {mode === 'dark' && <Moon className="w-5 h-5 text-purple-400" />}
+                  {mode === 'dark' && <Moon className="w-5 h-5 text-indigo-400" />}
                   {mode === 'light' && <Sun className="w-5 h-5 text-amber-400" />}
-                  {mode === 'system' && <Globe className="w-5 h-5 text-blue-400" />}
-                  {theme === mode && <Check className="w-4 h-4 text-red-500" />}
+                  {theme === mode && <Check className="w-4 h-4 text-emerald-400" />}
                 </div>
                 <div className="mt-4">
                   <p className="text-xs font-bold capitalize">{mode} Mode</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {mode === 'dark' && 'OLED dark contrast optimized for PDF focus'}
-                    {mode === 'light' && 'High light intensity for bright environments'}
-                    {mode === 'system' && 'Sync automatically with OS preferences'}
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {mode === 'dark' && 'Deep dark contrast optimized for extended document focus'}
+                    {mode === 'light' && 'Clean, high-contrast light theme for bright daylight conditions'}
                   </p>
                 </div>
               </button>
