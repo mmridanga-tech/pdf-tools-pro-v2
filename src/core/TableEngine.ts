@@ -4,9 +4,9 @@ import { TableBlock } from './DocumentStructure';
 
 export class TableEngine {
   /**
-   * Test if text items in a line contain wide horizontal column gaps typical of tables
+   * Test if text items in a line contain horizontal column gaps typical of tables and forms
    */
-  static hasColumnGaps(items: PositionedTextItem[], minGapPx = 25): boolean {
+  static hasColumnGaps(items: PositionedTextItem[], minGapPx = 12): boolean {
     if (!items || items.length < 2) return false;
     for (let k = 1; k < items.length; k++) {
       const gap = items[k].leftX - (items[k - 1].leftX + items[k - 1].width);

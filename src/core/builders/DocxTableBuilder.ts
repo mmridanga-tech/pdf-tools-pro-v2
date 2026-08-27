@@ -9,6 +9,9 @@ import {
   AlignmentType,
   HeightRule,
   VerticalAlign,
+  TableAnchorType,
+  RelativeHorizontalPosition,
+  RelativeVerticalPosition,
 } from 'docx';
 import { StructuredLine, PositionedTextItem } from '../LayoutAnalyzer';
 import { TypographyEngine } from '../TypographyEngine';
@@ -47,7 +50,7 @@ export class DocxTableBuilder {
       });
     }
 
-    // 1. Detect Column X Boundaries
+    // 1. Detect Column X Boundaries across all rows
     const xPositions: number[] = [];
     tableLines.forEach((line) => {
       line.items.forEach((it) => {
@@ -57,12 +60,12 @@ export class DocxTableBuilder {
 
     xPositions.sort((a, b) => a - b);
 
-    // Cluster xPositions to find unique column left boundaries (within 18pt tolerance)
+    // Cluster xPositions to find unique column left boundaries (within 12pt tolerance)
     const colBoundaries: number[] = [];
     for (const x of xPositions) {
       if (
         colBoundaries.length === 0 ||
-        x - colBoundaries[colBoundaries.length - 1] > 20
+        x - colBoundaries[colBoundaries.length - 1] > 12
       ) {
         colBoundaries.push(x);
       }
@@ -70,24 +73,36 @@ export class DocxTableBuilder {
 
     const colCount = Math.max(1, colBoundaries.length);
 
+    // Determine if table is a formatted data table or a borderless 2-column key-value form
+    const isDataTable =
+      colCount >= 3 ||
+      tableLines.some((l) => {
+        const t = l.cleanText.toLowerCase();
+        return /earnings|deductions|attendance|amount|gross|salary|net amount|total|present|days|basic|rate|qty|price|tax|invoice|item|description|date|status|hours|balance|hra|pf|esi|lop/i.test(
+          t
+        );
+      });
+
     // Compute column widths in twips/dxa (1 pt = 20 twips)
-    const tableLeftX = colBoundaries[0] || 36;
-    const tableRightX = Math.max(
-      ...tableLines.map((l) => l.rightX || l.leftX + l.width)
-    );
+    const tableLeftX = Math.min(...tableLines.map((l) => l.leftX));
+    const tableRightX = Math.max(...tableLines.map((l) => l.rightX || l.leftX + l.width));
+    const totalTableWidthPt = Math.max(100, tableRightX - tableLeftX);
 
     const colWidthsTwips: number[] = [];
     for (let c = 0; c < colCount; c++) {
       const cLeft = colBoundaries[c];
-      const cRight =
-        c < colCount - 1 ? colBoundaries[c + 1] : tableRightX;
+      const cRight = c < colCount - 1 ? colBoundaries[c + 1] : tableRightX;
       const wPt = Math.max(20, cRight - cLeft);
       colWidthsTwips.push(Math.round(wPt * 20));
     }
 
     // 2. Build Rows and Cells
     const tableRows: TableRow[] = tableLines.map((line, rIdx) => {
-      const isHeaderRow = rIdx === 0;
+      const isHeaderRow =
+        (rIdx === 0 && isDataTable) ||
+        /^(earnings|deductions|attendance|particulars|description|sr\.?\s*no|item|date|rate)/i.test(
+          line.cleanText.trim()
+        );
 
       // Group line items into column buckets
       const cellBuckets: PositionedTextItem[][] = Array.from(
@@ -96,16 +111,15 @@ export class DocxTableBuilder {
       );
 
       line.items.forEach((item) => {
-        // Find closest column boundary
-        let bestColIdx = 0;
-        let minDiff = Infinity;
-        colBoundaries.forEach((cb, idx) => {
-          const diff = Math.abs(item.leftX - cb);
-          if (diff < minDiff) {
-            minDiff = diff;
-            bestColIdx = idx;
+        // Robust Column Assignment: find the best column index for this item
+        let bestColIdx = colCount - 1;
+        for (let c = 0; c < colCount; c++) {
+          const nextBoundary = c < colCount - 1 ? colBoundaries[c + 1] : Infinity;
+          if (item.leftX < nextBoundary - 4) {
+            bestColIdx = c;
+            break;
           }
-        });
+        }
         cellBuckets[bestColIdx].push(item);
       });
 
@@ -117,19 +131,27 @@ export class DocxTableBuilder {
 
         // Detect cell alignment
         let cellAlign: any = AlignmentType.LEFT;
-        if (/^[\$\€\£\¥]?\s*[\d,]+(\.\d+)?%?$/.test(cellText)) {
+        if (/^[\$\€\£\¥\₹]?\s*[\d,]+(\.\d+)?%?$/.test(cellText)) {
           cellAlign = AlignmentType.RIGHT;
-        } else if (isHeaderRow || cellText.length < 5) {
+        } else if (isHeaderRow && cellText.length < 15) {
           cellAlign = AlignmentType.LEFT;
         }
 
         const paragraphs: Paragraph[] = [];
 
         if (items.length > 0) {
-          const runs: TextRun[] = items.map((it) => {
+          const runs: TextRun[] = items.map((it, idx) => {
+            let str = TypographyEngine.normalizeText(it.str);
+            if (idx < items.length - 1) {
+              const nextIt = items[idx + 1];
+              const gap = nextIt.leftX - (it.leftX + it.width);
+              if (gap >= 0.8 || it.str.endsWith(' ') || nextIt.str.startsWith(' ')) {
+                str += ' ';
+              }
+            }
             return new TextRun({
-              text: TypographyEngine.normalizeText(it.str) + ' ',
-              bold: it.isBold || isHeaderRow,
+              text: str,
+              bold: it.isBold || (isHeaderRow && isDataTable),
               italics: it.isItalic,
               underline: it.isUnderline ? {} : undefined,
               strike: it.isStrike,
@@ -142,25 +164,29 @@ export class DocxTableBuilder {
             new Paragraph({
               children: runs,
               alignment: cellAlign,
-              spacing: { before: 40, after: 40 },
+              spacing: { before: isDataTable ? 30 : 15, after: isDataTable ? 30 : 15 },
             })
           );
         } else {
           paragraphs.push(
             new Paragraph({
               children: [new TextRun({ text: '' })],
-              spacing: { before: 40, after: 40 },
+              spacing: { before: isDataTable ? 30 : 15, after: isDataTable ? 30 : 15 },
             })
           );
         }
 
         // Background Shading
         let fillColor: string | undefined = undefined;
-        if (isHeaderRow) {
-          fillColor = 'E5E7EB'; // Header grey
-        } else if (rIdx % 2 === 1) {
-          fillColor = 'F9FAFB'; // Alternate row subtle shading
+        if (isDataTable) {
+          if (isHeaderRow) {
+            fillColor = 'F3F4F6'; // Header light grey
+          }
         }
+
+        const borderStyle = isDataTable ? BorderStyle.SINGLE : BorderStyle.NONE;
+        const borderColor = isDataTable ? (isHeaderRow ? '9CA3AF' : 'E5E7EB') : 'FFFFFF';
+        const borderSize = isDataTable ? 1 : 0;
 
         const colWidthPct = Math.floor(100 / colCount);
 
@@ -173,29 +199,29 @@ export class DocxTableBuilder {
           shading: fillColor ? { fill: fillColor } : undefined,
           verticalAlign: VerticalAlign.CENTER,
           margins: {
-            top: 100, // 5pt padding
-            bottom: 100,
-            left: 140, // 7pt padding
-            right: 140,
+            top: isDataTable ? 60 : 20, // padding
+            bottom: isDataTable ? 60 : 20,
+            left: isDataTable ? 100 : 40,
+            right: isDataTable ? 100 : 40,
           },
           borders: {
             top: {
-              style: BorderStyle.SINGLE,
-              size: isHeaderRow ? 2 : 1,
-              color: isHeaderRow ? '9CA3AF' : 'E5E7EB',
+              style: borderStyle,
+              size: borderSize,
+              color: borderColor,
             },
             bottom: {
-              style: BorderStyle.SINGLE,
-              size: isHeaderRow ? 2 : 1,
-              color: isHeaderRow ? '9CA3AF' : 'E5E7EB',
+              style: borderStyle,
+              size: borderSize,
+              color: borderColor,
             },
-            left: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' },
-            right: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB' },
+            left: { style: borderStyle, size: borderSize, color: borderColor },
+            right: { style: borderStyle, size: borderSize, color: borderColor },
           },
         });
       });
 
-      const rowHeightPt = line.height || 18;
+      const rowHeightPt = line.height || 16;
 
       return new TableRow({
         children: rowCells,
@@ -215,3 +241,4 @@ export class DocxTableBuilder {
     });
   }
 }
+

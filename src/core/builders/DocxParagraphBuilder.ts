@@ -43,7 +43,8 @@ export class DocxParagraphBuilder {
 
         if (!isLastInLine) {
           const nextItem = lineItems[k + 1];
-          if (nextItem.leftX - (item.leftX + item.width) > 2) {
+          const gap = nextItem.leftX - (item.leftX + item.width);
+          if (gap >= 1.0 || item.str.endsWith(' ') || nextItem.str.startsWith(' ')) {
             itemStr += ' ';
           }
         } else if (lIdx < para.lines.length - 1) {

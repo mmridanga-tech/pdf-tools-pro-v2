@@ -307,7 +307,7 @@ export class PDFToWordService {
         if (block.type === 'table') {
           totalTables++;
           pageChildren.push(block.tableComponent);
-          pageChildren.push(new Paragraph({ text: '', spacing: { after: 120 } }));
+          pageChildren.push(new Paragraph({ text: '', spacing: { before: 20, after: 40 } }));
         } else if (block.type === 'image') {
           const availWidthPt = Math.max(100, pageWidth - (pageMargins.left! + pageMargins.right!) / 20);
           const imgParas = DocxImageBuilder.buildImageParagraph(block.image, availWidthPt, pageWidth);
@@ -432,6 +432,9 @@ export class PDFToWordService {
 
       if (isCandidateTableRow) {
         const tableLines: StructuredLine[] = [currentLine];
+        const colSet = new Set<number>();
+        currentLine.items.forEach((it) => colSet.add(Math.round(it.leftX / 15) * 15));
+
         let j = i + 1;
 
         while (j < lines.length) {
@@ -440,15 +443,28 @@ export class PDFToWordService {
             break;
           }
 
-          if (this.isTableLineCandidate(nextLine) && Math.abs(nextLine.topY - lines[j - 1].topY) < 45) {
+          const yDistance = Math.abs(nextLine.topY - lines[j - 1].topY);
+          const isLineClose = yDistance <= Math.max(38, (lines[j - 1].height || 14) * 2.2);
+
+          if (!isLineClose || nextLine.headingLevel) {
+            break;
+          }
+
+          const isNextCandidate = this.isTableLineCandidate(nextLine);
+          const sharesColumns = nextLine.items.some((it) =>
+            Array.from(colSet).some((cx) => Math.abs(Math.round(it.leftX / 15) * 15 - cx) <= 20)
+          );
+
+          if (isNextCandidate || (sharesColumns && nextLine.items.length >= 1)) {
             tableLines.push(nextLine);
+            nextLine.items.forEach((it) => colSet.add(Math.round(it.leftX / 15) * 15));
             j++;
           } else {
             break;
           }
         }
 
-        if (tableLines.length >= 2 && this.validateTableStructure(tableLines)) {
+        if (tableLines.length >= 1 && this.validateTableStructure(tableLines)) {
           const tableComponent = DocxTableBuilder.buildRealTable(tableLines, pageWidth);
           blocks.push({ type: 'table', tableComponent });
           i = j;
@@ -472,7 +488,7 @@ export class PDFToWordService {
             candidateRows++;
             k++;
           }
-          if (candidateRows >= 2 && this.validateTableStructure(lines.slice(j, k))) {
+          if (candidateRows >= 1 && this.validateTableStructure(lines.slice(j, k))) {
             break;
           }
         }
@@ -502,23 +518,30 @@ export class PDFToWordService {
   }
 
   private static isTableLineCandidate(line: StructuredLine): boolean {
-    if (line.items.length < 2 || line.headingLevel) return false;
-    if (line.cleanText.length > 120 && line.cleanText.endsWith('.')) return false;
-    return TableEngine.hasColumnGaps(line.items, 20);
+    if (line.headingLevel) return false;
+    if (line.cleanText.length > 130 && line.cleanText.endsWith('.')) return false;
+    if (line.items.length >= 2) {
+      return (
+        TableEngine.hasColumnGaps(line.items, 12) ||
+        /[:\|\-]/.test(line.cleanText) ||
+        /earnings|deductions|attendance|amount|salary|gross|total|basic|present|days|allowance|rate|qty/i.test(line.cleanText)
+      );
+    }
+    return false;
   }
 
   private static validateTableStructure(tableLines: StructuredLine[]): boolean {
-    if (tableLines.length < 2) return false;
-    let matchingCols = 0;
-    const row1X = tableLines[0].items.map((it) => Math.round(it.leftX / 15) * 15);
-    const row2X = tableLines[1].items.map((it) => Math.round(it.leftX / 15) * 15);
-
-    for (const x1 of row1X) {
-      if (row2X.some((x2) => Math.abs(x1 - x2) <= 20)) {
-        matchingCols++;
-      }
+    if (tableLines.length === 0) return false;
+    if (tableLines.length === 1) {
+      return tableLines[0].items.length >= 3;
     }
-    return matchingCols >= 2;
+
+    const colXSet = new Set<number>();
+    tableLines.forEach((l) => {
+      l.items.forEach((it) => colXSet.add(Math.round(it.leftX / 15) * 15));
+    });
+
+    return colXSet.size >= 2;
   }
 
   /**

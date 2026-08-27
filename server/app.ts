@@ -53,6 +53,8 @@ export function createExpressApp(): express.Application {
   app.all('/api/gemini/advanced', advancedAiHandler);
   app.all('/api/admin/generate-content', contentGenHandler);
   app.all('/api/convert/word', wordConvertHandler);
+  app.all('/api/convert/word-to-pdf', wordConvertHandler);
+  app.all('/convert/word-to-pdf', wordConvertHandler);
   app.all('/api/convert/compress', compressHandler);
   app.all('/api/convert/pdfToWord', pdfToWordHandler);
   app.all('/api/checkout/stripe', stripeCheckoutHandler);

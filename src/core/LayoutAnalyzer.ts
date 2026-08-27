@@ -57,7 +57,7 @@ export interface SemanticParagraph extends BoundingBox {
 
 export class LayoutAnalyzer {
   /**
-   * Sort items by reading flow with multi-column (2-col & 3-col) and header/footer region awareness
+   * Sort items by reading flow with header/footer region awareness
    */
   static sortItemsByReadingOrder(
     items: PositionedTextItem[],
@@ -66,125 +66,74 @@ export class LayoutAnalyzer {
   ): PositionedTextItem[] {
     if (!items || items.length === 0) return [];
 
-    const nonEmpties = items.filter((it) => TypographyEngine.normalizeText(it.str).length > 0);
+    const nonEmpties = items.filter((it) => it.str && it.str.trim().length > 0);
     if (nonEmpties.length === 0) return [];
 
-    // Separate Running Headers (top 7%) and Footers (bottom 7%)
-    const headerThreshold = pageHeight * 0.07;
-    const footerThreshold = pageHeight * 0.93;
-
-    const headers: PositionedTextItem[] = [];
-    const footers: PositionedTextItem[] = [];
-    const bodyItems: PositionedTextItem[] = [];
-
-    for (const item of nonEmpties) {
-      if (item.topY < headerThreshold) {
-        headers.push(item);
-      } else if (item.topY > footerThreshold) {
-        footers.push(item);
-      } else {
-        bodyItems.push(item);
-      }
-    }
-
-    const sortYThenX = (a: PositionedTextItem, b: PositionedTextItem) => {
-      if (Math.abs(a.topY - b.topY) > 5) return a.topY - b.topY;
+    // Sort top-to-bottom by Y, and left-to-right by X
+    const sorted = [...nonEmpties].sort((a, b) => {
+      if (Math.abs(a.topY - b.topY) > 3) return a.topY - b.topY;
       return a.leftX - b.leftX;
-    };
+    });
 
-    headers.sort(sortYThenX);
-    footers.sort(sortYThenX);
-
-    if (bodyItems.length === 0) {
-      return [...headers, ...footers];
-    }
-
-    // 3 Column Detection (Newsletter / Magazine layouts)
-    const col1Threshold = pageWidth * 0.35;
-    const col2Threshold = pageWidth * 0.68;
-
-    const col1Items = bodyItems.filter((it) => it.leftX + it.width <= col1Threshold + 10);
-    const col2Items = bodyItems.filter(
-      (it) => it.leftX >= col1Threshold - 10 && it.leftX + it.width <= col2Threshold + 10
-    );
-    const col3Items = bodyItems.filter((it) => it.leftX >= col2Threshold - 10);
-
-    const isThreeColumn =
-      col1Items.length >= 4 &&
-      col2Items.length >= 4 &&
-      col3Items.length >= 4 &&
-      col1Items.length + col2Items.length + col3Items.length >= bodyItems.length * 0.75;
-
-    if (isThreeColumn) {
-      col1Items.sort(sortYThenX);
-      col2Items.sort(sortYThenX);
-      col3Items.sort(sortYThenX);
-
-      const spanningItems = bodyItems.filter(
-        (it) => !col1Items.includes(it) && !col2Items.includes(it) && !col3Items.includes(it)
-      );
-      spanningItems.sort(sortYThenX);
-
-      return [...headers, ...spanningItems, ...col1Items, ...col2Items, ...col3Items, ...footers];
-    }
-
-    // 2 Column Detection
-    const midX = pageWidth / 2;
-    const leftCol = bodyItems.filter((it) => it.leftX + it.width < midX + 15);
-    const rightCol = bodyItems.filter((it) => it.leftX > midX - 15);
-
-    const isTwoColumn =
-      leftCol.length > 5 &&
-      rightCol.length > 5 &&
-      leftCol.length + rightCol.length >= bodyItems.length * 0.75;
-
-    if (isTwoColumn) {
-      leftCol.sort(sortYThenX);
-      rightCol.sort(sortYThenX);
-
-      const spanningItems = bodyItems.filter(
-        (it) => !(it.leftX + it.width < midX + 15) && !(it.leftX > midX - 15)
-      );
-      spanningItems.sort(sortYThenX);
-
-      return [...headers, ...spanningItems, ...leftCol, ...rightCol, ...footers];
-    }
-
-    // Default single column flow
-    bodyItems.sort(sortYThenX);
-    return [...headers, ...bodyItems, ...footers];
+    return sorted;
   }
 
   /**
    * Group text items into structured lines and infer line typography/layout metadata
    */
   static groupItemsIntoLines(
-    sortedItems: PositionedTextItem[],
+    rawItems: PositionedTextItem[],
     pageWidth: number,
     bodyFontSize = 11,
     pageHeight = 792
   ): StructuredLine[] {
-    const lines: StructuredLine[] = [];
-    if (!sortedItems || sortedItems.length === 0) return lines;
+    if (!rawItems || rawItems.length === 0) return [];
 
-    let currentLineItems: PositionedTextItem[] = [sortedItems[0]];
+    const items = rawItems.filter((it) => it.str && it.str.trim().length > 0);
+    if (items.length === 0) return [];
 
-    for (let i = 1; i < sortedItems.length; i++) {
-      const prev = currentLineItems[currentLineItems.length - 1];
-      const curr = sortedItems[i];
+    // 1. Initial sort by topY, then leftX
+    const sorted = [...items].sort((a, b) => {
+      if (Math.abs(a.topY - b.topY) > 2.5) return a.topY - b.topY;
+      return a.leftX - b.leftX;
+    });
 
-      const isSameLine = Math.abs(curr.topY - prev.topY) <= Math.max(4, curr.fontSize * 0.35);
+    // 2. Cluster into lines with adaptive tolerance
+    const lineClusters: PositionedTextItem[][] = [];
+    for (const item of sorted) {
+      let matchedCluster: PositionedTextItem[] | null = null;
+      let minDiff = Infinity;
 
-      if (isSameLine) {
-        currentLineItems.push(curr);
+      for (const cluster of lineClusters) {
+        const clusterY = cluster.reduce((sum, it) => sum + it.topY, 0) / cluster.length;
+        const avgFontSize = cluster.reduce((sum, it) => sum + it.fontSize, 0) / cluster.length;
+        const yTolerance = Math.max(3.5, avgFontSize * 0.4);
+        const diff = Math.abs(item.topY - clusterY);
+
+        if (diff <= yTolerance && diff < minDiff) {
+          minDiff = diff;
+          matchedCluster = cluster;
+        }
+      }
+
+      if (matchedCluster) {
+        matchedCluster.push(item);
       } else {
-        lines.push(this.buildStructuredLine(currentLineItems, pageWidth, bodyFontSize, pageHeight));
-        currentLineItems = [curr];
+        lineClusters.push([item]);
       }
     }
 
-    if (currentLineItems.length > 0) {
-      lines.push(this.buildStructuredLine(currentLineItems, pageWidth, bodyFontSize, pageHeight));
+    // 3. Sort line clusters by their average topY
+    lineClusters.sort((a, b) => {
+      const avgYA = a.reduce((sum, it) => sum + it.topY, 0) / a.length;
+      const avgYB = b.reduce((sum, it) => sum + it.topY, 0) / b.length;
+      return avgYA - avgYB;
+    });
+
+    const lines: StructuredLine[] = [];
+    for (const cluster of lineClusters) {
+      cluster.sort((a, b) => a.leftX - b.leftX);
+      lines.push(this.buildStructuredLine(cluster, pageWidth, bodyFontSize, pageHeight));
     }
 
     return lines;

@@ -154,7 +154,7 @@ export class TypographyEngine {
   /**
    * Normalize unicode characters, ligatures, whitespace and remove corrupt PDF glyph codes
    */
-  static normalizeText(str: string): string {
+  static normalizeText(str: string, preserveWhitespace = false): string {
     if (!str) return '';
     let text = str.normalize('NFC');
 
@@ -170,6 +170,10 @@ export class TypographyEngine {
 
     // Remove Private Use Area (PUA) and corrupt replacement glyphs while preserving all standard scripts & typography
     text = text.replace(/[\uE000-\uF8FF\uFFFD]/g, '');
+
+    if (preserveWhitespace) {
+      return text.replace(/[\t\r\n]+/g, ' ');
+    }
 
     // Normalize multiple spaces into single space
     return text.replace(/\s+/g, ' ').trim();

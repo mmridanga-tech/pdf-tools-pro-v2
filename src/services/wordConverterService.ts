@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { ConversionManager } from '../core/ConversionManager';
 import { MemoryManager } from '../core/MemoryManager';
 import { DocxOpenXmlParser, DocxXmlInfo } from './docxOpenXmlParser';
@@ -60,6 +61,18 @@ export class WordConverterService {
   }
 
   /**
+   * Resolve Word to PDF conversion API endpoint
+   * Uses VITE_WORD_TO_PDF_API_URL environment variable: ${VITE_WORD_TO_PDF_API_URL}/convert/word-to-pdf
+   */
+  static getBackendApiUrl(): string {
+    const customBase = (import.meta.env.VITE_WORD_TO_PDF_API_URL as string | undefined)?.trim();
+    if (customBase && customBase.length > 0) {
+      return `${customBase.replace(/\/+$/, '')}/convert/word-to-pdf`;
+    }
+    return '/convert/word-to-pdf';
+  }
+
+  /**
    * Main entry point to convert a Word or ODT file to PDF
    */
   static async convertToPDF(
@@ -72,8 +85,9 @@ export class WordConverterService {
       file,
       'pdf',
       async (inputFile, tracker, logger) => {
-        const engine = options.engine || 'client';
-        const serverEndpoint = options.serverEndpoint || '/api/convert/word-to-pdf';
+        const hasExternalBackend = !!(import.meta.env.VITE_WORD_TO_PDF_API_URL as string | undefined)?.trim();
+        const engine = options.engine || (hasExternalBackend ? 'server' : 'auto');
+        const serverEndpoint = options.serverEndpoint || this.getBackendApiUrl();
 
         const progressBridge = (percent: number, msg?: string) => {
           if (options.onProgress) {
@@ -143,153 +157,139 @@ export class WordConverterService {
     const marginBottomPx = Math.round(sectionConfig.marginsPt.bottom * (96 / 72));
     const marginLeftPx = Math.round(sectionConfig.marginsPt.left * (96 / 72));
 
-    // Create a hidden container for pixel-accurate DOM layout rendering
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '-9999px';
-    container.style.top = '-9999px';
-    container.style.width = `${containerWidthPx}px`;
-    container.style.backgroundColor = '#ffffff';
-    container.style.color = '#111111';
-    container.style.zIndex = '-9999';
-    container.style.fontFamily =
-      "'Calibri', 'Segoe UI', 'Arial', 'Liberation Sans', 'Times New Roman', 'Cambria', 'Georgia', 'DejaVu Sans', sans-serif";
-    container.style.boxSizing = 'border-box';
-    document.body.appendChild(container);
+    // Create an isolated hidden iframe for pixel-accurate, pristine native rendering without global CSS interference
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '0';
+    iframe.style.top = '0';
+    iframe.style.width = `${containerWidthPx}px`;
+    iframe.style.height = `${containerHeightPx}px`;
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    iframe.style.zIndex = '-99999';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
 
-    const overrideStyles = document.createElement('style');
-    overrideStyles.innerHTML = `
-      .docx-wrapper {
-        background: #ffffff !important;
-        padding: 0 !important;
-      }
-      section.docx {
-        box-shadow: none !important;
-        margin: 0 auto !important;
-        background: #ffffff !important;
-        border: none !important;
-        padding: ${marginTopPx}px ${marginRightPx}px ${marginBottomPx}px ${marginLeftPx}px !important;
-        box-sizing: border-box !important;
-        min-height: ${containerHeightPx}px !important;
-        width: ${containerWidthPx}px !important;
-        position: relative !important;
-        overflow: hidden !important;
-        page-break-after: always !important;
-      }
-      
-      /* Paragraph & Line Preservation */
-      p, .docx p {
-        margin-top: 0 !important;
-        margin-bottom: 0.5em !important;
-        line-height: 1.45 !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        font-feature-settings: "kern" 1 !important;
-        text-rendering: optimizeLegibility !important;
-      }
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      throw new Error('Failed to create isolated document rendering frame.');
+    }
 
-      /* Font Preservation & Rich Formatting */
-      b, strong, .docx-b { font-weight: 700 !important; }
-      i, em, .docx-i { font-style: italic !important; }
-      u, .docx-u { text-decoration: underline !important; }
-      s, del, strike, .docx-strike { text-decoration: line-through !important; }
-      sup, .docx-sup {
-        vertical-align: super !important;
-        font-size: 0.75em !important;
-        line-height: 0 !important;
-      }
-      sub, .docx-sub {
-        vertical-align: sub !important;
-        font-size: 0.75em !important;
-        line-height: 0 !important;
-      }
+    iframeDoc.open();
+    iframeDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #111111;
+      font-family: Calibri, "Segoe UI", Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      line-height: 1.15;
+      -webkit-font-smoothing: antialiased;
+    }
+    .docx-wrapper {
+      background: #ffffff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    section.docx {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      background: #ffffff !important;
+      border: none !important;
+      box-sizing: border-box !important;
+      position: relative !important;
+    }
 
-      /* Table Preservation: rows, columns, merged cells, borders & background */
-      table, .docx table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-        margin: 12px 0 !important;
-        page-break-inside: avoid !important;
-        box-sizing: border-box !important;
-      }
-      th, td, .docx th, .docx td {
-        border: 1px solid #cbd5e1 !important;
-        padding: 6px 10px !important;
-        vertical-align: top !important;
-        word-break: break-word !important;
-        box-sizing: border-box !important;
-      }
-      th, .docx th {
-        background-color: #f8fafc !important;
-        font-weight: 600 !important;
-      }
+    /* Compact Office table styling without strikethroughs */
+    table, .docx table {
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      margin: 1.5pt 0 !important;
+    }
+    td, th, .docx td, .docx th {
+      box-sizing: border-box !important;
+      vertical-align: middle !important;
+      padding: 2pt 3.5pt !important;
+      position: relative !important;
+      font-size: 9.5pt !important;
+      line-height: 1.15 !important;
+    }
+    /* CRITICAL: Never let inner paragraph borders draw strikethrough lines through cell text */
+    td p, th p, td div, th div, td [class*="docx_p"], th [class*="docx_p"], td span, th span {
+      border: none !important;
+      border-top: none !important;
+      border-bottom: none !important;
+      border-left: none !important;
+      border-right: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 1.15 !important;
+      font-size: inherit !important;
+      text-decoration: none !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Paragraphs and headers with bottom borders - ensure line is cleanly placed below text */
+    p[style*="border-bottom"], div[style*="border-bottom"], h1[style*="border-bottom"], h2[style*="border-bottom"], [class*="docx_p"][style*="border-bottom"] {
+      padding-bottom: 2px !important;
+      margin-bottom: 4px !important;
+      line-height: 1.15 !important;
+      display: block !important;
+      overflow: visible !important;
+    }
+    p[style*="border-top"], div[style*="border-top"], h1[style*="border-top"], h2[style*="border-top"], [class*="docx_p"][style*="border-top"] {
+      padding-top: 2px !important;
+      margin-top: 4px !important;
+      line-height: 1.15 !important;
+      display: block !important;
+      overflow: visible !important;
+    }
 
-      /* Image Preservation: resolution, aspect ratio, position */
-      img, .docx img {
-        max-width: 100% !important;
-        height: auto !important;
-        display: inline-block !important;
-        object-fit: contain !important;
-      }
+    h1, h2, h3, h4, h5, h6, .docx h1, .docx h2, .docx h3, [class*="docx_heading"] {
+      margin: 3pt 0 1.5pt 0 !important;
+      line-height: 1.15 !important;
+    }
 
-      /* Floating Images & Anchors */
-      .docx-floating-img {
-        position: relative !important;
-        display: flow-root !important;
-        overflow: visible !important;
-      }
+    p, .docx p, [class*="docx_p"] {
+      margin: 1.5pt 0 !important;
+      line-height: 1.15 !important;
+    }
 
-      /* Embedded SVG & Chart Preservation */
-      svg, canvas.chart-canvas {
-        max-width: 100% !important;
-        height: auto !important;
-        overflow: visible !important;
-      }
+    /* Clean image and table rules */
+    img, .docx img {
+      max-width: 100% !important;
+      object-fit: contain;
+    }
+    svg {
+      max-width: 100% !important;
+      overflow: visible !important;
+    }
+    /* Page Break rules */
+    .docx-page-break, .page-break, [style*="page-break-before"] {
+      page-break-before: always !important;
+      break-before: page !important;
+      height: 0 !important;
+      margin: 0 !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="docx-root"></div>
+</body>
+</html>`);
+    iframeDoc.close();
 
-      /* Headers & Footers Preservation */
-      .docx-header, header, .header-content {
-        font-size: 10px !important;
-        color: #64748b !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        padding-bottom: 6px !important;
-        margin-bottom: 16px !important;
-      }
-      .docx-footer, footer, .footer-content {
-        font-size: 10px !important;
-        color: #64748b !important;
-        border-top: 1px solid #e2e8f0 !important;
-        padding-top: 6px !important;
-        margin-top: 16px !important;
-      }
-
-      /* Lists Preservation: bullets, numbering, nested lists */
-      ul, ol, .docx ul, .docx ol {
-        padding-left: 28px !important;
-        margin: 8px 0 !important;
-      }
-      ul { list-style-type: disc !important; }
-      ol { list-style-type: decimal !important; }
-      ul ul, ol ol, ul ol, ol ul {
-        margin: 4px 0 !important;
-        padding-left: 20px !important;
-      }
-
-      /* Hyperlinks Preservation */
-      a, .docx a {
-        color: #2563eb !important;
-        text-decoration: underline !important;
-        cursor: pointer !important;
-      }
-
-      /* Page & Section Breaks */
-      .docx-page-break, .page-break, [style*="page-break-before"] {
-        page-break-before: always !important;
-        break-before: page !important;
-        height: 0 !important;
-        margin: 0 !important;
-      }
-    `;
-    container.appendChild(overrideStyles);
+    const container = (iframeDoc.getElementById('docx-root') || iframeDoc.body) as HTMLElement;
 
     try {
       let pageElements: HTMLElement[] = [];
@@ -304,6 +304,7 @@ export class WordConverterService {
             ignoreHeight: false,
             ignoreFonts: false,
             breakPages: true,
+            ignoreLastRenderedPageBreak: false,
             useBase64URL: true,
             experimental: true,
             renderHeaders: true,
@@ -325,6 +326,9 @@ export class WordConverterService {
           }
         } catch (docxErr) {
           console.warn('docx-preview notice, using Mammoth HTML fallback engine:', docxErr);
+          const overrideStyles = iframeDoc.createElement('style');
+          overrideStyles.textContent = `section.docx { background: #fff; padding: 36pt; }`;
+          iframeDoc.head.appendChild(overrideStyles);
           pageElements = await this.renderWithMammoth(
             arrayBuffer,
             container,
@@ -336,6 +340,9 @@ export class WordConverterService {
       } else {
         // Legacy .doc or .odt file format
         if (onProgress) onProgress(30, `Parsing ${format} structure, styles & formatting...`);
+        const overrideStyles = iframeDoc.createElement('style');
+        overrideStyles.textContent = `section.docx { background: #fff; padding: 36pt; }`;
+        iframeDoc.head.appendChild(overrideStyles);
         pageElements = await this.renderWithMammoth(
           arrayBuffer,
           container,
@@ -345,17 +352,69 @@ export class WordConverterService {
         );
       }
 
-      // 2. Perform advanced DOM post-processing (Tables, Floating Images, Charts, Multi-Section orientation, Fonts, Headers/Footers)
+      // 2. Perform advanced DOM post-processing
       this.postProcessDOM(container, parsedInfo, containerWidthPx, containerHeightPx);
+
+      // Ensure pageElements has all rendered section pages
+      let renderedSections = Array.from(container.querySelectorAll('section.docx')) as HTMLElement[];
+      if (renderedSections.length === 0) {
+        renderedSections = [container];
+      }
+
+      // 3. Smart Multi-Page Splitting: if we have a single continuous section that exceeds 1 page height, paginate cleanly without chopping table rows
+      if (renderedSections.length === 1 && renderedSections[0].offsetHeight > containerHeightPx * 1.15) {
+        pageElements = this.splitSectionIntoPages(
+          renderedSections[0],
+          containerWidthPx,
+          containerHeightPx,
+          sectionConfig,
+          iframeDoc
+        );
+      } else {
+        pageElements = renderedSections;
+      }
+
+      // Filter out empty or ghost trailing sections
+      pageElements = pageElements.filter((sec) => {
+        const text = sec.textContent?.trim() || '';
+        const hasImages = sec.querySelectorAll('img, svg, table').length > 0;
+        return text.length > 5 || hasImages;
+      });
+
+      // Re-apply DOM enhancements on rendered containers
+      this.postProcessDOM(container, parsedInfo, containerWidthPx, containerHeightPx);
+
+      // Enforce clean height clipping on each page section so it fits exactly on its page
+      pageElements.forEach((el) => {
+        el.style.boxSizing = 'border-box';
+        el.style.width = `${containerWidthPx}px`;
+        el.style.height = `${containerHeightPx}px`;
+        el.style.minHeight = `${containerHeightPx}px`;
+        el.style.maxHeight = `${containerHeightPx}px`;
+        el.style.overflow = 'hidden';
+        el.style.margin = '0 auto';
+        el.style.backgroundColor = '#ffffff';
+      });
+
+      // Wait for fonts to be ready in iframe
+      if (iframeDoc.fonts && iframeDoc.fonts.ready) {
+        try {
+          await iframeDoc.fonts.ready;
+        } catch {
+          // ignore font loading timeouts
+        }
+      }
+      // Small pause to allow browser engine to calculate layout & font metrics
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (onProgress) onProgress(45, `Capturing ${pageElements.length} page(s) into vector PDF...`);
 
-      // Determine canvas scale dynamically for optimal memory performance
+      // Determine canvas scale dynamically for optimal memory & visual fidelity
       const pageCount = pageElements.length;
       let renderScale = options.qualityScale || 2;
-      if (pageCount > 25) renderScale = 1.15;
-      else if (pageCount > 12) renderScale = 1.35;
-      else if (pageCount > 5) renderScale = 1.6;
+      if (pageCount > 25) renderScale = 1.25;
+      else if (pageCount > 12) renderScale = 1.5;
+      else if (pageCount > 5) renderScale = 1.75;
 
       let pdfDoc: jsPDF | null = null;
 
@@ -366,7 +425,7 @@ export class WordConverterService {
           onProgress(stepPercent, `Rendering page ${i + 1} of ${pageElements.length}...`);
         }
 
-        // Measure page element dimensions
+        // Measure page element dimensions accurately
         const elemRect = elem.getBoundingClientRect();
         const elemWidthPx = Math.round(elemRect.width) || containerWidthPx;
         const elemHeightPx = Math.round(elemRect.height) || containerHeightPx;
@@ -378,11 +437,27 @@ export class WordConverterService {
           backgroundColor: '#ffffff',
           windowWidth: elemWidthPx,
           windowHeight: elemHeightPx,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const allTables = clonedDoc.querySelectorAll('table');
+            allTables.forEach((t) => {
+              t.style.borderCollapse = 'collapse';
+              t.style.borderSpacing = '0';
+            });
+            const allCells = clonedDoc.querySelectorAll('td, th');
+            allCells.forEach((cell) => {
+              const el = cell as HTMLElement;
+              el.style.verticalAlign = 'middle';
+            });
+          },
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
+        canvas.width = 0;
+        canvas.height = 0;
 
         // Convert canvas pixels to PDF points (1 px at 96 DPI = 0.75 pt)
         const pdfWidthPt = (canvasWidth * (72 / 96)) / renderScale;
@@ -390,76 +465,29 @@ export class WordConverterService {
 
         const orientation = pdfWidthPt > pdfHeightPt ? 'landscape' : 'portrait';
 
-        // Slicing support for continuous single-wrapper DOM elements
-        if (pageElements.length === 1 && pdfHeightPt > sectionConfig.heightPt * 1.3) {
-          const pageHeightPt = sectionConfig.heightPt;
-          const pageWidthPt = sectionConfig.widthPt;
-          const scaleRatio = pageWidthPt / pdfWidthPt;
-          const scaledTotalHeightPt = pdfHeightPt * scaleRatio;
-
-          let yOffsetPt = 0;
-          let pageIndex = 0;
-
-          while (yOffsetPt < scaledTotalHeightPt) {
-            if (pageIndex > 0) {
-              pdfDoc!.addPage([pageWidthPt, pageHeightPt], orientation);
-            } else {
-              pdfDoc = new jsPDF({
-                orientation,
-                unit: 'pt',
-                format: [pageWidthPt, pageHeightPt],
-              });
-            }
-
-            pdfDoc.addImage(
-              imgData,
-              'JPEG',
-              0,
-              -yOffsetPt,
-              pageWidthPt,
-              scaledTotalHeightPt
-            );
-
-            // Preserve clickable hyperlinks on current sliced page section
-            this.addHyperlinkAnnotations(
-              pdfDoc,
-              elem,
-              elemRect,
-              pageWidthPt,
-              pageHeightPt,
-              yOffsetPt
-            );
-
-            yOffsetPt += pageHeightPt;
-            pageIndex++;
-          }
+        // Standard paginated section output with per-section orientation & dimensions
+        if (i === 0) {
+          pdfDoc = new jsPDF({
+            orientation,
+            unit: 'pt',
+            format: [pdfWidthPt, pdfHeightPt],
+          });
+          pdfDoc.addImage(imgData, 'JPEG', 0, 0, pdfWidthPt, pdfHeightPt);
         } else {
-          // Standard paginated section output with per-section orientation & dimensions
-          if (i === 0) {
-            pdfDoc = new jsPDF({
-              orientation,
-              unit: 'pt',
-              format: [pdfWidthPt, pdfHeightPt],
-            });
-            pdfDoc.addImage(imgData, 'JPEG', 0, 0, pdfWidthPt, pdfHeightPt);
-          } else {
-            pdfDoc!.addPage([pdfWidthPt, pdfHeightPt], orientation);
-            pdfDoc!.addImage(imgData, 'JPEG', 0, 0, pdfWidthPt, pdfHeightPt);
-          }
-
-          // Preserve clickable hyperlinks
-          this.addHyperlinkAnnotations(
-            pdfDoc,
-            elem,
-            elemRect,
-            pdfWidthPt,
-            pdfHeightPt
-          );
+          pdfDoc!.addPage([pdfWidthPt, pdfHeightPt], orientation);
+          pdfDoc!.addImage(imgData, 'JPEG', 0, 0, pdfWidthPt, pdfHeightPt);
         }
 
-        // Release canvas memory immediately
-        canvas.width = 0;
-        canvas.height = 0;
+        // Preserve clickable hyperlinks
+        this.addHyperlinkAnnotations(
+          pdfDoc,
+          elem,
+          elemRect,
+          pdfWidthPt,
+          pdfHeightPt
+        );
+
+        // Release memory
         MemoryManager.getInstance().purgeAll();
       }
 
@@ -486,8 +514,8 @@ export class WordConverterService {
       const pdfBytes = pdfDoc.output('arraybuffer');
       return new Blob([pdfBytes], { type: 'application/pdf' });
     } finally {
-      if (document.body.contains(container)) {
-        document.body.removeChild(container);
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
       }
       MemoryManager.getInstance().purgeAll();
     }
@@ -502,37 +530,39 @@ export class WordConverterService {
     containerWidthPx: number,
     containerHeightPx: number
   ) {
-    // 1. Table Rendering Enhancements (Requirement 3)
+    // 1. Table Rendering Enhancements
     const tables = Array.from(container.querySelectorAll('table')) as HTMLTableElement[];
     tables.forEach((table) => {
       table.style.borderCollapse = 'collapse';
-      table.style.width = '100%';
-      table.style.margin = '12px 0';
+      table.style.borderSpacing = '0';
       table.style.pageBreakInside = 'avoid';
       table.style.boxSizing = 'border-box';
+      table.style.width = '100%';
 
       const rows = Array.from(table.rows);
-      rows.forEach((row, rowIndex) => {
-        // Header row styling
-        if (rowIndex === 0 || row.closest('thead') || row.classList.contains('docx-tbl-header')) {
-          row.style.pageBreakInside = 'avoid';
-          Array.from(row.cells).forEach((cell) => {
-            if (!cell.style.backgroundColor) cell.style.backgroundColor = '#f8fafc';
-            cell.style.fontWeight = '600';
-          });
-        }
-
+      rows.forEach((row) => {
+        row.style.pageBreakInside = 'avoid';
         Array.from(row.cells).forEach((cell) => {
-          cell.style.border = cell.style.border || '1px solid #cbd5e1';
-          cell.style.padding = cell.style.padding || '6px 10px';
-          cell.style.verticalAlign = cell.style.verticalAlign || 'top';
           cell.style.boxSizing = 'border-box';
           cell.style.wordBreak = 'break-word';
+          cell.style.verticalAlign = cell.style.verticalAlign || 'middle';
+          cell.style.padding = '2pt 3.5pt';
+          cell.style.lineHeight = '1.15';
 
-          // Preserve merged cell rendering & vertical alignment
-          if (cell.colSpan > 1 || cell.rowSpan > 1) {
-            cell.style.verticalAlign = 'middle';
-          }
+          // Ensure inner paragraphs/spans inside table cells never have conflicting borders that cross through text
+          const innerBlocks = cell.querySelectorAll('p, div, span, [class*="docx_p"]');
+          innerBlocks.forEach((ib) => {
+            const el = ib as HTMLElement;
+            el.style.border = 'none';
+            el.style.borderBottom = 'none';
+            el.style.borderTop = 'none';
+            el.style.borderLeft = 'none';
+            el.style.borderRight = 'none';
+            el.style.textDecoration = 'none';
+            el.style.lineHeight = '1.15';
+            el.style.margin = '0';
+            el.style.padding = '0';
+          });
         });
       });
     });
@@ -541,7 +571,6 @@ export class WordConverterService {
     const images = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
     images.forEach((img, idx) => {
       img.style.maxWidth = '100%';
-      img.style.height = 'auto';
       img.style.objectFit = 'contain';
 
       const parent = img.parentElement;
@@ -585,13 +614,24 @@ export class WordConverterService {
       }
     });
 
-    // 4. Font & Spacing Preservation (Requirement 1 & Requirement 7)
-    const paragraphs = Array.from(container.querySelectorAll('p, .docx p')) as HTMLElement[];
+    // 4. Ensure font inheritance & text wrapping, and fix paragraph borders so they never strike through text
+    const paragraphs = Array.from(container.querySelectorAll('p, .docx p, h1, h2, h3, h4, h5, h6, [class*="docx_p"]')) as HTMLElement[];
     paragraphs.forEach((p) => {
-      p.style.lineHeight = '1.45';
       p.style.wordWrap = 'break-word';
-      p.style.fontFamily =
-        "'Calibri', 'Segoe UI', 'Arial', 'Liberation Sans', 'Times New Roman', 'Cambria', 'Georgia', 'DejaVu Sans', sans-serif";
+      p.style.overflowWrap = 'break-word';
+      p.style.boxSizing = 'border-box';
+
+      // If paragraph or header has a border, ensure adequate spacing so line sits strictly below or above text
+      if (p.style.borderBottom && p.style.borderBottom !== 'none') {
+        p.style.paddingBottom = p.style.paddingBottom || '4px';
+        p.style.display = 'block';
+        p.style.overflow = 'visible';
+      }
+      if (p.style.borderTop && p.style.borderTop !== 'none') {
+        p.style.paddingTop = p.style.paddingTop || '4px';
+        p.style.display = 'block';
+        p.style.overflow = 'visible';
+      }
     });
 
     // 5. Multi-Section Layout & Orientation Handling (Requirement 4)
@@ -602,11 +642,8 @@ export class WordConverterService {
         const secWidthPx = Math.round(secConf.widthPt * (96 / 72));
         const secHeightPx = Math.round(secConf.heightPt * (96 / 72));
 
-        secElem.style.width = `${secWidthPx}px`;
-        secElem.style.minHeight = `${secHeightPx}px`;
-
-        const m = secConf.marginsPt;
-        secElem.style.padding = `${Math.round(m.top * (96 / 72))}px ${Math.round(m.right * (96 / 72))}px ${Math.round(m.bottom * (96 / 72))}px ${Math.round(m.left * (96 / 72))}px`;
+        if (!secElem.style.width) secElem.style.width = `${secWidthPx}px`;
+        if (!secElem.style.minHeight) secElem.style.minHeight = `${secHeightPx}px`;
       }
     });
 
@@ -792,31 +829,185 @@ export class WordConverterService {
   }
 
   /**
-   * Pluggable Server-Side Conversion API Call
+   * Intelligently paginate long continuous sections into clean discrete pages without chopping table rows
+   */
+  private static splitSectionIntoPages(
+    section: HTMLElement,
+    pageWidthPx: number,
+    pageHeightPx: number,
+    sectionConfig: DocxXmlInfo['sectionConfig'],
+    doc: Document
+  ): HTMLElement[] {
+    const parent = section.parentElement || doc.body;
+    const computedStyle = doc.defaultView?.getComputedStyle(section);
+
+    // Standard calibrated Office margins (~0.45 - 0.5 inches = 36-42px)
+    const rawPadTop = parseFloat(computedStyle?.paddingTop || '0') || Math.round(sectionConfig.marginsPt.top * (96 / 72));
+    const rawPadBottom = parseFloat(computedStyle?.paddingBottom || '0') || Math.round(sectionConfig.marginsPt.bottom * (96 / 72));
+    const rawPadLeft = parseFloat(computedStyle?.paddingLeft || '0') || Math.round(sectionConfig.marginsPt.left * (96 / 72));
+    const rawPadRight = parseFloat(computedStyle?.paddingRight || '0') || Math.round(sectionConfig.marginsPt.right * (96 / 72));
+
+    const paddingTop = Math.min(rawPadTop, 40);
+    const paddingBottom = Math.min(rawPadBottom, 40);
+    const paddingLeft = Math.min(rawPadLeft, 45);
+    const paddingRight = Math.min(rawPadRight, 45);
+
+    const maxContentHeight = pageHeightPx - paddingTop - paddingBottom;
+    const children = Array.from(section.children) as HTMLElement[];
+    if (children.length === 0) return [section];
+
+    const pages: HTMLElement[] = [];
+
+    const createPage = (): HTMLElement => {
+      const p = doc.createElement('section');
+      p.className = 'docx pdf-page';
+      p.style.width = `${pageWidthPx}px`;
+      p.style.height = `${pageHeightPx}px`;
+      p.style.minHeight = `${pageHeightPx}px`;
+      p.style.maxHeight = `${pageHeightPx}px`;
+      p.style.overflow = 'hidden';
+      p.style.backgroundColor = '#ffffff';
+      p.style.padding = `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`;
+      p.style.boxSizing = 'border-box';
+      p.style.margin = '0 auto';
+      p.style.position = 'relative';
+      return p;
+    };
+
+    let currentPage = createPage();
+    let currentHeight = 0;
+
+    for (let c = 0; c < children.length; c++) {
+      const child = children[c];
+      const isLastChild = c === children.length - 1;
+      
+      // If element is a table
+      if (child.tagName.toLowerCase() === 'table') {
+        const table = child as HTMLTableElement;
+        const rows = Array.from(table.rows);
+
+        // Check total table height
+        const tableHeight = table.offsetHeight || table.getBoundingClientRect().height;
+        // Allow a small 60px tolerance for bottom of page to prevent spilling a 1-row table onto an empty page
+        const tolerance = isLastChild ? 65 : 15;
+
+        if (currentHeight + tableHeight <= maxContentHeight + tolerance) {
+          currentPage.appendChild(child.cloneNode(true));
+          currentHeight += tableHeight;
+        } else {
+          // Table spans across page boundary: split row-by-row
+          let currentTableClone = table.cloneNode(false) as HTMLTableElement;
+          currentTableClone.style.margin = '0 0 2pt 0';
+          let tbody = doc.createElement('tbody');
+          currentTableClone.appendChild(tbody);
+          currentPage.appendChild(currentTableClone);
+
+          let hasAppendedRowInCurrentTable = false;
+
+          for (let r = 0; r < rows.length; r++) {
+            const row = rows[r];
+            const isLastRow = r === rows.length - 1;
+            const rowHeight = row.offsetHeight || row.getBoundingClientRect().height || 26;
+            const rowTolerance = (isLastChild && isLastRow) ? 55 : 10;
+
+            if (currentHeight + rowHeight > maxContentHeight + rowTolerance && hasAppendedRowInCurrentTable) {
+              // Finish current page and start a new page
+              pages.push(currentPage);
+              currentPage = createPage();
+              currentHeight = 0;
+
+              currentTableClone = table.cloneNode(false) as HTMLTableElement;
+              currentTableClone.style.margin = '0 0 2pt 0';
+              tbody = doc.createElement('tbody');
+              currentTableClone.appendChild(tbody);
+              currentPage.appendChild(currentTableClone);
+              hasAppendedRowInCurrentTable = false;
+            }
+
+            tbody.appendChild(row.cloneNode(true));
+            currentHeight += rowHeight;
+            hasAppendedRowInCurrentTable = true;
+          }
+        }
+      } else {
+        // Normal block element (p, h1, div, etc.)
+        const elemHeight = child.offsetHeight || child.getBoundingClientRect().height || 20;
+        const elemTolerance = isLastChild ? 45 : 10;
+
+        if (currentHeight + elemHeight > maxContentHeight + elemTolerance && currentPage.children.length > 0) {
+          pages.push(currentPage);
+          currentPage = createPage();
+          currentHeight = 0;
+        }
+
+        currentPage.appendChild(child.cloneNode(true));
+        currentHeight += elemHeight;
+      }
+    }
+
+    if (currentPage.children.length > 0) {
+      pages.push(currentPage);
+    }
+
+    // Replace original section with paginated pages in container
+    section.style.display = 'none';
+    pages.forEach((p) => parent.appendChild(p));
+
+    return pages;
+  }
+
+  /**
+   * External Backend Server-Side Conversion API Call
+   * Sends Word (.doc, .docx, .odt) to ${VITE_WORD_TO_PDF_API_URL}/convert/word-to-pdf using multipart/form-data
+   * Returns generated PDF binary Blob
    */
   private static async convertOnServer(
     file: File,
     serverEndpoint: string,
     onProgress?: (percent: number, statusMsg?: string) => void
   ): Promise<Blob> {
-    if (onProgress) onProgress(20, 'Sending document to server conversion service...');
+    if (onProgress) onProgress(25, 'Uploading document to Word to PDF conversion service...');
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', file, file.name);
 
-    const response = await fetch(serverEndpoint, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => '');
+    let response: Response;
+    try {
+      if (onProgress) onProgress(45, 'Converting layout, fonts, tables and graphics...');
+      response = await fetch(serverEndpoint, {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (networkErr: any) {
       throw new Error(
-        `Server conversion failed (${response.status}): ${errText || response.statusText}`
+        `Network error: Could not reach conversion service at ${serverEndpoint}. Please ensure the backend is running and CORS is enabled.`
       );
     }
 
-    if (onProgress) onProgress(80, 'Receiving high-fidelity PDF from server...');
-    return await response.blob();
+    if (!response.ok) {
+      let errorMessage = `Conversion failed with status ${response.status} (${response.statusText})`;
+      try {
+        const errorData = await response.json();
+        if (errorData?.error || errorData?.message) {
+          errorMessage = errorData.error || errorData.message;
+        }
+      } catch {
+        const textErr = await response.text().catch(() => '');
+        if (textErr) {
+          errorMessage = textErr;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (onProgress) onProgress(85, 'Finalizing high-fidelity PDF output...');
+    const arrayBuffer = await response.arrayBuffer();
+
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error('Conversion server returned an empty PDF response.');
+    }
+
+    if (onProgress) onProgress(100, 'Conversion completed successfully!');
+    return new Blob([arrayBuffer], { type: 'application/pdf' });
   }
 }
